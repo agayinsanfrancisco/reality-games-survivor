@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+**/.DS_Store
+*.bak
+*.backup
+*.old
+compressed/
+
+# Mobile (Expo)
+mobile/.expo/
+mobile/.expo-shared/
+mobile/dist/
+mobile/npm-debug.*
+mobile/web-build/
