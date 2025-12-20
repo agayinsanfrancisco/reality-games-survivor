@@ -6,6 +6,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 // Pages
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
+import { Signup } from './pages/Signup';
 import { Dashboard } from './pages/Dashboard';
 import { NotFound } from './pages/NotFound';
 
@@ -16,6 +17,7 @@ export default function App() {
         {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
