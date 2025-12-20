@@ -4,50 +4,60 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Survivor-inspired palette
-        tribal: {
-          50: '#fef7ee',
-          100: '#fdecd3',
-          200: '#fad5a5',
-          300: '#f6b86d',
-          400: '#f19232',
-          500: '#ed7412',
-          600: '#de5a08',
-          700: '#b84209',
-          800: '#93350f',
-          900: '#772e10',
-          950: '#401505',
+        // Cream/beige background palette
+        cream: {
+          50: '#FEFDFB',
+          100: '#FBF8F3',
+          200: '#F5F0E6',
+          300: '#EDE5D5',
+          400: '#E2D6C1',
+          500: '#D4C4A8',
+          600: '#C4B08B',
+          700: '#A8926B',
+          800: '#8A7654',
+          900: '#6B5A40',
         },
-        jungle: {
+        // Deep burgundy/red accent
+        burgundy: {
+          50: '#FDF2F2',
+          100: '#FCE7E7',
+          200: '#FAD1D1',
+          300: '#F5AEAE',
+          400: '#EC7D7D',
+          500: '#A52A2A',  // Main brand color from mockups
+          600: '#8B2323',
+          700: '#751D1D',
+          800: '#5C1717',
+          900: '#4A1414',
+          950: '#2D0A0A',
+        },
+        // Keep jungle for success states
+        success: {
           50: '#f0fdf4',
           100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
           500: '#22c55e',
           600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
-          950: '#052e16',
         },
-        ocean: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-          950: '#082f49',
+        // Error/penalty
+        error: {
+          50: '#fef2f2',
+          100: '#fee2e2',
+          500: '#ef4444',
+          600: '#dc2626',
         },
       },
       fontFamily: {
-        display: ['Bebas Neue', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
+        display: ['Playfair Display', 'Georgia', 'serif'],
+        body: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        'card': '0 2px 8px rgba(0, 0, 0, 0.08)',
+        'card-hover': '0 4px 16px rgba(0, 0, 0, 0.12)',
+        'elevated': '0 8px 24px rgba(0, 0, 0, 0.12)',
+      },
+      borderRadius: {
+        'xl': '12px',
+        '2xl': '16px',
       },
     },
   },

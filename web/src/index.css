@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,28 +10,106 @@
   }
 
   body {
-    @apply bg-neutral-950 text-neutral-100 font-body;
+    @apply bg-cream-200 text-neutral-800 font-body;
   }
 }
 
 @layer components {
+  /* Buttons */
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-200 text-sm;
   }
 
   .btn-primary {
-    @apply bg-tribal-500 hover:bg-tribal-600 text-white;
+    @apply bg-burgundy-500 hover:bg-burgundy-600 text-white shadow-sm hover:shadow-md;
   }
 
   .btn-secondary {
-    @apply bg-neutral-800 hover:bg-neutral-700 text-neutral-100;
+    @apply bg-white hover:bg-cream-100 text-neutral-700 border border-neutral-200;
   }
 
+  .btn-outline {
+    @apply bg-transparent border-2 border-burgundy-500 text-burgundy-500 hover:bg-burgundy-500 hover:text-white;
+  }
+
+  /* Cards */
   .card {
-    @apply bg-neutral-900 rounded-xl border border-neutral-800 p-6;
+    @apply bg-white rounded-2xl shadow-card p-6 transition-shadow duration-200;
   }
 
+  .card-hover {
+    @apply hover:shadow-card-hover;
+  }
+
+  .card-elevated {
+    @apply bg-white rounded-2xl shadow-elevated p-8;
+  }
+
+  /* Inputs */
   .input {
-    @apply w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-100 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-tribal-500 focus:border-transparent;
+    @apply w-full px-4 py-3 bg-white border border-neutral-200 rounded-lg text-neutral-800 placeholder-neutral-400
+           focus:outline-none focus:ring-2 focus:ring-burgundy-500/20 focus:border-burgundy-500 transition-all;
+  }
+
+  .input-error {
+    @apply border-error-500 focus:ring-error-500/20 focus:border-error-500;
+  }
+
+  /* Table styles from mockups */
+  .table-header {
+    @apply bg-burgundy-500 text-white;
+  }
+
+  .table-row {
+    @apply bg-white border-b border-neutral-100 hover:bg-cream-50 transition-colors;
+  }
+
+  /* Navigation */
+  .nav-link {
+    @apply text-neutral-600 hover:text-burgundy-500 font-medium transition-colors;
+  }
+
+  .nav-link-active {
+    @apply text-burgundy-500 font-semibold;
+  }
+
+  /* Progress bars from mockups */
+  .progress-bar {
+    @apply h-3 bg-cream-300 rounded-full overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full bg-burgundy-500 rounded-full transition-all duration-500;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-success-100 text-success-600;
+  }
+
+  .badge-error {
+    @apply bg-error-100 text-error-600;
+  }
+
+  .badge-neutral {
+    @apply bg-neutral-100 text-neutral-600;
+  }
+
+  /* Avatar */
+  .avatar {
+    @apply rounded-full object-cover border-2 border-white shadow-sm;
+  }
+
+  /* Section headers */
+  .section-title {
+    @apply text-xl font-semibold text-neutral-800;
+  }
+
+  .section-subtitle {
+    @apply text-neutral-500 text-sm mt-1;
   }
 }
