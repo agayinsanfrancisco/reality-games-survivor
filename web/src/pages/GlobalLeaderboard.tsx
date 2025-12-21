@@ -1,0 +1,362 @@
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth';
+import { Navigation } from '@/components/Navigation';
+import { Flame, Trophy, Users, TrendingUp, Medal } from 'lucide-react';
+
+interface PlayerStats {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  totalPoints: number;
+  leagueCount: number;
+  averagePoints: number;
+  hasEliminatedCastaway: boolean;
+}
+
+export default function GlobalLeaderboard() {
+  const { user } = useAuth();
+
+  // Fetch all league members with their user info and calculate averages
+  const { data: leaderboard, isLoading } = useQuery({
+    queryKey: ['global-leaderboard'],
+    queryFn: async () => {
+      // Get all league members with user info
+      const { data: members, error } = await supabase
+        .from('league_members')
+        .select(`
+          user_id,
+          total_points,
+          league_id,
+          users (id, display_name, avatar_url)
+        `);
+
+      if (error) throw error;
+
+      // Get rosters to check for eliminated castaways
+      const { data: rosters } = await supabase
+        .from('rosters')
+        .select(`
+          user_id,
+          castaway:castaways (id, status)
+        `)
+        .is('dropped_at', null);
+
+      // Build player stats map
+      const playerMap = new Map<string, {
+        displayName: string;
+        avatarUrl: string | null;
+        totalPoints: number;
+        leagueCount: number;
+        hasEliminatedCastaway: boolean;
+      }>();
+
+      // Aggregate member data
+      members?.forEach((member: any) => {
+        const userId = member.user_id;
+        const existing = playerMap.get(userId);
+
+        if (existing) {
+          existing.totalPoints += member.total_points || 0;
+          existing.leagueCount += 1;
+        } else {
+          playerMap.set(userId, {
+            displayName: member.users?.display_name || 'Unknown',
+            avatarUrl: member.users?.avatar_url || null,
+            totalPoints: member.total_points || 0,
+            leagueCount: 1,
+            hasEliminatedCastaway: false,
+          });
+        }
+      });
+
+      // Check for eliminated castaways per user
+      rosters?.forEach((roster: any) => {
+        const userId = roster.user_id;
+        const player = playerMap.get(userId);
+        if (player && roster.castaway?.status === 'eliminated') {
+          player.hasEliminatedCastaway = true;
+        }
+      });
+
+      // Convert to array and calculate averages
+      const stats: PlayerStats[] = Array.from(playerMap.entries()).map(([userId, data]) => ({
+        userId,
+        displayName: data.displayName,
+        avatarUrl: data.avatarUrl,
+        totalPoints: data.totalPoints,
+        leagueCount: data.leagueCount,
+        averagePoints: data.leagueCount > 0 ? Math.round(data.totalPoints / data.leagueCount) : 0,
+        hasEliminatedCastaway: data.hasEliminatedCastaway,
+      }));
+
+      // Sort by average points descending
+      return stats.sort((a, b) => b.averagePoints - a.averagePoints);
+    },
+  });
+
+  const { data: activeSeason } = useQuery({
+    queryKey: ['active-season'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('seasons')
+        .select('*')
+        .eq('is_active', true)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Torch icon component with lit/unlit states
+  const TorchIcon = ({ lit, size = 'normal' }: { lit: boolean; size?: 'normal' | 'large' }) => {
+    const baseSize = size === 'large' ? 'h-8 w-8' : 'h-5 w-5';
+
+    if (lit) {
+      return (
+        <div className="relative">
+          <Flame className={`${baseSize} text-orange-500`} />
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2">
+            <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse opacity-80" />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative">
+        <Flame className={`${baseSize} text-neutral-300`} />
+      </div>
+    );
+  };
+
+  const getRankStyle = (rank: number) => {
+    if (rank === 1) return {
+      bg: 'bg-gradient-to-r from-yellow-100 to-amber-50',
+      border: 'border-yellow-300',
+      text: 'text-yellow-700',
+      icon: <Medal className="h-6 w-6 text-yellow-500" />
+    };
+    if (rank === 2) return {
+      bg: 'bg-gradient-to-r from-gray-100 to-slate-50',
+      border: 'border-gray-300',
+      text: 'text-gray-600',
+      icon: <Medal className="h-6 w-6 text-gray-400" />
+    };
+    if (rank === 3) return {
+      bg: 'bg-gradient-to-r from-orange-100 to-amber-50',
+      border: 'border-orange-300',
+      text: 'text-orange-700',
+      icon: <Medal className="h-6 w-6 text-orange-400" />
+    };
+    return {
+      bg: 'bg-white',
+      border: 'border-cream-200',
+      text: 'text-neutral-600',
+      icon: null
+    };
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
+      <Navigation />
+
+      <div className="max-w-4xl mx-auto p-4 pb-24">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <Trophy className="h-8 w-8 text-burgundy-500" />
+            <h1 className="text-3xl font-display font-bold text-neutral-800">
+              Global Leaderboard
+            </h1>
+          </div>
+          <p className="text-neutral-500">
+            Season {activeSeason?.number}: {activeSeason?.name} - Rankings by average points across all leagues
+          </p>
+        </div>
+
+        {/* Stats Summary */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
+            <Users className="h-6 w-6 text-burgundy-500 mx-auto mb-2" />
+            <p className="text-2xl font-bold text-neutral-800">{leaderboard?.length || 0}</p>
+            <p className="text-neutral-500 text-sm">Total Players</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
+            <TrendingUp className="h-6 w-6 text-green-500 mx-auto mb-2" />
+            <p className="text-2xl font-bold text-neutral-800">
+              {leaderboard && leaderboard.length > 0 ? leaderboard[0].averagePoints : 0}
+            </p>
+            <p className="text-neutral-500 text-sm">Top Avg Points</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
+            <Flame className="h-6 w-6 text-orange-500 mx-auto mb-2" />
+            <p className="text-2xl font-bold text-neutral-800">
+              {leaderboard?.filter(p => !p.hasEliminatedCastaway).length || 0}
+            </p>
+            <p className="text-neutral-500 text-sm">Torches Lit</p>
+          </div>
+        </div>
+
+        {/* Top 3 Podium */}
+        {leaderboard && leaderboard.length >= 3 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold text-neutral-700 mb-4">Top Survivors</h2>
+            <div className="grid grid-cols-3 gap-4">
+              {/* Second Place */}
+              <div className="bg-gradient-to-b from-gray-100 to-gray-50 rounded-2xl p-6 border-2 border-gray-200 text-center mt-8">
+                <div className="flex justify-center mb-3">
+                  <TorchIcon lit={!leaderboard[1].hasEliminatedCastaway} size="large" />
+                </div>
+                <div className="w-12 h-12 bg-gray-200 rounded-full mx-auto mb-2 flex items-center justify-center">
+                  <span className="text-gray-600 font-bold text-lg">2</span>
+                </div>
+                <p className="font-semibold text-neutral-800 truncate">{leaderboard[1].displayName}</p>
+                <p className="text-2xl font-display text-gray-600 mt-1">{leaderboard[1].averagePoints}</p>
+                <p className="text-xs text-neutral-400">avg pts</p>
+              </div>
+
+              {/* First Place */}
+              <div className="bg-gradient-to-b from-yellow-100 to-amber-50 rounded-2xl p-6 border-2 border-yellow-300 text-center shadow-elevated">
+                <div className="flex justify-center mb-3">
+                  <TorchIcon lit={!leaderboard[0].hasEliminatedCastaway} size="large" />
+                </div>
+                <div className="w-14 h-14 bg-yellow-300 rounded-full mx-auto mb-2 flex items-center justify-center">
+                  <Trophy className="h-7 w-7 text-yellow-700" />
+                </div>
+                <p className="font-bold text-neutral-800 truncate">{leaderboard[0].displayName}</p>
+                <p className="text-3xl font-display text-yellow-700 mt-1">{leaderboard[0].averagePoints}</p>
+                <p className="text-xs text-neutral-500">avg pts</p>
+              </div>
+
+              {/* Third Place */}
+              <div className="bg-gradient-to-b from-orange-100 to-amber-50 rounded-2xl p-6 border-2 border-orange-200 text-center mt-8">
+                <div className="flex justify-center mb-3">
+                  <TorchIcon lit={!leaderboard[2].hasEliminatedCastaway} size="large" />
+                </div>
+                <div className="w-12 h-12 bg-orange-200 rounded-full mx-auto mb-2 flex items-center justify-center">
+                  <span className="text-orange-600 font-bold text-lg">3</span>
+                </div>
+                <p className="font-semibold text-neutral-800 truncate">{leaderboard[2].displayName}</p>
+                <p className="text-2xl font-display text-orange-600 mt-1">{leaderboard[2].averagePoints}</p>
+                <p className="text-xs text-neutral-400">avg pts</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Full Rankings */}
+        <div className="bg-white rounded-2xl shadow-elevated overflow-hidden border border-cream-200">
+          <div className="p-5 border-b border-cream-100 flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold text-neutral-800">All Players</h2>
+              <p className="text-sm text-neutral-500">Ranked by average points across leagues</p>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-neutral-500">
+              <TorchIcon lit={true} /> = Active
+              <span className="mx-2">|</span>
+              <TorchIcon lit={false} /> = Eliminated
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="p-12 text-center">
+              <div className="w-8 h-8 mx-auto border-2 border-burgundy-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-neutral-500 mt-4">Loading rankings...</p>
+            </div>
+          ) : leaderboard?.length === 0 ? (
+            <div className="p-12 text-center">
+              <Trophy className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
+              <p className="text-neutral-500">No players yet. Join a league to get started!</p>
+              <Link to="/leagues" className="btn btn-primary mt-4 inline-block">
+                Browse Leagues
+              </Link>
+            </div>
+          ) : (
+            <div className="divide-y divide-cream-100">
+              {leaderboard?.map((player, index) => {
+                const rank = index + 1;
+                const rankStyle = getRankStyle(rank);
+                const isCurrentUser = player.userId === user?.id;
+
+                return (
+                  <div
+                    key={player.userId}
+                    className={`flex items-center gap-4 p-4 transition-colors ${
+                      isCurrentUser
+                        ? 'bg-burgundy-50 border-l-4 border-burgundy-500'
+                        : rank <= 3
+                          ? rankStyle.bg
+                          : 'hover:bg-cream-50'
+                    }`}
+                  >
+                    {/* Rank */}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                      rank <= 3 ? '' : 'bg-cream-100'
+                    } ${rankStyle.text}`}>
+                      {rankStyle.icon || rank}
+                    </div>
+
+                    {/* Torch */}
+                    <div className="flex-shrink-0">
+                      <TorchIcon lit={!player.hasEliminatedCastaway} />
+                    </div>
+
+                    {/* Player Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-semibold truncate ${isCurrentUser ? 'text-burgundy-700' : 'text-neutral-800'}`}>
+                        {player.displayName}
+                        {isCurrentUser && <span className="ml-2 text-xs text-burgundy-500 font-normal">(You)</span>}
+                      </p>
+                      <p className="text-sm text-neutral-400">
+                        {player.leagueCount} {player.leagueCount === 1 ? 'league' : 'leagues'} · {player.totalPoints} total pts
+                      </p>
+                    </div>
+
+                    {/* Average Points */}
+                    <div className="text-right">
+                      <p className={`text-2xl font-display ${rank <= 3 ? rankStyle.text : 'text-neutral-800'}`}>
+                        {player.averagePoints}
+                      </p>
+                      <p className="text-xs text-neutral-400">avg pts</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Your Position Card (if not in top 10) */}
+        {user && leaderboard && leaderboard.length > 0 && (
+          (() => {
+            const userIndex = leaderboard.findIndex(p => p.userId === user.id);
+            if (userIndex === -1 || userIndex < 10) return null;
+
+            const userStats = leaderboard[userIndex];
+            return (
+              <div className="mt-6 bg-gradient-to-r from-burgundy-500 to-burgundy-600 rounded-2xl p-6 text-white shadow-elevated">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                      <span className="font-bold text-xl">#{userIndex + 1}</span>
+                    </div>
+                    <div>
+                      <p className="text-burgundy-100 text-sm">Your Position</p>
+                      <p className="text-xl font-semibold">{userStats.displayName}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-display">{userStats.averagePoints}</p>
+                    <p className="text-burgundy-100 text-sm">avg pts</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()
+        )}
+      </div>
+    </div>
+  );
+}

@@ -2,12 +2,18 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
+interface SignUpOptions {
+  phone?: string;
+  hometown?: string;
+  favorite_castaway?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, options?: SignUpOptions) => Promise<void>;
   signInWithMagicLink: (email: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -42,15 +48,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
 
-  const signUp = async (email: string, password: string, displayName: string) => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (email: string, password: string, displayName: string, options?: SignUpOptions) => {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { display_name: displayName },
+        data: {
+          display_name: displayName,
+          phone: options?.phone,
+          hometown: options?.hometown,
+          favorite_castaway: options?.favorite_castaway,
+        },
       },
     });
     if (error) throw error;
+
+    // If we have additional profile fields and the user was created, update the users table
+    if (data.user && (options?.phone || options?.hometown || options?.favorite_castaway)) {
+      const updates: Record<string, string> = {};
+      if (options?.phone) updates.phone = options.phone;
+      if (options?.hometown) updates.hometown = options.hometown;
+      if (options?.favorite_castaway) updates.favorite_castaway = options.favorite_castaway;
+
+      await supabase.from('users').update(updates).eq('id', data.user.id);
+    }
   };
 
   const signInWithMagicLink = async (email: string) => {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Users, Search, Shield, ShieldCheck, ShieldAlert, Loader2, Mail, Phone, Calendar, MoreVertical } from 'lucide-react';
+import { ArrowLeft, Users, Search, Shield, ShieldCheck, ShieldAlert, Loader2, Mail, Phone, Calendar, MoreVertical, MapPin, Heart, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Navigation } from '@/components/Navigation';
 
@@ -12,6 +12,7 @@ export function AdminUsers() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
 
   // Fetch all users
   const { data: users, isLoading } = useQuery({
@@ -262,12 +263,87 @@ export function AdminUsers() {
               <span className="text-neutral-400 text-sm">
                 {leagueCounts?.[user.id] || 0} leagues
               </span>
-              <div className="flex gap-2">
-                <button className="text-neutral-500 hover:text-neutral-800 text-sm">
-                  View Activity
-                </button>
-              </div>
+              <button
+                onClick={() => setExpandedUser(expandedUser === user.id ? null : user.id)}
+                className="text-burgundy-500 hover:text-burgundy-700 text-sm flex items-center gap-1"
+              >
+                {expandedUser === user.id ? (
+                  <>Hide Details <ChevronUp className="h-4 w-4" /></>
+                ) : (
+                  <>View Full Profile <ChevronDown className="h-4 w-4" /></>
+                )}
+              </button>
             </div>
+
+            {/* Expanded Profile Details */}
+            {expandedUser === user.id && (
+              <div className="mt-4 pt-4 border-t border-cream-200 space-y-3">
+                <h4 className="font-medium text-neutral-700 text-sm">Full Profile</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <label className="text-neutral-400 text-xs uppercase tracking-wide">User ID</label>
+                    <p className="font-mono text-xs text-neutral-600 break-all">{user.id}</p>
+                  </div>
+                  <div>
+                    <label className="text-neutral-400 text-xs uppercase tracking-wide">Email</label>
+                    <p className="text-neutral-800">{user.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-neutral-400 text-xs uppercase tracking-wide">Phone</label>
+                    <p className="text-neutral-800 flex items-center gap-1">
+                      {user.phone || 'Not provided'}
+                      {user.phone_verified && <span className="text-green-500 text-xs">(verified)</span>}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-neutral-400 text-xs uppercase tracking-wide">Hometown</label>
+                    <p className="text-neutral-800 flex items-center gap-1">
+                      {user.hometown ? (
+                        <><MapPin className="h-3 w-3" /> {user.hometown}</>
+                      ) : (
+                        <span className="text-neutral-400">Not provided</span>
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-neutral-400 text-xs uppercase tracking-wide">Favorite Castaway</label>
+                    <p className="text-neutral-800 flex items-center gap-1">
+                      {user.favorite_castaway ? (
+                        <><Heart className="h-3 w-3" /> {user.favorite_castaway}</>
+                      ) : (
+                        <span className="text-neutral-400">Not provided</span>
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-neutral-400 text-xs uppercase tracking-wide">Timezone</label>
+                    <p className="text-neutral-800">{user.timezone || 'America/Los_Angeles'}</p>
+                  </div>
+                  <div>
+                    <label className="text-neutral-400 text-xs uppercase tracking-wide">Created</label>
+                    <p className="text-neutral-800">{new Date(user.created_at).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <label className="text-neutral-400 text-xs uppercase tracking-wide">Last Updated</label>
+                    <p className="text-neutral-800">{new Date(user.updated_at).toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  <div className={`p-2 rounded-lg text-center ${user.notification_email ? 'bg-green-50 text-green-700' : 'bg-neutral-100 text-neutral-400'}`}>
+                    <Mail className="h-4 w-4 mx-auto mb-1" />
+                    <span className="text-xs">Email {user.notification_email ? 'ON' : 'OFF'}</span>
+                  </div>
+                  <div className={`p-2 rounded-lg text-center ${user.notification_sms ? 'bg-green-50 text-green-700' : 'bg-neutral-100 text-neutral-400'}`}>
+                    <Phone className="h-4 w-4 mx-auto mb-1" />
+                    <span className="text-xs">SMS {user.notification_sms ? 'ON' : 'OFF'}</span>
+                  </div>
+                  <div className={`p-2 rounded-lg text-center ${user.notification_push ? 'bg-green-50 text-green-700' : 'bg-neutral-100 text-neutral-400'}`}>
+                    <span className="text-sm mx-auto mb-1 block">🔔</span>
+                    <span className="text-xs">Push {user.notification_push ? 'ON' : 'OFF'}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ))}
 

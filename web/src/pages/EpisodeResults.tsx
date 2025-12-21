@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Trophy, TrendingUp, TrendingDown, Minus, Users, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { Navigation } from '@/components/Navigation';
 
 export default function EpisodeResults() {
   const { leagueId, episodeId } = useParams<{ leagueId: string; episodeId: string }>();
@@ -99,14 +100,19 @@ export default function EpisodeResults() {
 
   if (episodeLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
-      </div>
+      <>
+        <Navigation />
+        <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
+    <>
+      <Navigation />
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link
@@ -236,7 +242,9 @@ export default function EpisodeResults() {
                       )}
                       <div>
                         <p className="text-neutral-800 font-medium">{data.castaway.name}</p>
-                        <p className="text-neutral-500 text-sm">{data.castaway.tribe_original}</p>
+                        {data.castaway.tribe_original && (
+                          <p className="text-neutral-500 text-sm">{data.castaway.tribe_original}</p>
+                        )}
                       </div>
                     </div>
                     <span className={`text-xl font-bold ${
@@ -271,5 +279,6 @@ export default function EpisodeResults() {
         )}
       </div>
     </div>
+    </>
   );
 }

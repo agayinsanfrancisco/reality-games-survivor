@@ -1,6 +1,5 @@
 import { supabaseAdmin } from '../config/supabase.js';
-import { sendEmail } from '../emails/index.js';
-import * as emails from '../emails/index.js';
+import { EmailService } from '../emails/index.js';
 
 interface ReminderResult {
   sent: number;
@@ -61,18 +60,28 @@ export async function sendPickReminders(): Promise<ReminderResult> {
       const user = (member as any).users;
       if (!user?.email || !user.notification_email) continue;
 
-      const emailHtml = emails.pickReminderEmail({
-        displayName: user.display_name,
-        episodeNumber: episode.number,
-        hoursLeft,
-        leagueId: league.id,
-      });
+      if (hoursLeft <= 1) {
+        await EmailService.sendPickFinalWarning({
+          displayName: user.display_name,
+          email: user.email,
+          episodeNumber: episode.number,
+          minutesRemaining: 30,
+        });
+      } else {
+        await EmailService.sendPickReminder({
+          displayName: user.display_name,
+          email: user.email,
+          episodeNumber: episode.number,
+          hoursRemaining: hoursLeft,
+        });
+      }
 
-      await sendEmail({
-        to: user.email,
-        subject: `Make your pick for Episode ${episode.number}`,
-        html: emailHtml,
-      });
+      await EmailService.logNotification(
+        member.user_id,
+        'email',
+        `Pick reminder for Episode ${episode.number}`,
+        `Reminder sent with ${hoursLeft} hours remaining.`
+      );
 
       sent++;
     }
@@ -101,7 +110,8 @@ export async function sendDraftReminders(): Promise<ReminderResult> {
   }
 
   const deadline = new Date(season.draft_deadline);
-  const daysLeft = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const hoursLeft = Math.round((deadline.getTime() - now.getTime()) / (1000 * 60 * 60));
+  const daysLeft = Math.ceil(hoursLeft / 24);
 
   // Get leagues with pending drafts
   const { data: leagues } = await supabaseAdmin
@@ -124,18 +134,30 @@ export async function sendDraftReminders(): Promise<ReminderResult> {
       const user = (member as any).users;
       if (!user?.email || !user.notification_email) continue;
 
-      const emailHtml = emails.draftReminderEmail({
-        displayName: user.display_name,
-        leagueName: league.name,
-        daysLeft,
-        leagueId: league.id,
-      });
+      if (hoursLeft <= 2) {
+        await EmailService.sendDraftFinalWarning({
+          displayName: user.display_name,
+          email: user.email,
+          leagueName: league.name,
+          leagueId: league.id,
+          hoursRemaining: hoursLeft,
+        });
+      } else {
+        await EmailService.sendDraftReminder({
+          displayName: user.display_name,
+          email: user.email,
+          leagueName: league.name,
+          leagueId: league.id,
+          daysRemaining: daysLeft,
+        });
+      }
 
-      await sendEmail({
-        to: user.email,
-        subject: `${daysLeft} days left to complete your draft!`,
-        html: emailHtml,
-      });
+      await EmailService.logNotification(
+        member.user_id,
+        'email',
+        `Draft reminder for ${league.name}`,
+        `Reminder sent with ${daysLeft} days remaining.`
+      );
 
       sent++;
     }
@@ -209,18 +231,13 @@ export async function sendWaiverReminders(): Promise<ReminderResult> {
       const user = (member as any).users;
       if (!user?.email || !user.notification_email) continue;
 
-      const emailHtml = emails.waiverReminderEmail({
-        displayName: user.display_name,
-        leagueName: league.name,
-        hoursLeft,
-        leagueId: league.id,
-      });
-
-      await sendEmail({
-        to: user.email,
-        subject: 'Submit your waiver rankings',
-        html: emailHtml,
-      });
+      // Waiver reminder email not in EmailService yet, log to notifications
+      await EmailService.logNotification(
+        member.user_id,
+        'email',
+        'Submit your waiver rankings',
+        `You have ${hoursLeft} hours to submit your rankings for ${league.name}.`
+      );
 
       sent++;
     }

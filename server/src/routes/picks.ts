@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { authenticate, AuthenticatedRequest, requireAdmin } from '../middleware/authenticate.js';
 import { supabase, supabaseAdmin } from '../config/supabase.js';
+import { EmailService } from '../emails/index.js';
 
 const router = Router();
 
@@ -75,6 +76,51 @@ router.post('/:id/picks', authenticate, async (req: AuthenticatedRequest, res: R
     if (error) {
       return res.status(400).json({ error: error.message });
     }
+
+    // Send pick confirmation email (fire and forget)
+    (async () => {
+      try {
+        // Get user and castaway details
+        const { data: user } = await supabase
+          .from('users')
+          .select('email, display_name')
+          .eq('id', userId)
+          .single();
+
+        const { data: castawayDetails } = await supabase
+          .from('castaways')
+          .select('name')
+          .eq('id', castaway_id)
+          .single();
+
+        const { data: league } = await supabase
+          .from('leagues')
+          .select('name')
+          .eq('id', leagueId)
+          .single();
+
+        if (user && castawayDetails && league) {
+          await EmailService.sendPickConfirmed({
+            displayName: user.display_name,
+            email: user.email,
+            castawayName: castawayDetails.name,
+            leagueName: league.name,
+            leagueId,
+            episodeNumber: episode.number,
+            picksLockAt: new Date(episode.picks_lock_at),
+          });
+
+          await EmailService.logNotification(
+            userId,
+            'email',
+            `Pick confirmed: ${castawayDetails.name}`,
+            `Your pick for Episode ${episode.number} has been confirmed.`
+          );
+        }
+      } catch (emailErr) {
+        console.error('Failed to send pick confirmation email:', emailErr);
+      }
+    })();
 
     res.json({ pick });
   } catch (err) {
@@ -222,7 +268,7 @@ router.post('/auto-fill', requireAdmin, async (req: AuthenticatedRequest, res: R
       return res.json({ auto_picked: 0, users: [] });
     }
 
-    const autoPicks: Array<{ user_id: string; episode_id: string }> = [];
+    const autoPicks: Array<{ user_id: string; episode_id: string; league_id: string; castaway_id: string }> = [];
 
     for (const episode of episodes) {
       // Get all leagues for this season
@@ -278,11 +324,65 @@ router.post('/auto-fill', requireAdmin, async (req: AuthenticatedRequest, res: R
             autoPicks.push({
               user_id: member.user_id,
               episode_id: episode.id,
+              league_id: league.id,
+              castaway_id: activeCastaway.castaway_id,
             });
           }
         }
       }
     }
+
+    // Send auto-pick alert emails (fire and forget)
+    (async () => {
+      for (const autoPick of autoPicks) {
+        try {
+          // Get user, castaway, league, and episode details
+          const { data: user } = await supabaseAdmin
+            .from('users')
+            .select('email, display_name')
+            .eq('id', autoPick.user_id)
+            .single();
+
+          const { data: castawayDetails } = await supabaseAdmin
+            .from('castaways')
+            .select('name')
+            .eq('id', autoPick.castaway_id)
+            .single();
+
+          const { data: leagueDetails } = await supabaseAdmin
+            .from('leagues')
+            .select('name')
+            .eq('id', autoPick.league_id)
+            .single();
+
+          const { data: episodeDetails } = await supabaseAdmin
+            .from('episodes')
+            .select('number')
+            .eq('id', autoPick.episode_id)
+            .single();
+
+          if (user && castawayDetails && leagueDetails && episodeDetails) {
+            await EmailService.sendAutoPickAlert({
+              displayName: user.display_name,
+              email: user.email,
+              castawayName: castawayDetails.name,
+              leagueName: leagueDetails.name,
+              leagueId: autoPick.league_id,
+              episodeNumber: episodeDetails.number,
+            });
+
+            await EmailService.logNotification(
+              autoPick.user_id,
+              'email',
+              `Auto-pick applied: ${castawayDetails.name}`,
+              `You missed the pick deadline for Episode ${episodeDetails.number}. We auto-selected ${castawayDetails.name} for you.`
+            );
+          }
+        } catch (emailErr) {
+          console.error('Failed to send auto-pick alert email:', emailErr);
+        }
+      }
+    })();
 
     res.json({
       auto_picked: autoPicks.length,

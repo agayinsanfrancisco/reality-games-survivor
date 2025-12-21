@@ -1,7 +1,11 @@
 import { Router, Response } from 'express';
+import bcrypt from 'bcrypt';
 import { authenticate, AuthenticatedRequest } from '../middleware/authenticate.js';
 import { supabase, supabaseAdmin } from '../config/supabase.js';
 import { stripe } from '../config/stripe.js';
+import { EmailService } from '../emails/index.js';
+
+const SALT_ROUNDS = 10;
 
 const router = Router();
 
@@ -15,6 +19,12 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
       return res.status(400).json({ error: 'Name and season_id are required' });
     }
 
+    // Hash password if provided
+    let hashedPassword: string | null = null;
+    if (password) {
+      hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    }
+
     // Create league
     const { data: league, error } = await supabaseAdmin
       .from('leagues')
@@ -22,7 +32,7 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
         name,
         season_id,
         commissioner_id: userId,
-        password_hash: password || null, // TODO: Hash password
+        password_hash: hashedPassword,
         require_donation: !!donation_amount,
         donation_amount: donation_amount || null,
       })
@@ -41,6 +51,37 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
         user_id: userId,
         draft_position: 1,
       });
+
+    // Send league created email
+    try {
+      const { data: user } = await supabaseAdmin
+        .from('users')
+        .select('email, display_name')
+        .eq('id', userId)
+        .single();
+
+      const { data: season } = await supabaseAdmin
+        .from('seasons')
+        .select('name, registration_closes_at, premiere_at, draft_deadline')
+        .eq('id', season_id)
+        .single();
+
+      if (user && season) {
+        await EmailService.sendLeagueCreated({
+          displayName: user.display_name,
+          email: user.email,
+          leagueName: league.name,
+          leagueCode: league.code,
+          seasonName: season.name,
+          registrationCloses: new Date(season.registration_closes_at),
+          premiereDate: new Date(season.premiere_at),
+          draftDeadline: new Date(season.draft_deadline),
+        });
+      }
+    } catch (emailErr) {
+      console.error('Failed to send league created email:', emailErr);
+      // Don't fail the request if email fails
+    }
 
     res.status(201).json({ league, invite_code: league.code });
   } catch (err) {
@@ -85,8 +126,14 @@ router.post('/:id/join', authenticate, async (req: AuthenticatedRequest, res: Re
     }
 
     // Check password if required
-    if (league.password_hash && league.password_hash !== password) {
-      return res.status(403).json({ error: 'Invalid password' });
+    if (league.password_hash) {
+      if (!password) {
+        return res.status(403).json({ error: 'Password required to join this league' });
+      }
+      const passwordValid = await bcrypt.compare(password, league.password_hash);
+      if (!passwordValid) {
+        return res.status(403).json({ error: 'Invalid password' });
+      }
     }
 
     // Check if donation required
@@ -119,6 +166,50 @@ router.post('/:id/join', authenticate, async (req: AuthenticatedRequest, res: Re
 
     if (error) {
       return res.status(400).json({ error: error.message });
+    }
+
+    // Send league joined email
+    try {
+      const { data: user } = await supabaseAdmin
+        .from('users')
+        .select('email, display_name')
+        .eq('id', userId)
+        .single();
+
+      const { data: leagueWithSeason } = await supabaseAdmin
+        .from('leagues')
+        .select('name, max_players, seasons(name, premiere_at, draft_deadline)')
+        .eq('id', leagueId)
+        .single();
+
+      const { count: memberCount } = await supabaseAdmin
+        .from('league_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('league_id', leagueId);
+
+      // First pick is Episode 2 (week after premiere)
+      const season = (leagueWithSeason as any)?.seasons;
+      const premiereDate = new Date(season?.premiere_at);
+      const firstPickDue = new Date(premiereDate);
+      firstPickDue.setDate(firstPickDue.getDate() + 7);
+      firstPickDue.setHours(15, 0, 0, 0); // Wed 3pm PST
+
+      if (user && leagueWithSeason && season) {
+        await EmailService.sendLeagueJoined({
+          displayName: user.display_name,
+          email: user.email,
+          leagueName: leagueWithSeason.name,
+          leagueId: leagueId,
+          seasonName: season.name,
+          memberCount: memberCount || 1,
+          maxMembers: leagueWithSeason.max_players || 12,
+          premiereDate: premiereDate,
+          draftDeadline: new Date(season.draft_deadline),
+          firstPickDue: firstPickDue,
+        });
+      }
+    } catch (emailErr) {
+      console.error('Failed to send league joined email:', emailErr);
     }
 
     res.status(201).json({ membership });

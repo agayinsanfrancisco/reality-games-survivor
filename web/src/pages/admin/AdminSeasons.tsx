@@ -165,21 +165,21 @@ export function AdminSeasons() {
             >
               <ArrowLeft className="h-5 w-5 text-neutral-600" />
             </Link>
-          <div>
-            <h1 className="text-2xl font-display font-bold text-neutral-800 flex items-center gap-2">
-              <Calendar className="h-6 w-6 text-burgundy-500" />
-              Manage Seasons
-            </h1>
-            <p className="text-neutral-500">{seasons?.length || 0} seasons</p>
+            <div>
+              <h1 className="text-2xl font-display font-bold text-neutral-800 flex items-center gap-2">
+                <Calendar className="h-6 w-6 text-orange-500" />
+                Manage Seasons
+              </h1>
+              <p className="text-neutral-500">{seasons?.length || 0} seasons</p>
+            </div>
           </div>
+          <button
+            onClick={() => setShowForm(true)}
+            className="p-2 bg-orange-500 hover:bg-orange-600 rounded-xl transition-colors shadow-card"
+          >
+            <Plus className="h-5 w-5 text-white" />
+          </button>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="p-2 bg-burgundy-500 hover:bg-burgundy-600 rounded-xl transition-colors shadow-card"
-        >
-          <Plus className="h-5 w-5 text-white" />
-        </button>
-      </div>
 
       {/* Create/Edit Form */}
       {showForm && (
@@ -277,7 +277,7 @@ export function AdminSeasons() {
             <button
               onClick={() => saveSeason.mutate()}
               disabled={saveSeason.isPending}
-              className="btn btn-primary flex-1"
+              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
             >
               {saveSeason.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -290,7 +290,7 @@ export function AdminSeasons() {
             </button>
             <button
               onClick={resetForm}
-              className="btn btn-secondary"
+              className="bg-cream-100 hover:bg-cream-200 text-neutral-700 py-2 px-4 rounded-xl font-medium transition-colors"
             >
               Cancel
             </button>
@@ -304,7 +304,7 @@ export function AdminSeasons() {
           <div
             key={season.id}
             className={`bg-white rounded-2xl shadow-card p-4 border ${
-              season.is_active ? 'border-burgundy-300' : 'border-cream-200'
+              season.is_active ? 'border-orange-300 ring-2 ring-orange-100' : 'border-cream-200'
             }`}
           >
             <div className="flex items-start justify-between mb-3">
@@ -314,7 +314,7 @@ export function AdminSeasons() {
                     Season {season.number}
                   </h3>
                   {season.is_active && (
-                    <span className="px-2 py-0.5 bg-burgundy-100 text-burgundy-600 text-xs rounded-full flex items-center gap-1">
+                    <span className="px-2 py-0.5 bg-orange-100 text-orange-600 text-xs rounded-full flex items-center gap-1">
                       <Star className="h-3 w-3" /> Active
                     </span>
                   )}
@@ -367,7 +367,7 @@ export function AdminSeasons() {
                 <button
                   onClick={() => activateSeason.mutate(season.id)}
                   disabled={activateSeason.isPending}
-                  className="flex-1 bg-burgundy-50 hover:bg-burgundy-100 text-burgundy-600 py-2 rounded-xl text-sm font-medium transition-colors"
+                  className="flex-1 bg-orange-50 hover:bg-orange-100 text-orange-600 py-2 rounded-xl text-sm font-medium transition-colors"
                 >
                   Set as Active
                 </button>

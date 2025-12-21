@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export function Signup() {
   const navigate = useNavigate();
@@ -13,16 +14,36 @@ export function Signup() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Optional profile fields
+  const [showOptionalFields, setShowOptionalFields] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [hometown, setHometown] = useState('');
+  const [favoriteCastaway, setFavoriteCastaway] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      await signUp(email, password, displayName);
+      await signUp(email, password, displayName, {
+        phone: phone || undefined,
+        hometown: hometown || undefined,
+        favorite_castaway: favoriteCastaway || undefined,
+      });
+      // Show success message - email confirmation may be required
+      setError('');
       navigate('/dashboard');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch (err: any) {
+      console.error('Signup error:', err);
+      // Handle specific Supabase errors
+      if (err?.message?.includes('User already registered')) {
+        setError('An account with this email already exists. Try logging in instead.');
+      } else if (err?.message?.includes('Password')) {
+        setError('Password must be at least 6 characters.');
+      } else {
+        setError(err instanceof Error ? err.message : 'An error occurred during signup.');
+      }
     } finally {
       setLoading(false);
     }
@@ -72,7 +93,7 @@ export function Signup() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               className="input"
-              placeholder="Your tribe name"
+              placeholder="Your name"
               required
             />
           </div>
@@ -125,6 +146,68 @@ export function Signup() {
               </button>
             </div>
           </div>
+
+          {/* Optional Fields Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowOptionalFields(!showOptionalFields)}
+            className="w-full flex items-center justify-center gap-2 text-sm text-neutral-500 hover:text-neutral-700 py-2 transition-colors"
+          >
+            {showOptionalFields ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {showOptionalFields ? 'Hide optional info' : 'Add more about you (optional)'}
+          </button>
+
+          {/* Optional Fields */}
+          {showOptionalFields && (
+            <div className="space-y-4 p-4 bg-cream-50 rounded-xl border border-cream-200">
+              <p className="text-xs text-neutral-500 mb-2">
+                These fields are optional and help personalize your profile.
+              </p>
+
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-neutral-700 mb-2">
+                  Phone number
+                </label>
+                <input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="input"
+                  placeholder="+1 (555) 123-4567"
+                />
+                <p className="text-xs text-neutral-400 mt-1">For SMS reminders (not shared publicly)</p>
+              </div>
+
+              <div>
+                <label htmlFor="hometown" className="block text-sm font-medium text-neutral-700 mb-2">
+                  Hometown
+                </label>
+                <input
+                  id="hometown"
+                  type="text"
+                  value={hometown}
+                  onChange={(e) => setHometown(e.target.value)}
+                  className="input"
+                  placeholder="e.g., Los Angeles, CA"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="favoriteCastaway" className="block text-sm font-medium text-neutral-700 mb-2">
+                  Favorite all-time castaway
+                </label>
+                <input
+                  id="favoriteCastaway"
+                  type="text"
+                  value={favoriteCastaway}
+                  onChange={(e) => setFavoriteCastaway(e.target.value)}
+                  className="input"
+                  placeholder="e.g., Boston Rob, Parvati"
+                />
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"

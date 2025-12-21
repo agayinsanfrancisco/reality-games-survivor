@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -56,6 +56,10 @@ export function AdminScoring() {
   const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | null>(episodeIdParam);
   const [selectedCastawayId, setSelectedCastawayId] = useState<string | null>(null);
   const [scores, setScores] = useState<Record<string, number>>({});
+  const [showSummary, setShowSummary] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const previousCastawayRef = useRef<string | null>(null);
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -168,51 +172,77 @@ export function AdminScoring() {
     }
   }, [existingScores, selectedCastawayId]);
 
+  // Save scores for a specific castaway
+  const saveScoresForCastaway = useCallback(async (castawayId: string, scoresToSave: Record<string, number>) => {
+    if (!selectedEpisodeId || !castawayId || !user?.id) {
+      return;
+    }
+
+    // Delete existing scores for this castaway/episode
+    await supabase
+      .from('episode_scores')
+      .delete()
+      .eq('episode_id', selectedEpisodeId)
+      .eq('castaway_id', castawayId);
+
+    // Insert new scores
+    const scoresToInsert = Object.entries(scoresToSave)
+      .filter(([_, quantity]) => quantity > 0)
+      .map(([ruleId, quantity]) => {
+        const rule = scoringRules?.find(r => r.id === ruleId);
+        return {
+          episode_id: selectedEpisodeId,
+          castaway_id: castawayId,
+          scoring_rule_id: ruleId,
+          quantity,
+          points: (rule?.points || 0) * quantity,
+          entered_by: user.id,
+        };
+      });
+
+    if (scoresToInsert.length > 0) {
+      const { error } = await supabase
+        .from('episode_scores')
+        .insert(scoresToInsert);
+      if (error) throw error;
+    }
+
+    setLastSavedAt(new Date());
+    setIsDirty(false);
+    queryClient.invalidateQueries({ queryKey: ['episodeScores', selectedEpisodeId] });
+  }, [selectedEpisodeId, user?.id, scoringRules, queryClient]);
+
   const saveScoresMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedEpisodeId || !selectedCastawayId || !user?.id) {
-        throw new Error('Missing required data');
-      }
-
-      // Delete existing scores for this castaway/episode
-      await supabase
-        .from('episode_scores')
-        .delete()
-        .eq('episode_id', selectedEpisodeId)
-        .eq('castaway_id', selectedCastawayId);
-
-      // Insert new scores
-      const scoresToInsert = Object.entries(scores)
-        .filter(([_, quantity]) => quantity > 0)
-        .map(([ruleId, quantity]) => {
-          const rule = scoringRules?.find(r => r.id === ruleId);
-          return {
-            episode_id: selectedEpisodeId,
-            castaway_id: selectedCastawayId,
-            scoring_rule_id: ruleId,
-            quantity,
-            points: (rule?.points || 0) * quantity,
-            entered_by: user.id,
-          };
-        });
-
-      if (scoresToInsert.length > 0) {
-        const { error } = await supabase
-          .from('episode_scores')
-          .insert(scoresToInsert);
-        if (error) throw error;
-      }
+      if (!selectedCastawayId) return;
+      await saveScoresForCastaway(selectedCastawayId, scores);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['episodeScores', selectedEpisodeId] });
+      setLastSavedAt(new Date());
+      setIsDirty(false);
     },
   });
+
+  // Auto-save when switching castaways
+  useEffect(() => {
+    const previousCastaway = previousCastawayRef.current;
+
+    // If we're switching from one castaway to another and have dirty scores
+    if (previousCastaway && previousCastaway !== selectedCastawayId && isDirty) {
+      // Save the previous castaway's scores
+      const previousScores = { ...scores };
+      saveScoresForCastaway(previousCastaway, previousScores);
+    }
+
+    previousCastawayRef.current = selectedCastawayId;
+  }, [selectedCastawayId, isDirty, scores, saveScoresForCastaway]);
 
   const updateScore = (ruleId: string, value: number) => {
     setScores(prev => ({
       ...prev,
       [ruleId]: Math.max(0, value),
     }));
+    setIsDirty(true);
   };
 
   const calculateCastawayTotal = (castawayId: string) => {
@@ -360,7 +390,7 @@ export function AdminScoring() {
                         <p className="text-burgundy-100">Episode {selectedEpisode?.number}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-4">
                       {/* Live Total */}
                       <div className="text-center">
                         <p className="text-burgundy-200 text-sm">Episode Total</p>
@@ -368,13 +398,19 @@ export function AdminScoring() {
                           {liveTotal >= 0 ? '+' : ''}{liveTotal}
                         </p>
                       </div>
-                      <button
-                        onClick={() => saveScoresMutation.mutate()}
-                        disabled={saveScoresMutation.isPending}
-                        className="btn bg-white text-burgundy-600 hover:bg-cream-50 shadow-lg disabled:opacity-50"
-                      >
-                        {saveScoresMutation.isPending ? 'Saving...' : 'Save Scores'}
-                      </button>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                          {isDirty && (
+                            <span className="text-xs text-burgundy-200">Unsaved changes</span>
+                          )}
+                          {lastSavedAt && !isDirty && (
+                            <span className="text-xs text-green-200">Saved</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-burgundy-200">
+                          Auto-saves when switching castaways
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

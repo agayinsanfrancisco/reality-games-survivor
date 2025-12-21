@@ -1,10 +1,24 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
-import { CastawayCard } from '@/components/CastawayCard';
+import {
+  ArrowLeft,
+  GripVertical,
+  Check,
+  Loader2,
+  Trophy,
+  Users,
+  Clock,
+  AlertCircle,
+  ChevronUp,
+  ChevronDown,
+  Save,
+  Flame,
+  Info,
+} from 'lucide-react';
 
 interface Castaway {
   id: string;
@@ -13,22 +27,16 @@ interface Castaway {
   hometown?: string;
   age?: number;
   tribe_original?: string;
+  occupation?: string;
   status: string;
 }
 
-interface RosterEntry {
+interface DraftRanking {
   id: string;
   user_id: string;
-  castaway_id: string;
-  draft_round: number;
-  draft_pick: number;
-}
-
-interface LeagueMember {
-  id: string;
-  user_id: string;
-  draft_position: number | null;
-  users: { id: string; display_name: string };
+  league_id: string;
+  rankings: string[]; // Array of castaway IDs in ranked order
+  submitted_at: string;
 }
 
 interface League {
@@ -36,45 +44,38 @@ interface League {
   name: string;
   code: string;
   draft_status: string;
-  draft_order: string[] | null;
   season_id: string;
+  seasons?: {
+    draft_deadline: string;
+    name: string;
+    number: number;
+  };
 }
 
-interface UserProfile {
+interface RosterEntry {
   id: string;
-  display_name: string;
+  user_id: string;
+  castaway_id: string;
+  draft_round: number;
+  castaways?: Castaway;
 }
 
 export function Draft() {
   const { leagueId } = useParams<{ leagueId: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [selectedCastaway, setSelectedCastaway] = useState<string | null>(null);
-  const [tribeFilter, setTribeFilter] = useState<string | null>(null);
-
-  // Fetch user profile
-  const { data: profile } = useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, display_name')
-        .eq('id', user!.id)
-        .single();
-      if (error) throw error;
-      return data as UserProfile;
-    },
-    enabled: !!user?.id,
-  });
+  const [rankings, setRankings] = useState<string[]>([]);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   // Fetch league details
-  const { data: league } = useQuery({
+  const { data: league, isLoading: leagueLoading } = useQuery({
     queryKey: ['league', leagueId],
     queryFn: async () => {
       if (!leagueId) throw new Error('No league ID');
       const { data, error } = await supabase
         .from('leagues')
-        .select('*')
+        .select('*, seasons(*)')
         .eq('id', leagueId)
         .single();
       if (error) throw error;
@@ -83,24 +84,8 @@ export function Draft() {
     enabled: !!leagueId,
   });
 
-  // Fetch league members with their draft positions
-  const { data: leagueMembers } = useQuery({
-    queryKey: ['leagueMembers', leagueId],
-    queryFn: async () => {
-      if (!leagueId) throw new Error('No league ID');
-      const { data, error } = await supabase
-        .from('league_members')
-        .select('id, user_id, draft_position, users(id, display_name)')
-        .eq('league_id', leagueId)
-        .order('draft_position', { ascending: true });
-      if (error) throw error;
-      return data as LeagueMember[];
-    },
-    enabled: !!leagueId,
-  });
-
   // Fetch all castaways for this season
-  const { data: castaways } = useQuery({
+  const { data: castaways, isLoading: castawaysLoading } = useQuery({
     queryKey: ['castaways', league?.season_id],
     queryFn: async () => {
       if (!league?.season_id) throw new Error('No season ID');
@@ -108,7 +93,6 @@ export function Draft() {
         .from('castaways')
         .select('*')
         .eq('season_id', league.season_id)
-        .eq('status', 'active')
         .order('name');
       if (error) throw error;
       return data as Castaway[];
@@ -116,377 +100,452 @@ export function Draft() {
     enabled: !!league?.season_id,
   });
 
-  // Fetch all roster entries (drafted castaways) for this league
-  const { data: rosters } = useQuery({
-    queryKey: ['rosters', leagueId],
+  // Fetch user's existing rankings (using waiver_rankings table with episode_id = null for draft)
+  const { data: existingRankings, isLoading: rankingsLoading } = useQuery({
+    queryKey: ['draft-rankings', leagueId, user?.id],
     queryFn: async () => {
-      if (!leagueId) throw new Error('No league ID');
-      const { data, error } = await supabase
-        .from('rosters')
+      if (!leagueId || !user?.id) return null;
+      // Use waiver_rankings table - for draft, we use a placeholder approach
+      // Check league_members for draft_position which indicates rankings submitted
+      const { data, error } = await (supabase as any)
+        .from('waiver_rankings')
         .select('*')
         .eq('league_id', leagueId)
-        .is('dropped_at', null);
+        .eq('user_id', user.id)
+        .is('episode_id', null)
+        .single();
+      if (error && error.code !== 'PGRST116') return null; // PGRST116 = no rows
+      return data as DraftRanking | null;
+    },
+    enabled: !!leagueId && !!user?.id,
+  });
+
+  // Fetch user's roster (if draft already processed)
+  const { data: myRoster } = useQuery({
+    queryKey: ['my-roster', leagueId, user?.id],
+    queryFn: async () => {
+      if (!leagueId || !user?.id) return [];
+      const { data, error } = await supabase
+        .from('rosters')
+        .select('*, castaways(*)')
+        .eq('league_id', leagueId)
+        .eq('user_id', user.id)
+        .is('dropped_at', null)
+        .order('draft_round', { ascending: true });
       if (error) throw error;
       return data as RosterEntry[];
     },
-    enabled: !!leagueId,
+    enabled: !!leagueId && !!user?.id,
   });
 
-  // Mutation to make a draft pick
-  const draftPickMutation = useMutation({
-    mutationFn: async (castawayId: string) => {
+  // Initialize rankings from existing data or default order
+  useEffect(() => {
+    if (existingRankings?.rankings) {
+      setRankings(existingRankings.rankings);
+    } else if (castaways && castaways.length > 0 && rankings.length === 0) {
+      setRankings(castaways.map(c => c.id));
+    }
+  }, [existingRankings, castaways]);
+
+  // Save rankings mutation (using waiver_rankings with null episode_id for draft)
+  const saveRankings = useMutation({
+    mutationFn: async () => {
       if (!leagueId || !user?.id) throw new Error('Missing required data');
 
-      const myRoster = rosters?.filter(r => r.user_id === user.id) || [];
-      const draftRound = myRoster.length + 1;
-      const totalPicks = (rosters?.length || 0) + 1;
-
-      const { data, error } = await supabase
-        .from('rosters')
-        .insert({
+      // Use waiver_rankings table with null episode_id to store draft rankings
+      const { error } = await (supabase as any)
+        .from('waiver_rankings')
+        .upsert({
           league_id: leagueId,
           user_id: user.id,
-          castaway_id: castawayId,
-          draft_round: draftRound,
-          draft_pick: totalPicks,
-        })
-        .select()
-        .single();
+          episode_id: null, // null indicates these are draft rankings, not waiver rankings
+          rankings: rankings,
+          submitted_at: new Date().toISOString(),
+        }, {
+          onConflict: 'league_id,user_id,episode_id',
+        });
 
       if (error) throw error;
-      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rosters', leagueId] });
-      setSelectedCastaway(null);
+      queryClient.invalidateQueries({ queryKey: ['draft-rankings', leagueId, user?.id] });
+      setHasChanges(false);
     },
   });
 
-  // Compute draft state
-  const draftedCastawayIds = useMemo(() => {
-    return new Set(rosters?.map(r => r.castaway_id) || []);
-  }, [rosters]);
-
-  const myPicks = useMemo(() => {
-    return rosters?.filter(r => r.user_id === user?.id) || [];
-  }, [rosters, user?.id]);
-
-  const availableCastaways = useMemo(() => {
-    let available = castaways?.filter(c => !draftedCastawayIds.has(c.id)) || [];
-    if (tribeFilter) {
-      available = available.filter(c => c.tribe_original === tribeFilter);
-    }
-    return available;
-  }, [castaways, draftedCastawayIds, tribeFilter]);
-
-  // Get unique tribes for filter
-  const tribes = useMemo(() => {
-    const tribeSet = new Set(castaways?.map(c => c.tribe_original).filter(Boolean));
-    return Array.from(tribeSet) as string[];
+  // Castaway lookup map
+  const castawayMap = useMemo(() => {
+    const map = new Map<string, Castaway>();
+    castaways?.forEach(c => map.set(c.id, c));
+    return map;
   }, [castaways]);
 
-  // Determine whose turn it is (simplified - in production this would be more complex)
-  const totalMembers = leagueMembers?.length || 0;
-  const currentPickNumber = (rosters?.length || 0) + 1;
-  const currentRound = Math.ceil(currentPickNumber / Math.max(totalMembers, 1));
+  // Deadline calculation
+  const deadline = league?.seasons?.draft_deadline
+    ? new Date(league.seasons.draft_deadline)
+    : null;
+  const now = new Date();
+  const isPastDeadline = deadline ? now > deadline : false;
+  const draftProcessed = league?.draft_status === 'completed';
 
-  // Snake draft logic
-  const positionInRound = ((currentPickNumber - 1) % totalMembers);
-  const isReverseRound = currentRound % 2 === 0;
-  const currentPickerIndex = isReverseRound ? (totalMembers - 1 - positionInRound) : positionInRound;
-  const currentPicker = leagueMembers?.[currentPickerIndex];
-  const isMyTurn = currentPicker?.user_id === user?.id;
-
-  const draftComplete = myPicks.length >= 2;
-  const allDraftComplete = (rosters?.length || 0) >= (totalMembers * 2);
-
-  const handleDraftPick = () => {
-    if (!selectedCastaway || !isMyTurn) return;
-    draftPickMutation.mutate(selectedCastaway);
+  // Move castaway up/down in rankings
+  const moveUp = (index: number) => {
+    if (index === 0) return;
+    const newRankings = [...rankings];
+    [newRankings[index - 1], newRankings[index]] = [newRankings[index], newRankings[index - 1]];
+    setRankings(newRankings);
+    setHasChanges(true);
   };
 
-  // Build draft order display
-  const draftOrderDisplay = useMemo(() => {
-    return leagueMembers?.map((member, index) => {
-      const memberPicks = rosters?.filter(r => r.user_id === member.user_id) || [];
-      const pickedCastaways = memberPicks.map(pick =>
-        castaways?.find(c => c.id === pick.castaway_id)?.name
-      ).filter(Boolean);
+  const moveDown = (index: number) => {
+    if (index === rankings.length - 1) return;
+    const newRankings = [...rankings];
+    [newRankings[index], newRankings[index + 1]] = [newRankings[index + 1], newRankings[index]];
+    setRankings(newRankings);
+    setHasChanges(true);
+  };
 
-      return {
-        position: index + 1,
-        name: member.users?.display_name || 'Unknown',
-        isCurrentUser: member.user_id === user?.id,
-        picks: pickedCastaways as string[],
-        userId: member.user_id,
-      };
-    }) || [];
-  }, [leagueMembers, rosters, castaways, user?.id]);
+  // Drag and drop handlers
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    const newRankings = [...rankings];
+    const [draggedItem] = newRankings.splice(draggedIndex, 1);
+    newRankings.splice(index, 0, draggedItem);
+    setRankings(newRankings);
+    setDraggedIndex(index);
+    setHasChanges(true);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
+  const isLoading = leagueLoading || castawaysLoading || rankingsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
+        <Navigation />
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show roster if draft is complete
+  if (draftProcessed && myRoster && myRoster.length > 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
+        <Navigation />
+
+        <div className="max-w-2xl mx-auto p-4 pb-24">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-6">
+            <Link
+              to={`/leagues/${leagueId}`}
+              className="p-2 bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all border border-cream-200"
+            >
+              <ArrowLeft className="h-5 w-5 text-neutral-600" />
+            </Link>
+            <div>
+              <h1 className="text-2xl font-display font-bold text-neutral-800">
+                Draft Results
+              </h1>
+              <p className="text-neutral-500">{league?.name}</p>
+            </div>
+          </div>
+
+          {/* Success Message */}
+          <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-6 text-white shadow-elevated mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center">
+                <Trophy className="h-7 w-7" />
+              </div>
+              <div>
+                <h2 className="text-xl font-display font-bold">Draft Complete!</h2>
+                <p className="text-green-100">Your team has been drafted based on your rankings.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Your Team */}
+          <div className="bg-white rounded-2xl shadow-elevated border border-cream-200 overflow-hidden">
+            <div className="p-5 border-b border-cream-100">
+              <h2 className="text-lg font-display font-bold text-neutral-800 flex items-center gap-2">
+                <Users className="h-5 w-5 text-burgundy-500" />
+                Your Team
+              </h2>
+            </div>
+
+            <div className="divide-y divide-cream-100">
+              {myRoster.map((roster, index) => (
+                <div key={roster.id} className="p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 bg-burgundy-100 rounded-full flex items-center justify-center">
+                    <span className="font-bold text-burgundy-600">#{index + 1}</span>
+                  </div>
+                  {roster.castaways?.photo_url ? (
+                    <img
+                      src={roster.castaways.photo_url}
+                      alt={roster.castaways.name}
+                      className="w-14 h-14 rounded-full object-cover border-2 border-cream-200"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 bg-cream-100 rounded-full flex items-center justify-center">
+                      <Users className="h-6 w-6 text-neutral-400" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="font-semibold text-neutral-800">{roster.castaways?.name}</p>
+                    <div className="flex items-center gap-2 text-sm text-neutral-500">
+                      <Flame className="h-3 w-3 text-orange-500" />
+                      <span>{roster.castaways?.tribe_original}</span>
+                      {roster.castaways?.occupation && (
+                        <>
+                          <span>·</span>
+                          <span>{roster.castaways.occupation}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-neutral-400">Round {roster.draft_round}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 text-center">
+            <Link
+              to={`/leagues/${leagueId}`}
+              className="btn btn-primary"
+            >
+              Back to League
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
       <Navigation />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-3xl mx-auto p-4 pb-24">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8 animate-fade-in">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Link
-                to="/dashboard"
-                className="text-neutral-400 hover:text-neutral-600 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </Link>
-              <h1 className="text-2xl font-display text-neutral-800">
-                Draft Room
-              </h1>
-            </div>
-            <p className="text-neutral-500">
-              {league?.name || 'Loading...'} • Round {currentRound} of 2
-            </p>
+        <div className="flex items-center gap-3 mb-6">
+          <Link
+            to={`/leagues/${leagueId}`}
+            className="p-2 bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all border border-cream-200"
+          >
+            <ArrowLeft className="h-5 w-5 text-neutral-600" />
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-2xl font-display font-bold text-neutral-800">
+              Draft Rankings
+            </h1>
+            <p className="text-neutral-500">{league?.name}</p>
           </div>
+          {hasChanges && !isPastDeadline && (
+            <button
+              onClick={() => saveRankings.mutate()}
+              disabled={saveRankings.isPending}
+              className="btn btn-primary flex items-center gap-2"
+            >
+              {saveRankings.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              Save Rankings
+            </button>
+          )}
+        </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm text-neutral-500">Draft Deadline</p>
-              <p className="font-semibold text-burgundy-500">Mar 2, 8:00 PM PST</p>
+        {/* Info Banner */}
+        <div className="bg-gradient-to-r from-burgundy-500 to-burgundy-600 rounded-2xl p-5 text-white shadow-elevated mb-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Info className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className="font-display font-bold text-lg mb-1">How the Draft Works</h2>
+              <p className="text-burgundy-100 text-sm">
+                Rank all {castaways?.length || 24} castaways from your most wanted (#1) to least wanted.
+                At the deadline, the system runs a snake draft using everyone's rankings.
+                You'll get 2 castaways based on your draft position and preferences.
+              </p>
             </div>
           </div>
         </div>
 
-        {allDraftComplete || draftComplete ? (
-          /* Draft Complete State */
-          <div className="bg-white rounded-2xl shadow-elevated p-12 text-center animate-slide-up">
-            <div className="w-20 h-20 mx-auto mb-6 bg-green-100 rounded-full flex items-center justify-center">
-              <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+        {/* Deadline Warning */}
+        {deadline && (
+          <div className={`rounded-2xl p-4 mb-6 flex items-center gap-4 ${
+            isPastDeadline
+              ? 'bg-red-50 border border-red-200'
+              : 'bg-amber-50 border border-amber-200'
+          }`}>
+            <Clock className={`h-6 w-6 ${isPastDeadline ? 'text-red-500' : 'text-amber-500'}`} />
+            <div className="flex-1">
+              <p className={`font-medium ${isPastDeadline ? 'text-red-700' : 'text-amber-700'}`}>
+                {isPastDeadline ? 'Draft Deadline Passed' : 'Draft Deadline'}
+              </p>
+              <p className={`text-sm ${isPastDeadline ? 'text-red-600' : 'text-amber-600'}`}>
+                {deadline.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  timeZoneName: 'short',
+                })}
+              </p>
             </div>
-            <h2 className="text-2xl font-display text-neutral-800 mb-3">
-              {allDraftComplete ? 'Draft Complete!' : 'Your Picks Complete!'}
-            </h2>
-            <p className="text-neutral-500 mb-8 max-w-md mx-auto">
-              {allDraftComplete
-                ? "The draft is complete. Make your weekly picks when episodes air."
-                : "You've picked your team. Wait for other players to complete the draft."
-              }
-            </p>
-
-            <div className="flex justify-center gap-4 mb-8">
-              {myPicks.map((pick) => {
-                const castaway = castaways?.find(c => c.id === pick.castaway_id);
-                return castaway ? (
-                  <div key={pick.id} className="bg-cream-50 rounded-xl p-4 text-center">
-                    {castaway.photo_url ? (
-                      <img
-                        src={castaway.photo_url}
-                        alt={castaway.name}
-                        className="w-16 h-16 mx-auto mb-3 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 mx-auto mb-3 bg-cream-200 rounded-full flex items-center justify-center">
-                        <svg className="w-8 h-8 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                    )}
-                    <p className="font-semibold text-neutral-800">{castaway.name}</p>
-                    <p className="text-xs text-neutral-500">{castaway.tribe_original}</p>
-                  </div>
-                ) : null;
-              })}
-            </div>
-
-            <Link to="/dashboard" className="btn btn-primary shadow-card">
-              Back to Dashboard
-            </Link>
+            {existingRankings && (
+              <div className="flex items-center gap-2 text-green-600">
+                <Check className="h-5 w-5" />
+                <span className="text-sm font-medium">Submitted</span>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="grid lg:grid-cols-4 gap-8">
-            {/* Draft Order Sidebar */}
-            <div className="lg:col-span-1 animate-slide-up">
-              <div className="bg-white rounded-2xl shadow-elevated overflow-hidden sticky top-24">
-                <div className="p-5 border-b border-cream-100">
-                  <h2 className="font-semibold text-neutral-800">Draft Order</h2>
-                  <p className="text-sm text-neutral-500 mt-1">Snake format</p>
-                </div>
+        )}
 
-                <div className="p-4 space-y-2">
-                  {draftOrderDisplay.map((player, i) => (
-                    <div
-                      key={i}
-                      className={`p-3 rounded-xl flex items-center justify-between transition-all ${
-                        currentPicker?.user_id === player.userId
-                          ? 'bg-burgundy-50 border-2 border-burgundy-200'
-                          : 'bg-cream-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
-                          currentPicker?.user_id === player.userId
-                            ? 'bg-burgundy-500 text-white'
-                            : 'bg-cream-200 text-neutral-600'
-                        }`}>
-                          {player.position}
-                        </span>
-                        <div>
-                          <p className={`font-medium text-sm ${
-                            player.isCurrentUser ? 'text-burgundy-600' : 'text-neutral-800'
-                          }`}>
-                            {player.isCurrentUser ? 'You' : player.name}
-                          </p>
-                          {player.picks.length > 0 && (
-                            <p className="text-xs text-neutral-400">
-                              {player.picks.join(', ')}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      {currentPicker?.user_id === player.userId && (
-                        <span className="badge badge-burgundy text-xs animate-pulse">
-                          Picking
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+        {isPastDeadline && !draftProcessed && (
+          <div className="bg-neutral-100 rounded-2xl p-6 text-center mb-6 border border-neutral-200">
+            <AlertCircle className="h-10 w-10 text-neutral-400 mx-auto mb-3" />
+            <p className="text-neutral-600 font-medium">Rankings are locked</p>
+            <p className="text-neutral-500 text-sm mt-1">
+              The draft deadline has passed. The system will process the draft soon.
+            </p>
+          </div>
+        )}
 
-                {/* Your Team */}
-                <div className="p-4 border-t border-cream-100 bg-cream-50/50">
-                  <h3 className="font-semibold text-neutral-800 mb-3">Your Team</h3>
-                  {myPicks.length === 0 ? (
-                    <p className="text-sm text-neutral-400">No picks yet</p>
+        {/* Rankings List */}
+        <div className="bg-white rounded-2xl shadow-elevated border border-cream-200 overflow-hidden">
+          <div className="p-5 border-b border-cream-100 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-display font-bold text-neutral-800">
+                Your Rankings
+              </h2>
+              <p className="text-sm text-neutral-500">
+                {existingRankings ? 'Last saved ' + new Date(existingRankings.submitted_at).toLocaleDateString() : 'Drag to reorder or use arrows'}
+              </p>
+            </div>
+            <div className="text-sm text-neutral-400">
+              {rankings.length} castaways
+            </div>
+          </div>
+
+          <div className="divide-y divide-cream-100">
+            {rankings.map((castawayId, index) => {
+              const castaway = castawayMap.get(castawayId);
+              if (!castaway) return null;
+
+              return (
+                <div
+                  key={castawayId}
+                  draggable={!isPastDeadline}
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`p-3 flex items-center gap-3 transition-all ${
+                    draggedIndex === index ? 'bg-burgundy-50 opacity-50' : 'hover:bg-cream-50'
+                  } ${isPastDeadline ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}`}
+                >
+                  {/* Rank Number */}
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    index < 2
+                      ? 'bg-burgundy-100 text-burgundy-600'
+                      : index < 5
+                        ? 'bg-amber-100 text-amber-600'
+                        : 'bg-cream-100 text-neutral-600'
+                  }`}>
+                    {index + 1}
+                  </div>
+
+                  {/* Drag Handle */}
+                  {!isPastDeadline && (
+                    <GripVertical className="h-5 w-5 text-neutral-300 flex-shrink-0" />
+                  )}
+
+                  {/* Photo */}
+                  {castaway.photo_url ? (
+                    <img
+                      src={castaway.photo_url}
+                      alt={castaway.name}
+                      className="w-10 h-10 rounded-full object-cover border border-cream-200"
+                    />
                   ) : (
-                    <div className="space-y-2">
-                      {myPicks.map((pick) => {
-                        const castaway = castaways?.find(c => c.id === pick.castaway_id);
-                        return castaway ? (
-                          <div key={pick.id} className="flex items-center gap-2 text-sm">
-                            <div className="w-6 h-6 bg-burgundy-100 rounded-full flex items-center justify-center">
-                              <svg className="w-3 h-3 text-burgundy-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                            <span className="font-medium text-neutral-800">{castaway.name}</span>
-                          </div>
-                        ) : null;
-                      })}
+                    <div className="w-10 h-10 bg-cream-100 rounded-full flex items-center justify-center">
+                      <Users className="h-5 w-5 text-neutral-400" />
                     </div>
                   )}
-                  <p className="text-xs text-neutral-400 mt-3">
-                    {2 - myPicks.length} pick{2 - myPicks.length !== 1 ? 's' : ''} remaining
-                  </p>
-                </div>
-              </div>
-            </div>
 
-            {/* Main Draft Area */}
-            <div className="lg:col-span-3 space-y-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              {/* Current Pick Banner */}
-              {isMyTurn ? (
-                <div className="bg-gradient-to-r from-burgundy-500 to-burgundy-600 rounded-2xl p-6 text-white shadow-elevated">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-burgundy-100 text-sm font-medium">Round {currentRound}, Pick {currentPickNumber}</p>
-                      <h2 className="text-2xl font-display mt-1">It's Your Turn!</h2>
-                      <p className="text-burgundy-100 mt-2">Select a castaway below to add to your team.</p>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-neutral-800 truncate">{castaway.name}</p>
+                    <div className="flex items-center gap-2 text-xs text-neutral-500">
+                      <span className="px-2 py-0.5 bg-cream-100 rounded-full">{castaway.tribe_original}</span>
+                      {castaway.age && <span>{castaway.age} yrs</span>}
                     </div>
-                    {selectedCastaway && (
+                  </div>
+
+                  {/* Up/Down Buttons */}
+                  {!isPastDeadline && (
+                    <div className="flex flex-col gap-1">
                       <button
-                        onClick={handleDraftPick}
-                        disabled={draftPickMutation.isPending}
-                        className="btn bg-white text-burgundy-600 hover:bg-cream-50 shadow-lg disabled:opacity-50"
+                        onClick={() => moveUp(index)}
+                        disabled={index === 0}
+                        className="p-1 hover:bg-cream-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
                       >
-                        {draftPickMutation.isPending ? 'Drafting...' : 'Confirm Pick'}
+                        <ChevronUp className="h-4 w-4 text-neutral-500" />
                       </button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-cream-100 rounded-2xl p-6 border border-cream-200">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-cream-200 rounded-full flex items-center justify-center">
-                      <svg className="w-6 h-6 text-neutral-500 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
+                      <button
+                        onClick={() => moveDown(index)}
+                        disabled={index === rankings.length - 1}
+                        className="p-1 hover:bg-cream-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <ChevronDown className="h-4 w-4 text-neutral-500" />
+                      </button>
                     </div>
-                    <div>
-                      <p className="text-neutral-500 text-sm">Waiting for</p>
-                      <p className="font-semibold text-neutral-800">
-                        {currentPicker?.users?.display_name || 'Next player'} to pick...
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </div>
-              )}
+              );
+            })}
+          </div>
+        </div>
 
-              {/* Filter Tabs */}
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => setTribeFilter(null)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-all ${
-                    !tribeFilter
-                      ? 'bg-burgundy-500 text-white'
-                      : 'bg-white text-neutral-600 shadow-card hover:shadow-card-hover'
-                  }`}
-                >
-                  All ({castaways?.filter(c => !draftedCastawayIds.has(c.id)).length || 0})
-                </button>
-                {tribes.map(tribe => {
-                  const count = castaways?.filter(c => c.tribe_original === tribe && !draftedCastawayIds.has(c.id)).length || 0;
-                  return (
-                    <button
-                      key={tribe}
-                      onClick={() => setTribeFilter(tribe)}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-all ${
-                        tribeFilter === tribe
-                          ? 'bg-burgundy-500 text-white'
-                          : 'bg-white text-neutral-600 shadow-card hover:shadow-card-hover'
-                      }`}
-                    >
-                      {tribe} ({count})
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Castaway Grid */}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {availableCastaways.map((castaway) => (
-                  <CastawayCard
-                    key={castaway.id}
-                    id={castaway.id}
-                    name={castaway.name}
-                    photoUrl={castaway.photo_url}
-                    hometown={castaway.hometown}
-                    tribe={castaway.tribe_original}
-                    selected={selectedCastaway === castaway.id}
-                    disabled={!isMyTurn}
-                    showButton={isMyTurn}
-                    buttonText="Select"
-                    onSelect={(id) => setSelectedCastaway(id === selectedCastaway ? null : id)}
-                  />
-                ))}
-              </div>
-
-              {availableCastaways.length === 0 && (
-                <div className="bg-white rounded-2xl shadow-elevated p-12 text-center">
-                  <p className="text-neutral-500">
-                    {tribeFilter
-                      ? `No available castaways from ${tribeFilter}.`
-                      : 'All castaways have been drafted!'
-                    }
-                  </p>
-                </div>
-              )}
+        {/* Save Button (Sticky Footer) */}
+        {hasChanges && !isPastDeadline && (
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-cream-200 shadow-elevated">
+            <div className="max-w-3xl mx-auto flex items-center justify-between">
+              <p className="text-neutral-500 text-sm">You have unsaved changes</p>
+              <button
+                onClick={() => saveRankings.mutate()}
+                disabled={saveRankings.isPending}
+                className="btn btn-primary flex items-center gap-2"
+              >
+                {saveRankings.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                Save Rankings
+              </button>
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

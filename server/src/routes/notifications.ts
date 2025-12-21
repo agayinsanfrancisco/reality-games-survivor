@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { authenticate, AuthenticatedRequest, requireAdmin } from '../middleware/authenticate.js';
 import { supabase, supabaseAdmin } from '../config/supabase.js';
+import { EmailService } from '../emails/index.js';
 
 const router = Router();
 
@@ -165,7 +166,7 @@ router.post('/send-reminders', requireAdmin, async (req: AuthenticatedRequest, r
       }
     }
 
-    // Insert notifications
+    // Insert notifications and send emails
     if (notifications.length > 0) {
       const { error } = await supabaseAdmin.from('notifications').insert(
         notifications.map((n) => ({
@@ -180,10 +181,83 @@ router.post('/send-reminders', requireAdmin, async (req: AuthenticatedRequest, r
       if (!error) {
         sent = notifications.length;
       }
-    }
 
-    // TODO: Actually send emails via Resend
-    // For now, we just log to notifications table
+      // Send actual emails (fire and forget)
+      (async () => {
+        for (const notif of notifications) {
+          try {
+            // Get user email
+            const { data: user } = await supabaseAdmin
+              .from('users')
+              .select('email, display_name')
+              .eq('id', notif.user_id)
+              .single();
+
+            if (!user) continue;
+
+            if (type === 'pick') {
+              // Parse hours from body
+              const hoursMatch = notif.body.match(/in (\d+) hours/);
+              const hoursRemaining = hoursMatch ? parseInt(hoursMatch[1]) : 3;
+              const episodeMatch = notif.body.match(/Episode (\d+)/);
+              const episodeNumber = episodeMatch ? parseInt(episodeMatch[1]) : 1;
+
+              if (hoursRemaining <= 1) {
+                await EmailService.sendPickFinalWarning({
+                  displayName: user.display_name,
+                  email: user.email,
+                  episodeNumber,
+                  minutesRemaining: 30,
+                });
+              } else {
+                await EmailService.sendPickReminder({
+                  displayName: user.display_name,
+                  email: user.email,
+                  episodeNumber,
+                  hoursRemaining,
+                });
+              }
+            } else if (type === 'draft') {
+              // Parse hours and league from body
+              const hoursMatch = notif.body.match(/in (\d+) hours/);
+              const hoursRemaining = hoursMatch ? parseInt(hoursMatch[1]) : 24;
+              const leagueMatch = notif.subject.match(/for (.+)$/);
+              const leagueName = leagueMatch ? leagueMatch[1] : 'your league';
+
+              // Get league ID from context
+              const { data: leagues } = await supabaseAdmin
+                .from('leagues')
+                .select('id')
+                .eq('name', leagueName)
+                .limit(1);
+
+              const leagueId = leagues?.[0]?.id || '';
+
+              if (hoursRemaining <= 2) {
+                await EmailService.sendDraftFinalWarning({
+                  displayName: user.display_name,
+                  email: user.email,
+                  leagueName,
+                  leagueId,
+                  hoursRemaining,
+                });
+              } else {
+                await EmailService.sendDraftReminder({
+                  displayName: user.display_name,
+                  email: user.email,
+                  leagueName,
+                  leagueId,
+                  daysRemaining: Math.ceil(hoursRemaining / 24),
+                });
+              }
+            }
+            // Waiver reminders not implemented in EmailService yet
+          } catch (emailErr) {
+            console.error('Failed to send reminder email:', emailErr);
+          }
+        }
+      })();
+    }
 
     res.json({ sent });
   } catch (err) {
@@ -269,7 +343,7 @@ router.post('/send-results', requireAdmin, async (req: AuthenticatedRequest, res
       }
     }
 
-    // Insert notifications
+    // Insert notifications and send emails
     let sent = 0;
     if (notifications.length > 0) {
       const { error } = await supabaseAdmin.from('notifications').insert(
@@ -285,9 +359,104 @@ router.post('/send-results', requireAdmin, async (req: AuthenticatedRequest, res
       if (!error) {
         sent = notifications.length;
       }
-    }
 
-    // TODO: Actually send emails via Resend
+      // Send actual result emails (fire and forget)
+      (async () => {
+        // Group notifications by user to send consolidated results
+        const userLeagueResults = new Map<string, {
+          user: { email: string; display_name: string };
+          leagues: Array<{
+            name: string;
+            totalPoints: number;
+            rank: number;
+            rankChange: number;
+            totalPlayers: number;
+          }>;
+          episodeNumber: number;
+          castawayName: string;
+          pointsEarned: number;
+        }>();
+
+        for (const notif of notifications) {
+          try {
+            const { data: user } = await supabaseAdmin
+              .from('users')
+              .select('email, display_name')
+              .eq('id', notif.user_id)
+              .single();
+
+            if (!user) continue;
+
+            // Parse notification data
+            const episodeMatch = notif.subject.match(/Episode (\d+)/);
+            const pointsMatch = notif.subject.match(/(\d+) points/);
+            const castawayMatch = notif.body.match(/Your pick: (.+)\n/);
+            const totalPointsMatch = notif.body.match(/Total points: (\d+)/);
+            const rankMatch = notif.body.match(/Current rank: #(\d+)/);
+            const leagueMatch = notif.body.match(/in (.+)$/);
+
+            const episodeNumber = episodeMatch ? parseInt(episodeMatch[1]) : 1;
+            const pointsEarned = pointsMatch ? parseInt(pointsMatch[1]) : 0;
+            const castawayName = castawayMatch ? castawayMatch[1] : 'Unknown';
+            const totalPoints = totalPointsMatch ? parseInt(totalPointsMatch[1]) : 0;
+            const rank = rankMatch ? parseInt(rankMatch[1]) : 1;
+            const leagueName = leagueMatch ? leagueMatch[1] : 'Your League';
+
+            // Get total players in league
+            const { data: leagueData } = await supabaseAdmin
+              .from('leagues')
+              .select('id')
+              .eq('name', leagueName)
+              .single();
+
+            let totalPlayers = 1;
+            if (leagueData) {
+              const { count } = await supabaseAdmin
+                .from('league_members')
+                .select('*', { count: 'exact', head: true })
+                .eq('league_id', leagueData.id);
+              totalPlayers = count || 1;
+            }
+
+            if (!userLeagueResults.has(notif.user_id)) {
+              userLeagueResults.set(notif.user_id, {
+                user: { email: user.email, display_name: user.display_name },
+                leagues: [],
+                episodeNumber,
+                castawayName,
+                pointsEarned,
+              });
+            }
+
+            userLeagueResults.get(notif.user_id)!.leagues.push({
+              name: leagueName,
+              totalPoints,
+              rank,
+              rankChange: 0, // Would need previous rank to calculate
+              totalPlayers,
+            });
+          } catch (err) {
+            console.error('Error processing result notification:', err);
+          }
+        }
+
+        // Send consolidated emails
+        for (const [userId, data] of userLeagueResults) {
+          try {
+            await EmailService.sendEpisodeResults({
+              displayName: data.user.display_name,
+              email: data.user.email,
+              episodeNumber: data.episodeNumber,
+              castawayName: data.castawayName,
+              pointsEarned: data.pointsEarned,
+              leagues: data.leagues,
+            });
+          } catch (emailErr) {
+            console.error('Failed to send results email:', emailErr);
+          }
+        }
+      })();
+    }
 
     res.json({ sent });
   } catch (err) {

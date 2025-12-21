@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Bell, Mail, MessageSquare, Smartphone, Check, Loader2, Settings, Trash2, MailOpen } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { Navigation } from '@/components/Navigation';
 
 export default function Notifications() {
   const queryClient = useQueryClient();
@@ -127,14 +128,19 @@ export default function Notifications() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
-      </div>
+      <>
+        <Navigation />
+        <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
+    <>
+      <Navigation />
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link
@@ -365,5 +371,6 @@ export default function Notifications() {
         </div>
       )}
     </div>
+    </>
   );
 }

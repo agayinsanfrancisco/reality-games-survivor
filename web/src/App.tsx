@@ -28,6 +28,10 @@ import SeasonSchedule from './pages/SeasonSchedule';
 import SeasonCastaways from './pages/SeasonCastaways';
 import PaymentHistory from './pages/PaymentHistory';
 import PublicLeaderboard from './pages/PublicLeaderboard';
+import GlobalLeaderboard from './pages/GlobalLeaderboard';
+import Leagues from './pages/Leagues';
+import Castaways from './pages/Castaways';
+import Contact from './pages/Contact';
 import LeagueHistory from './pages/LeagueHistory';
 import Notifications from './pages/Notifications';
 import DraftSettings from './pages/DraftSettings';
@@ -67,6 +71,10 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/leagues/:leagueId/leaderboard" element={<Leaderboard />} />
+            <Route path="/leaderboard" element={<GlobalLeaderboard />} />
+            <Route path="/leagues" element={<Leagues />} />
+            <Route path="/castaways" element={<Castaways />} />
+            <Route path="/contact" element={<Contact />} />
           </Route>
           {/* Full-page protected routes (no Layout wrapper) */}
           <Route path="/join/:code" element={<JoinLeague />} />

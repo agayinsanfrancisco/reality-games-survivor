@@ -38,6 +38,22 @@ export default function LeagueSettings() {
     },
   });
 
+  // Fetch user profile to check admin status
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile', currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser?.id) return null;
+      const { data, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', currentUser.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentUser?.id,
+  });
+
   // Fetch league details
   const { data: league, isLoading } = useQuery({
     queryKey: ['league', leagueId],
@@ -83,8 +99,10 @@ export default function LeagueSettings() {
     }
   }, [league]);
 
-  // Check if current user is commissioner
+  // Check if current user is commissioner or admin
   const isCommissioner = league?.commissioner_id === currentUser?.id;
+  const isAdmin = userProfile?.role === 'admin';
+  const canManageLeague = isCommissioner || isAdmin;
 
   // Update league mutation
   const updateLeague = useMutation({
@@ -235,14 +253,14 @@ export default function LeagueSettings() {
     );
   }
 
-  if (!isCommissioner) {
+  if (!canManageLeague) {
     return (
       <>
         <Navigation />
         <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
           <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
             <h1 className="text-xl font-display font-bold text-neutral-800 mb-2">Access Denied</h1>
-            <p className="text-neutral-500 mb-4">Only the league commissioner can access settings.</p>
+            <p className="text-neutral-500 mb-4">Only the league commissioner or admin can access settings.</p>
             <Link
               to={`/leagues/${leagueId}`}
               className="text-burgundy-500 hover:text-burgundy-600"
@@ -278,7 +296,7 @@ export default function LeagueSettings() {
             {league?.name}
             <span className="inline-flex items-center gap-1 bg-burgundy-100 text-burgundy-600 text-xs px-2 py-0.5 rounded-full">
               <Crown className="h-3 w-3" />
-              Commissioner
+              {isCommissioner ? 'Commissioner' : 'Admin'}
             </span>
           </p>
         </div>

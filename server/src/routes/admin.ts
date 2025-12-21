@@ -352,6 +352,129 @@ router.get('/payments', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
+// GET /api/admin/users - View all users
+router.get('/users', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { role, search, limit = 50, offset = 0 } = req.query;
+
+    let query = supabaseAdmin
+      .from('users')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(Number(offset), Number(offset) + Number(limit) - 1);
+
+    if (role) {
+      query = query.eq('role', role);
+    }
+
+    if (search) {
+      query = query.or(`display_name.ilike.%${search}%,email.ilike.%${search}%`);
+    }
+
+    const { data: users, error, count } = await query;
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ users, total: count });
+  } catch (err) {
+    console.error('GET /api/admin/users error:', err);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// PATCH /api/admin/users/:id - Update user role
+router.patch('/users/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.params.id;
+    const { role } = req.body;
+
+    if (!role || !['player', 'commissioner', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+
+    const { data: user, error } = await supabaseAdmin
+      .from('users')
+      .update({ role })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ user });
+  } catch (err) {
+    console.error('PATCH /api/admin/users/:id error:', err);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// GET /api/admin/leagues - View all leagues
+router.get('/leagues', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { season_id, status, search, limit = 50, offset = 0 } = req.query;
+
+    let query = supabaseAdmin
+      .from('leagues')
+      .select(`
+        *,
+        seasons (
+          id,
+          name,
+          number
+        ),
+        users:commissioner_id (
+          id,
+          display_name,
+          email
+        )
+      `, { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(Number(offset), Number(offset) + Number(limit) - 1);
+
+    if (season_id) {
+      query = query.eq('season_id', season_id);
+    }
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    if (search) {
+      query = query.ilike('name', `%${search}%`);
+    }
+
+    const { data: leagues, error, count } = await query;
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    // Get member counts for each league
+    const leaguesWithCounts = await Promise.all(
+      (leagues || []).map(async (league) => {
+        const { count: memberCount } = await supabaseAdmin
+          .from('league_members')
+          .select('*', { count: 'exact', head: true })
+          .eq('league_id', league.id);
+
+        return {
+          ...league,
+          member_count: memberCount || 0,
+        };
+      })
+    );
+
+    res.json({ leagues: leaguesWithCounts, total: count });
+  } catch (err) {
+    console.error('GET /api/admin/leagues error:', err);
+    res.status(500).json({ error: 'Failed to fetch leagues' });
+  }
+});
+
 // POST /api/admin/payments/:id/refund - Issue refund
 router.post('/payments/:id/refund', async (req: AuthenticatedRequest, res: Response) => {
   try {

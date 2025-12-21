@@ -17,8 +17,9 @@ interface ScoringRule {
   sort_order: number;
 }
 
-const CATEGORIES = [
-  'Challenges',
+const DEFAULT_CATEGORIES = [
+  'Pre-Merge Challenges',
+  'Post-Merge Challenges',
   'Tribal Council',
   'Strategic Play',
   'Social Game',
@@ -35,14 +36,14 @@ export function AdminScoringRules() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [editingRule, setEditingRule] = useState<ScoringRule | null>(null);
   const [isAdding, setIsAdding] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(CATEGORIES));
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(DEFAULT_CATEGORIES));
 
   const [formData, setFormData] = useState({
     code: '',
     name: '',
     description: '',
     points: 0,
-    category: CATEGORIES[0],
+    category: DEFAULT_CATEGORIES[0],
     is_negative: false,
     is_active: true,
   });
@@ -60,6 +61,12 @@ export function AdminScoringRules() {
       return data || [];
     },
   });
+
+  // Derive categories from rules + defaults
+  const categories = Array.from(new Set([
+    ...DEFAULT_CATEGORIES,
+    ...(rules?.map((r: ScoringRule) => r.category).filter(Boolean) || [])
+  ])) as string[];
 
   // Create rule mutation
   const createRule = useMutation({
@@ -107,7 +114,7 @@ export function AdminScoringRules() {
       name: '',
       description: '',
       points: 0,
-      category: CATEGORIES[0],
+      category: DEFAULT_CATEGORIES[0],
       is_negative: false,
       is_active: true,
     });
@@ -120,7 +127,7 @@ export function AdminScoringRules() {
       name: rule.name,
       description: rule.description || '',
       points: rule.points,
-      category: rule.category || CATEGORIES[0],
+      category: rule.category || DEFAULT_CATEGORIES[0],
       is_negative: rule.is_negative,
       is_active: rule.is_active,
     });
@@ -173,7 +180,7 @@ export function AdminScoringRules() {
     return matchesSearch && matchesCategory;
   });
 
-  const groupedRules = CATEGORIES.reduce((acc, category) => {
+  const groupedRules = categories.reduce((acc, category) => {
     acc[category] = filteredRules?.filter((r: ScoringRule) => r.category === category) || [];
     return acc;
   }, {} as Record<string, ScoringRule[]>);
@@ -297,7 +304,7 @@ export function AdminScoringRules() {
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 className="input"
               >
-                {CATEGORIES.map((cat) => (
+                {categories.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
@@ -370,7 +377,7 @@ export function AdminScoringRules() {
           className="input px-3 py-2 w-40"
         >
           <option value="all">All Categories</option>
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
@@ -378,7 +385,7 @@ export function AdminScoringRules() {
 
       {/* Rules by Category */}
       <div className="space-y-4">
-        {CATEGORIES.map((category) => {
+        {categories.map((category) => {
           const categoryRules = groupedRules[category];
           if (categoryRules.length === 0) return null;
 

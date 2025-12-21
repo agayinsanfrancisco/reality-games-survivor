@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Settings, Users, Shuffle, GripVertical, Save, Loader2, AlertCircle, Check, Crown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { Navigation } from '@/components/Navigation';
 
 export default function DraftSettings() {
   const { leagueId } = useParams<{ leagueId: string }>();
@@ -153,15 +154,20 @@ export default function DraftSettings() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
-      </div>
+      <>
+        <Navigation />
+        <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
+        </div>
+      </>
     );
   }
 
   if (!isCommissioner) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
+      <>
+        <Navigation />
+        <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
         <div className="flex items-center gap-3 mb-6">
           <Link
             to={`/leagues/${leagueId}`}
@@ -178,11 +184,14 @@ export default function DraftSettings() {
           <p className="text-neutral-600">Only the league commissioner can manage draft settings.</p>
         </div>
       </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
+    <>
+      <Navigation />
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link
@@ -373,5 +382,6 @@ export default function DraftSettings() {
         )}
       </div>
     </div>
+    </>
   );
 }

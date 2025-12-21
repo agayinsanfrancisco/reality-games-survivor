@@ -1,6 +1,5 @@
 import { supabaseAdmin } from '../config/supabase.js';
-import { sendEmail } from '../emails/index.js';
-import * as emails from '../emails/index.js';
+import { EmailService } from '../emails/index.js';
 
 interface ResultsResult {
   sent: number;
@@ -45,6 +44,20 @@ export async function sendEpisodeResults(): Promise<ResultsResult> {
 
   if (!leagues) return { sent: 0, episodeId: episode.id };
 
+  // Group results by user across leagues
+  const userResults = new Map<string, {
+    user: { email: string; display_name: string };
+    leagues: Array<{
+      name: string;
+      totalPoints: number;
+      rank: number;
+      rankChange: number;
+      totalPlayers: number;
+    }>;
+    castawayName: string;
+    pointsEarned: number;
+  }>();
+
   let sent = 0;
 
   for (const league of leagues) {
@@ -73,27 +86,47 @@ export async function sendEpisodeResults(): Promise<ResultsResult> {
       const pointsEarned = pick?.points_earned || 0;
       const castawayName = (pick as any)?.castaways?.name || 'No pick';
 
-      const emailHtml = emails.episodeResultsEmail({
-        displayName: user.display_name,
-        leagueName: league.name,
-        episodeNumber: episode.number,
-        castawayName,
-        pointsEarned,
+      if (!userResults.has(member.user_id)) {
+        userResults.set(member.user_id, {
+          user: { email: user.email, display_name: user.display_name },
+          leagues: [],
+          castawayName,
+          pointsEarned,
+        });
+      }
+
+      userResults.get(member.user_id)!.leagues.push({
+        name: league.name,
         totalPoints: member.total_points,
         rank: member.rank || 0,
-        totalPlayers: members.length,
         rankChange: 0,
-        leagueId: league.id,
-        episodeId: episode.id,
+        totalPlayers: members.length,
+      });
+    }
+  }
+
+  // Send consolidated emails
+  for (const [userId, data] of userResults) {
+    try {
+      await EmailService.sendEpisodeResults({
+        displayName: data.user.display_name,
+        email: data.user.email,
+        episodeNumber: episode.number,
+        castawayName: data.castawayName,
+        pointsEarned: data.pointsEarned,
+        leagues: data.leagues,
       });
 
-      await sendEmail({
-        to: user.email,
-        subject: `Episode ${episode.number} Results - ${pointsEarned} points!`,
-        html: emailHtml,
-      });
+      await EmailService.logNotification(
+        userId,
+        'email',
+        `Episode ${episode.number} Results`,
+        `You earned ${data.pointsEarned} points.`
+      );
 
       sent++;
+    } catch (err) {
+      console.error('Failed to send results email:', err);
     }
   }
 
@@ -110,7 +143,7 @@ export async function sendEliminationAlerts(
 ): Promise<{ sent: number }> {
   const { data: episode } = await supabaseAdmin
     .from('episodes')
-    .select('id, number, season_id, waiver_opens_at')
+    .select('id, number, season_id, waiver_closes_at')
     .eq('id', episodeId)
     .single();
 
@@ -157,30 +190,26 @@ export async function sendEliminationAlerts(
 
       const castawayName = castawayNames.get(roster.castaway_id) || 'Your castaway';
 
-      const waiverOpensFormatted = new Date(episode.waiver_opens_at).toLocaleString('en-US', {
-        weekday: 'long',
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      });
+      try {
+        await EmailService.sendEliminationAlert({
+          displayName: user.display_name,
+          email: user.email,
+          castawayName,
+          leagueName: league.name,
+          leagueId: league.id,
+        });
 
-      const emailHtml = emails.eliminationAlertEmail({
-        displayName: user.display_name,
-        leagueName: league.name,
-        castawayName,
-        episodeNumber: episode.number,
-        waiverOpensAt: waiverOpensFormatted,
-        leagueId: league.id,
-      });
+        await EmailService.logNotification(
+          roster.user_id,
+          'email',
+          `${castawayName} has been eliminated`,
+          `You'll continue playing with your remaining castaway.`
+        );
 
-      await sendEmail({
-        to: user.email,
-        subject: `${castawayName} has been eliminated`,
-        html: emailHtml,
-      });
-
-      sent++;
+        sent++;
+      } catch (err) {
+        console.error('Failed to send elimination alert:', err);
+      }
     }
   }
 

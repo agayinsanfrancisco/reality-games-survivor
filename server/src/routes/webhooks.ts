@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { supabaseAdmin } from '../config/supabase.js';
 import { stripe, STRIPE_WEBHOOK_SECRET } from '../config/stripe.js';
 import Stripe from 'stripe';
+import { EmailService } from '../emails/index.js';
 
 const router = Router();
 
@@ -43,10 +44,11 @@ router.post('/stripe', async (req: Request, res: Response) => {
           }
 
           // Record payment
+          const amount = (session.amount_total || 0) / 100;
           await supabaseAdmin.from('payments').insert({
             user_id,
             league_id,
-            amount: (session.amount_total || 0) / 100,
+            amount,
             currency: session.currency || 'usd',
             stripe_session_id: session.id,
             stripe_payment_intent_id: session.payment_intent as string,
@@ -54,6 +56,72 @@ router.post('/stripe', async (req: Request, res: Response) => {
           });
 
           console.log(`User ${user_id} joined league ${league_id} via payment`);
+
+          // Send payment confirmation email
+          const { data: user } = await supabaseAdmin
+            .from('users')
+            .select('email, display_name')
+            .eq('id', user_id)
+            .single();
+
+          const { data: league } = await supabaseAdmin
+            .from('leagues')
+            .select('name')
+            .eq('id', league_id)
+            .single();
+
+          if (user && league) {
+            // Send payment confirmation email
+            await EmailService.sendPaymentConfirmed({
+              displayName: user.display_name,
+              email: user.email,
+              leagueName: league.name,
+              leagueId: league_id,
+              amount,
+              date: new Date(),
+            });
+
+            // Also send league joined email
+            const { data: leagueWithSeason } = await supabaseAdmin
+              .from('leagues')
+              .select('name, max_players, seasons(name, premiere_at, draft_deadline)')
+              .eq('id', league_id)
+              .single();
+
+            const { count: memberCount } = await supabaseAdmin
+              .from('league_members')
+              .select('*', { count: 'exact', head: true })
+              .eq('league_id', league_id);
+
+            const season = (leagueWithSeason as any)?.seasons;
+            if (season) {
+              const premiereDate = new Date(season.premiere_at);
+              const firstPickDue = new Date(premiereDate);
+              firstPickDue.setDate(firstPickDue.getDate() + 7);
+              firstPickDue.setHours(15, 0, 0, 0);
+
+              await EmailService.sendLeagueJoined({
+                displayName: user.display_name,
+                email: user.email,
+                leagueName: leagueWithSeason!.name,
+                leagueId: league_id,
+                seasonName: season.name,
+                memberCount: memberCount || 1,
+                maxMembers: leagueWithSeason!.max_players || 12,
+                premiereDate: premiereDate,
+                draftDeadline: new Date(season.draft_deadline),
+                firstPickDue: firstPickDue,
+              });
+            }
+
+            // Log notification
+            await EmailService.logNotification(
+              user_id,
+              'email',
+              `Payment received - ${league.name}`,
+              `$${amount.toFixed(2)} payment confirmed for ${league.name}`
+            );
+          }
         }
         break;
       }
@@ -87,11 +155,13 @@ router.post('/stripe', async (req: Request, res: Response) => {
   }
 });
 
-// POST /webhooks/sms - Handle SimpleTexting inbound SMS
+// POST /webhooks/sms - Handle Twilio inbound SMS
 router.post('/sms', async (req: Request, res: Response) => {
   try {
-    // SimpleTexting webhook payload
-    const { from, text, timestamp } = req.body;
+    // Twilio webhook payload (form-urlencoded)
+    // From = sender phone, Body = message text
+    const from = req.body.From;
+    const text = req.body.Body;
 
     if (!from || !text) {
       return res.status(400).json({ error: 'Missing from or text' });
@@ -267,11 +337,30 @@ router.post('/sms', async (req: Request, res: Response) => {
       response_sent: response,
     });
 
-    res.json({ processed: true, response_sent: response });
+    // Respond with TwiML to send SMS reply
+    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Message>${escapeXml(response)}</Message>
+</Response>`;
+
+    res.set('Content-Type', 'text/xml');
+    res.send(twiml);
   } catch (err) {
     console.error('Error processing SMS webhook:', err);
-    res.status(500).json({ error: 'SMS processing failed' });
+    // Return empty TwiML on error
+    res.set('Content-Type', 'text/xml');
+    res.send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
   }
 });
+
+// Helper to escape XML special characters
+function escapeXml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
 
 export default router;

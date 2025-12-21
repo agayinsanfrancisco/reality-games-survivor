@@ -63,7 +63,7 @@ We've created a scoring system with 100+ game-tested rules that reward real stra
         ┌─────────────────────┼─────────────────────┐
         ▼                     ▼                     ▼
 ┌───────────────┐    ┌───────────────┐    ┌───────────────┐
-│   Supabase    │    │  Express API  │    │  SimpleTexting│
+│   Supabase    │    │  Express API  │    │    Twilio     │
 │  (Auto CRUD)  │    │   (Supabase)  │    │   (Webhooks)  │
 │               │    │               │    │               │
 │ • Auth        │    │ • Scoring     │    │ • PICK cmd    │
@@ -288,7 +288,7 @@ Wednesday 3:00 PM  →  Waiver window closes / Next picks due
 **Webhooks (2)**
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| POST | `/webhooks/sms` | SimpleTexting inbound |
+| POST | `/webhooks/sms` | Twilio inbound |
 | POST | `/webhooks/stripe` | Stripe events |
 
 ---
@@ -1033,7 +1033,7 @@ Base URL: `{SUPABASE_URL}/rest/v1`
 
 | Method | Endpoint | Auth | Request | Response |
 |--------|----------|------|---------|----------|
-| POST | `/webhooks/sms` | Signature | SimpleTexting payload | `{processed, response_sent}` |
+| POST | `/webhooks/sms` | Signature | Twilio payload (TwiML response) | `<Response><Message>...</Message></Response>` |
 | POST | `/webhooks/stripe` | Signature | Stripe event | `{received: true}` |
 
 ---
@@ -1254,8 +1254,9 @@ DATABASE_URL=postgresql://postgres:krt.zar9HDF-yud1dpm@db.qxrgejdfxcvsfktgysop.s
 RESEND_API_KEY=
 
 # SMS
-SIMPLETEXTING_API_KEY=
-SIMPLETEXTING_WEBHOOK_SECRET=
+TWILIO_ACCOUNT_SID=ACxxx
+TWILIO_AUTH_TOKEN=
+TWILIO_PHONE_NUMBER=+14247227529
 
 # Stripe (Payments)
 STRIPE_SECRET_KEY=
@@ -1604,5 +1605,5 @@ STRIPE_PUBLISHABLE_KEY=pk_live_... # Client-side
 3. Implement Express API (scoring, draft, waivers)
 4. Build mobile app
 5. Set up cron jobs with Supabase pg_cron
-6. Configure SimpleTexting webhooks
+6. Configure Twilio webhooks
 7. Test end-to-end with Season 50 data

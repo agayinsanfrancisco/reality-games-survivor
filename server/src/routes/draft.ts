@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { authenticate, AuthenticatedRequest, requireAdmin } from '../middleware/authenticate.js';
 import { supabase, supabaseAdmin } from '../config/supabase.js';
+import { EmailService } from '../emails/index.js';
 
 const router = Router();
 
@@ -234,6 +235,110 @@ router.post('/:id/draft/pick', authenticate, async (req: AuthenticatedRequest, r
           status: 'active',
         })
         .eq('id', leagueId);
+
+      // Send draft complete emails to all members (fire and forget)
+      (async () => {
+        try {
+          const { data: allMembers } = await supabaseAdmin
+            .from('league_members')
+            .select('user_id')
+            .eq('league_id', leagueId);
+
+          const { data: leagueDetails } = await supabaseAdmin
+            .from('leagues')
+            .select('name, seasons(premiere_at, draft_deadline)')
+            .eq('id', leagueId)
+            .single();
+
+          const { data: allRosters } = await supabaseAdmin
+            .from('rosters')
+            .select('user_id, castaways(name, tribe_original)')
+            .eq('league_id', leagueId);
+
+          const { data: episodes } = await supabaseAdmin
+            .from('episodes')
+            .select('picks_lock_at')
+            .eq('season_id', league.season_id)
+            .order('number', { ascending: true })
+            .limit(2);
+
+          const firstPickDue = episodes?.[1]?.picks_lock_at
+            ? new Date(episodes[1].picks_lock_at)
+            : new Date();
+
+          for (const member of allMembers || []) {
+            const { data: user } = await supabaseAdmin
+              .from('users')
+              .select('email, display_name')
+              .eq('id', member.user_id)
+              .single();
+
+            const memberRoster = allRosters?.filter((r) => r.user_id === member.user_id) || [];
+
+            if (user && leagueDetails) {
+              await EmailService.sendDraftComplete({
+                displayName: user.display_name,
+                email: user.email,
+                leagueName: leagueDetails.name,
+                leagueId,
+                castaways: memberRoster.map((r: any) => ({
+                  name: r.castaways?.name || 'Unknown',
+                  tribe: r.castaways?.tribe_original || 'Unknown',
+                })),
+                premiereDate: new Date((leagueDetails as any).seasons?.premiere_at),
+                firstPickDue,
+              });
+            }
+          }
+        } catch (emailErr) {
+          console.error('Failed to send draft complete emails:', emailErr);
+        }
+      })();
+    } else {
+      // Send draft pick confirmation email (fire and forget)
+      (async () => {
+        try {
+          const { data: user } = await supabaseAdmin
+            .from('users')
+            .select('email, display_name')
+            .eq('id', userId)
+            .single();
+
+          const { data: castawayDetails } = await supabaseAdmin
+            .from('castaways')
+            .select('name')
+            .eq('id', castaway_id)
+            .single();
+
+          const { data: leagueDetails } = await supabaseAdmin
+            .from('leagues')
+            .select('name')
+            .eq('id', leagueId)
+            .single();
+
+          if (user && castawayDetails && leagueDetails) {
+            await EmailService.sendDraftPickConfirmed({
+              displayName: user.display_name,
+              email: user.email,
+              castawayName: castawayDetails.name,
+              leagueName: leagueDetails.name,
+              leagueId,
+              round: currentRound,
+              pickNumber: totalPicks + 1,
+              totalRounds: 2,
+            });
+
+            await EmailService.logNotification(
+              userId,
+              'email',
+              `Draft pick: ${castawayDetails.name}`,
+              `Round ${currentRound} pick confirmed.`
+            );
+          }
+        } catch (emailErr) {
+          console.error('Failed to send draft pick confirmation email:', emailErr);
+        }
+      })();
     }
 
     // Calculate next pick
