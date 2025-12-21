@@ -83,8 +83,8 @@ export default function App() {
           <Route path="/rules" element={<ScoringRules />} />
           <Route path="/profile/payments" element={<PaymentHistory />} />
           <Route path="/profile/notifications" element={<Notifications />} />
-          <Route path="/seasons/:id/schedule" element={<SeasonSchedule />} />
-          <Route path="/seasons/:id/castaways" element={<SeasonCastaways />} />
+          <Route path="/seasons/:seasonId/schedule" element={<SeasonSchedule />} />
+          <Route path="/seasons/:seasonId/castaways" element={<SeasonCastaways />} />
 
           {/* Admin routes */}
           <Route path="/admin" element={<AdminDashboard />} />

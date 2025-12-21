@@ -4,7 +4,7 @@ import { ArrowLeft, History, Trophy, Calendar, Users, Crown, Medal, Loader2 } fr
 import { supabase } from '../lib/supabase';
 
 export default function LeagueHistory() {
-  const { id: leagueId } = useParams<{ id: string }>();
+  const { leagueId } = useParams<{ leagueId: string }>();
 
   // Fetch league details
   const { data: league, isLoading: leagueLoading } = useQuery({
