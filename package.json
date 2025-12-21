@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Reality Games Fantasy League: Survivor",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "workspaces": [
     "web",
     "mobile",
