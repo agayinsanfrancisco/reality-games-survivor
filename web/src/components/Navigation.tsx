@@ -122,6 +122,9 @@ export function Navigation() {
               <Link to="/dashboard" className={isActive('/dashboard') ? 'nav-link-active' : 'nav-link'}>
                 Dashboard
               </Link>
+              <Link to="/leagues/create" className={isActive('/leagues/create') ? 'nav-link-active' : 'nav-link'}>
+                Create League
+              </Link>
             </div>
 
             <div className="flex items-center gap-2">
