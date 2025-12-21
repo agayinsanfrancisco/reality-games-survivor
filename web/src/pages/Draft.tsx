@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { AppNav } from '@/components/AppNav';
@@ -16,14 +16,19 @@ interface Castaway {
   status: string;
 }
 
-interface DraftPick {
+interface RosterEntry {
   id: string;
   user_id: string;
   castaway_id: string;
   draft_round: number;
   draft_pick: number;
-  users: { display_name: string };
-  castaways: { name: string; photo_url?: string };
+}
+
+interface LeagueMember {
+  id: string;
+  user_id: string;
+  draft_position: number | null;
+  users: { id: string; display_name: string };
 }
 
 interface League {
@@ -35,45 +40,25 @@ interface League {
   season_id: string;
 }
 
-// Mock data for demo
-const mockCastaways: Castaway[] = [
-  { id: '1', name: 'Boston Rob', hometown: 'Boston, MA', tribe_original: 'Tuku', status: 'active' },
-  { id: '2', name: 'Parvati', hometown: 'Los Angeles, CA', tribe_original: 'Gata', status: 'active' },
-  { id: '3', name: 'Sandra', hometown: 'Stamford, CT', tribe_original: 'Lavo', status: 'active' },
-  { id: '4', name: 'Tony', hometown: 'Jersey City, NJ', tribe_original: 'Tuku', status: 'active' },
-  { id: '5', name: 'Kim', hometown: 'San Antonio, TX', tribe_original: 'Gata', status: 'active' },
-  { id: '6', name: 'Jeremy', hometown: 'Foxboro, MA', tribe_original: 'Lavo', status: 'active' },
-  { id: '7', name: 'Michele', hometown: 'Freehold, NJ', tribe_original: 'Tuku', status: 'active' },
-  { id: '8', name: 'Tyson', hometown: 'Lindon, UT', tribe_original: 'Gata', status: 'active' },
-];
-
-const mockDraftOrder = [
-  { position: 1, name: 'You', isCurrentUser: true, picks: [] as string[] },
-  { position: 2, name: 'Sarah', isCurrentUser: false, picks: [] as string[] },
-  { position: 3, name: 'Mike', isCurrentUser: false, picks: [] as string[] },
-  { position: 4, name: 'Emily', isCurrentUser: false, picks: [] as string[] },
-];
+interface UserProfile {
+  id: string;
+  display_name: string;
+}
 
 export function Draft() {
   const { leagueId } = useParams<{ leagueId: string }>();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [selectedCastaway, setSelectedCastaway] = useState<string | null>(null);
-  const [draftedIds, setDraftedIds] = useState<string[]>([]);
-  const [myPicks, setMyPicks] = useState<string[]>([]);
-  const [currentPick, setCurrentPick] = useState(1);
-  const [currentRound, setCurrentRound] = useState(1);
+  const [tribeFilter, setTribeFilter] = useState<string | null>(null);
 
-  interface UserProfile {
-    id: string;
-    display_name: string;
-  }
-
+  // Fetch user profile
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('users')
-        .select('*')
+        .select('id, display_name')
         .eq('id', user!.id)
         .single();
       if (error) throw error;
@@ -82,6 +67,7 @@ export function Draft() {
     enabled: !!user?.id,
   });
 
+  // Fetch league details
   const { data: league } = useQuery({
     queryKey: ['league', leagueId],
     queryFn: async () => {
@@ -97,26 +83,145 @@ export function Draft() {
     enabled: !!leagueId,
   });
 
-  const handleDraftPick = () => {
-    if (!selectedCastaway) return;
+  // Fetch league members with their draft positions
+  const { data: leagueMembers } = useQuery({
+    queryKey: ['leagueMembers', leagueId],
+    queryFn: async () => {
+      if (!leagueId) throw new Error('No league ID');
+      const { data, error } = await supabase
+        .from('league_members')
+        .select('id, user_id, draft_position, users(id, display_name)')
+        .eq('league_id', leagueId)
+        .order('draft_position', { ascending: true });
+      if (error) throw error;
+      return data as LeagueMember[];
+    },
+    enabled: !!leagueId,
+  });
 
-    // Add to drafted list
-    setDraftedIds([...draftedIds, selectedCastaway]);
-    setMyPicks([...myPicks, selectedCastaway]);
-    setSelectedCastaway(null);
+  // Fetch all castaways for this season
+  const { data: castaways } = useQuery({
+    queryKey: ['castaways', league?.season_id],
+    queryFn: async () => {
+      if (!league?.season_id) throw new Error('No season ID');
+      const { data, error } = await supabase
+        .from('castaways')
+        .select('*')
+        .eq('season_id', league.season_id)
+        .eq('status', 'active')
+        .order('name');
+      if (error) throw error;
+      return data as Castaway[];
+    },
+    enabled: !!league?.season_id,
+  });
 
-    // Advance pick
-    if (currentPick < 4) {
-      setCurrentPick(currentPick + 1);
-    } else if (currentRound === 1) {
-      setCurrentRound(2);
-      setCurrentPick(4); // Snake draft - reverse order
+  // Fetch all roster entries (drafted castaways) for this league
+  const { data: rosters } = useQuery({
+    queryKey: ['rosters', leagueId],
+    queryFn: async () => {
+      if (!leagueId) throw new Error('No league ID');
+      const { data, error } = await supabase
+        .from('rosters')
+        .select('*')
+        .eq('league_id', leagueId)
+        .is('dropped_at', null);
+      if (error) throw error;
+      return data as RosterEntry[];
+    },
+    enabled: !!leagueId,
+  });
+
+  // Mutation to make a draft pick
+  const draftPickMutation = useMutation({
+    mutationFn: async (castawayId: string) => {
+      if (!leagueId || !user?.id) throw new Error('Missing required data');
+
+      const myRoster = rosters?.filter(r => r.user_id === user.id) || [];
+      const draftRound = myRoster.length + 1;
+      const totalPicks = (rosters?.length || 0) + 1;
+
+      const { data, error } = await supabase
+        .from('rosters')
+        .insert({
+          league_id: leagueId,
+          user_id: user.id,
+          castaway_id: castawayId,
+          draft_round: draftRound,
+          draft_pick: totalPicks,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rosters', leagueId] });
+      setSelectedCastaway(null);
+    },
+  });
+
+  // Compute draft state
+  const draftedCastawayIds = useMemo(() => {
+    return new Set(rosters?.map(r => r.castaway_id) || []);
+  }, [rosters]);
+
+  const myPicks = useMemo(() => {
+    return rosters?.filter(r => r.user_id === user?.id) || [];
+  }, [rosters, user?.id]);
+
+  const availableCastaways = useMemo(() => {
+    let available = castaways?.filter(c => !draftedCastawayIds.has(c.id)) || [];
+    if (tribeFilter) {
+      available = available.filter(c => c.tribe_original === tribeFilter);
     }
+    return available;
+  }, [castaways, draftedCastawayIds, tribeFilter]);
+
+  // Get unique tribes for filter
+  const tribes = useMemo(() => {
+    const tribeSet = new Set(castaways?.map(c => c.tribe_original).filter(Boolean));
+    return Array.from(tribeSet) as string[];
+  }, [castaways]);
+
+  // Determine whose turn it is (simplified - in production this would be more complex)
+  const totalMembers = leagueMembers?.length || 0;
+  const currentPickNumber = (rosters?.length || 0) + 1;
+  const currentRound = Math.ceil(currentPickNumber / Math.max(totalMembers, 1));
+
+  // Snake draft logic
+  const positionInRound = ((currentPickNumber - 1) % totalMembers);
+  const isReverseRound = currentRound % 2 === 0;
+  const currentPickerIndex = isReverseRound ? (totalMembers - 1 - positionInRound) : positionInRound;
+  const currentPicker = leagueMembers?.[currentPickerIndex];
+  const isMyTurn = currentPicker?.user_id === user?.id;
+
+  const draftComplete = myPicks.length >= 2;
+  const allDraftComplete = (rosters?.length || 0) >= (totalMembers * 2);
+
+  const handleDraftPick = () => {
+    if (!selectedCastaway || !isMyTurn) return;
+    draftPickMutation.mutate(selectedCastaway);
   };
 
-  const availableCastaways = mockCastaways.filter(c => !draftedIds.includes(c.id));
-  const isMyTurn = currentPick === 1; // Demo: always user's turn at position 1
-  const draftComplete = myPicks.length >= 2;
+  // Build draft order display
+  const draftOrderDisplay = useMemo(() => {
+    return leagueMembers?.map((member, index) => {
+      const memberPicks = rosters?.filter(r => r.user_id === member.user_id) || [];
+      const pickedCastaways = memberPicks.map(pick =>
+        castaways?.find(c => c.id === pick.castaway_id)?.name
+      ).filter(Boolean);
+
+      return {
+        position: index + 1,
+        name: member.users?.display_name || 'Unknown',
+        isCurrentUser: member.user_id === user?.id,
+        picks: pickedCastaways as string[],
+        userId: member.user_id,
+      };
+    }) || [];
+  }, [leagueMembers, rosters, castaways, user?.id]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
@@ -155,7 +260,7 @@ export function Draft() {
           </div>
         </div>
 
-        {draftComplete ? (
+        {allDraftComplete || draftComplete ? (
           /* Draft Complete State */
           <div className="bg-white rounded-2xl shadow-elevated p-12 text-center animate-slide-up">
             <div className="w-20 h-20 mx-auto mb-6 bg-green-100 rounded-full flex items-center justify-center">
@@ -163,21 +268,34 @@ export function Draft() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-2xl font-display text-neutral-800 mb-3">Draft Complete!</h2>
+            <h2 className="text-2xl font-display text-neutral-800 mb-3">
+              {allDraftComplete ? 'Draft Complete!' : 'Your Picks Complete!'}
+            </h2>
             <p className="text-neutral-500 mb-8 max-w-md mx-auto">
-              You've successfully drafted your team. Make your weekly picks when episodes air.
+              {allDraftComplete
+                ? "The draft is complete. Make your weekly picks when episodes air."
+                : "You've picked your team. Wait for other players to complete the draft."
+              }
             </p>
 
             <div className="flex justify-center gap-4 mb-8">
-              {myPicks.map((pickId) => {
-                const castaway = mockCastaways.find(c => c.id === pickId);
+              {myPicks.map((pick) => {
+                const castaway = castaways?.find(c => c.id === pick.castaway_id);
                 return castaway ? (
-                  <div key={pickId} className="bg-cream-50 rounded-xl p-4 text-center">
-                    <div className="w-16 h-16 mx-auto mb-3 bg-cream-200 rounded-full flex items-center justify-center">
-                      <svg className="w-8 h-8 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
+                  <div key={pick.id} className="bg-cream-50 rounded-xl p-4 text-center">
+                    {castaway.photo_url ? (
+                      <img
+                        src={castaway.photo_url}
+                        alt={castaway.name}
+                        className="w-16 h-16 mx-auto mb-3 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 mx-auto mb-3 bg-cream-200 rounded-full flex items-center justify-center">
+                        <svg className="w-8 h-8 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    )}
                     <p className="font-semibold text-neutral-800">{castaway.name}</p>
                     <p className="text-xs text-neutral-500">{castaway.tribe_original}</p>
                   </div>
@@ -200,18 +318,18 @@ export function Draft() {
                 </div>
 
                 <div className="p-4 space-y-2">
-                  {mockDraftOrder.map((player, i) => (
+                  {draftOrderDisplay.map((player, i) => (
                     <div
                       key={i}
                       className={`p-3 rounded-xl flex items-center justify-between transition-all ${
-                        currentPick === player.position
+                        currentPicker?.user_id === player.userId
                           ? 'bg-burgundy-50 border-2 border-burgundy-200'
                           : 'bg-cream-50'
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
-                          currentPick === player.position
+                          currentPicker?.user_id === player.userId
                             ? 'bg-burgundy-500 text-white'
                             : 'bg-cream-200 text-neutral-600'
                         }`}>
@@ -221,16 +339,16 @@ export function Draft() {
                           <p className={`font-medium text-sm ${
                             player.isCurrentUser ? 'text-burgundy-600' : 'text-neutral-800'
                           }`}>
-                            {player.name}
+                            {player.isCurrentUser ? 'You' : player.name}
                           </p>
                           {player.picks.length > 0 && (
                             <p className="text-xs text-neutral-400">
-                              Picked: {player.picks.join(', ')}
+                              {player.picks.join(', ')}
                             </p>
                           )}
                         </div>
                       </div>
-                      {currentPick === player.position && (
+                      {currentPicker?.user_id === player.userId && (
                         <span className="badge badge-burgundy text-xs animate-pulse">
                           Picking
                         </span>
@@ -246,10 +364,10 @@ export function Draft() {
                     <p className="text-sm text-neutral-400">No picks yet</p>
                   ) : (
                     <div className="space-y-2">
-                      {myPicks.map((pickId) => {
-                        const castaway = mockCastaways.find(c => c.id === pickId);
+                      {myPicks.map((pick) => {
+                        const castaway = castaways?.find(c => c.id === pick.castaway_id);
                         return castaway ? (
-                          <div key={pickId} className="flex items-center gap-2 text-sm">
+                          <div key={pick.id} className="flex items-center gap-2 text-sm">
                             <div className="w-6 h-6 bg-burgundy-100 rounded-full flex items-center justify-center">
                               <svg className="w-3 h-3 text-burgundy-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -271,40 +389,72 @@ export function Draft() {
             {/* Main Draft Area */}
             <div className="lg:col-span-3 space-y-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
               {/* Current Pick Banner */}
-              {isMyTurn && (
+              {isMyTurn ? (
                 <div className="bg-gradient-to-r from-burgundy-500 to-burgundy-600 rounded-2xl p-6 text-white shadow-elevated">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-burgundy-100 text-sm font-medium">Round {currentRound}, Pick {currentPick}</p>
+                      <p className="text-burgundy-100 text-sm font-medium">Round {currentRound}, Pick {currentPickNumber}</p>
                       <h2 className="text-2xl font-display mt-1">It's Your Turn!</h2>
                       <p className="text-burgundy-100 mt-2">Select a castaway below to add to your team.</p>
                     </div>
                     {selectedCastaway && (
                       <button
                         onClick={handleDraftPick}
-                        className="btn bg-white text-burgundy-600 hover:bg-cream-50 shadow-lg"
+                        disabled={draftPickMutation.isPending}
+                        className="btn bg-white text-burgundy-600 hover:bg-cream-50 shadow-lg disabled:opacity-50"
                       >
-                        Confirm Pick
+                        {draftPickMutation.isPending ? 'Drafting...' : 'Confirm Pick'}
                       </button>
                     )}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-cream-100 rounded-2xl p-6 border border-cream-200">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-cream-200 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-neutral-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-neutral-500 text-sm">Waiting for</p>
+                      <p className="font-semibold text-neutral-800">
+                        {currentPicker?.users?.display_name || 'Next player'} to pick...
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Filter Tabs */}
-              <div className="flex gap-2">
-                <button className="px-4 py-2 bg-burgundy-500 text-white rounded-xl text-sm font-medium shadow-sm">
-                  All
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => setTribeFilter(null)}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-all ${
+                    !tribeFilter
+                      ? 'bg-burgundy-500 text-white'
+                      : 'bg-white text-neutral-600 shadow-card hover:shadow-card-hover'
+                  }`}
+                >
+                  All ({castaways?.filter(c => !draftedCastawayIds.has(c.id)).length || 0})
                 </button>
-                <button className="px-4 py-2 bg-white text-neutral-600 rounded-xl text-sm font-medium shadow-card hover:shadow-card-hover transition-shadow">
-                  Tuku
-                </button>
-                <button className="px-4 py-2 bg-white text-neutral-600 rounded-xl text-sm font-medium shadow-card hover:shadow-card-hover transition-shadow">
-                  Gata
-                </button>
-                <button className="px-4 py-2 bg-white text-neutral-600 rounded-xl text-sm font-medium shadow-card hover:shadow-card-hover transition-shadow">
-                  Lavo
-                </button>
+                {tribes.map(tribe => {
+                  const count = castaways?.filter(c => c.tribe_original === tribe && !draftedCastawayIds.has(c.id)).length || 0;
+                  return (
+                    <button
+                      key={tribe}
+                      onClick={() => setTribeFilter(tribe)}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-all ${
+                        tribeFilter === tribe
+                          ? 'bg-burgundy-500 text-white'
+                          : 'bg-white text-neutral-600 shadow-card hover:shadow-card-hover'
+                      }`}
+                    >
+                      {tribe} ({count})
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Castaway Grid */}
@@ -328,7 +478,12 @@ export function Draft() {
 
               {availableCastaways.length === 0 && (
                 <div className="bg-white rounded-2xl shadow-elevated p-12 text-center">
-                  <p className="text-neutral-500">All castaways have been drafted!</p>
+                  <p className="text-neutral-500">
+                    {tribeFilter
+                      ? `No available castaways from ${tribeFilter}.`
+                      : 'All castaways have been drafted!'
+                    }
+                  </p>
                 </div>
               )}
             </div>
