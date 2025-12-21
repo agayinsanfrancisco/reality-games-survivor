@@ -201,51 +201,51 @@ export function AdminEpisodes() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-gold-500 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 p-4 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Link
             to="/admin/seasons"
-            className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+            className="p-2 bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all border border-cream-200"
           >
-            <ArrowLeft className="h-5 w-5 text-white" />
+            <ArrowLeft className="h-5 w-5 text-neutral-600" />
           </Link>
           <div>
-            <h1 className="text-2xl font-display font-bold text-white flex items-center gap-2">
-              <Tv className="h-6 w-6 text-gold-500" />
+            <h1 className="text-2xl font-display font-bold text-neutral-800 flex items-center gap-2">
+              <Tv className="h-6 w-6 text-burgundy-500" />
               Episodes
             </h1>
-            <p className="text-burgundy-200">Season {season?.number}: {season?.name}</p>
+            <p className="text-neutral-500">Season {season?.number}: {season?.name}</p>
           </div>
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="p-2 bg-gold-500 hover:bg-gold-400 rounded-lg transition-colors"
+          className="p-2 bg-burgundy-500 hover:bg-burgundy-600 rounded-xl transition-colors shadow-card"
         >
-          <Plus className="h-5 w-5 text-burgundy-900" />
+          <Plus className="h-5 w-5 text-white" />
         </button>
       </div>
 
       {/* Quick Generate */}
       {episodes?.length === 0 && (
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 mb-6 text-center">
-          <Tv className="h-12 w-12 text-burgundy-400 mx-auto mb-4" />
-          <h3 className="text-lg font-display font-bold text-white mb-2">No Episodes Yet</h3>
-          <p className="text-burgundy-200 mb-4">
+        <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200 mb-6 text-center">
+          <Tv className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
+          <h3 className="text-lg font-display font-bold text-neutral-800 mb-2">No Episodes Yet</h3>
+          <p className="text-neutral-500 mb-4">
             Generate all 14 episodes based on the premiere date, or add them manually.
           </p>
           <button
             onClick={() => generateEpisodes.mutate()}
             disabled={generateEpisodes.isPending}
-            className="bg-gold-500 hover:bg-gold-400 text-burgundy-900 font-bold px-6 py-2 rounded-lg transition-colors flex items-center gap-2 mx-auto"
+            className="btn btn-primary"
           >
             {generateEpisodes.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -261,83 +261,83 @@ export function AdminEpisodes() {
 
       {/* Create/Edit Form */}
       {showForm && (
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 mb-6">
-          <h3 className="text-lg font-display font-bold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200 mb-6">
+          <h3 className="text-lg font-display font-bold text-neutral-800 mb-4">
             {editingId ? 'Edit Episode' : 'Add Episode'}
           </h3>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <label className="block">
-              <span className="text-burgundy-200 text-sm">Episode Number</span>
+              <span className="text-neutral-500 text-sm">Episode Number</span>
               <input
                 type="number"
                 value={formData.number}
                 onChange={(e) => setFormData({ ...formData, number: e.target.value })}
-                className="w-full bg-burgundy-800 border border-burgundy-600 rounded-lg px-3 py-2 text-white mt-1"
+                className="input mt-1"
               />
             </label>
             <label className="block">
-              <span className="text-burgundy-200 text-sm">Title (Optional)</span>
+              <span className="text-neutral-500 text-sm">Title (Optional)</span>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="Episode Title"
-                className="w-full bg-burgundy-800 border border-burgundy-600 rounded-lg px-3 py-2 text-white mt-1"
+                className="input mt-1"
               />
             </label>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <label className="block">
-              <span className="text-burgundy-200 text-sm">Air Date</span>
+              <span className="text-neutral-500 text-sm">Air Date</span>
               <input
                 type="datetime-local"
                 value={formData.air_date}
                 onChange={(e) => setFormData({ ...formData, air_date: e.target.value })}
-                className="w-full bg-burgundy-800 border border-burgundy-600 rounded-lg px-3 py-2 text-white mt-1"
+                className="input mt-1"
               />
             </label>
             <label className="block">
-              <span className="text-burgundy-200 text-sm">Picks Lock At</span>
+              <span className="text-neutral-500 text-sm">Picks Lock At</span>
               <input
                 type="datetime-local"
                 value={formData.picks_lock_at}
                 onChange={(e) => setFormData({ ...formData, picks_lock_at: e.target.value })}
-                className="w-full bg-burgundy-800 border border-burgundy-600 rounded-lg px-3 py-2 text-white mt-1"
+                className="input mt-1"
               />
             </label>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <label className="block">
-              <span className="text-burgundy-200 text-sm">Results Posted At</span>
+              <span className="text-neutral-500 text-sm">Results Posted At</span>
               <input
                 type="datetime-local"
                 value={formData.results_posted_at}
                 onChange={(e) => setFormData({ ...formData, results_posted_at: e.target.value })}
-                className="w-full bg-burgundy-800 border border-burgundy-600 rounded-lg px-3 py-2 text-white mt-1"
+                className="input mt-1"
               />
             </label>
             <label className="block">
-              <span className="text-burgundy-200 text-sm">Waiver Opens At</span>
+              <span className="text-neutral-500 text-sm">Waiver Opens At</span>
               <input
                 type="datetime-local"
                 value={formData.waiver_opens_at}
                 onChange={(e) => setFormData({ ...formData, waiver_opens_at: e.target.value })}
-                className="w-full bg-burgundy-800 border border-burgundy-600 rounded-lg px-3 py-2 text-white mt-1"
+                className="input mt-1"
               />
             </label>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <label className="block">
-              <span className="text-burgundy-200 text-sm">Waiver Closes At</span>
+              <span className="text-neutral-500 text-sm">Waiver Closes At</span>
               <input
                 type="datetime-local"
                 value={formData.waiver_closes_at}
                 onChange={(e) => setFormData({ ...formData, waiver_closes_at: e.target.value })}
-                className="w-full bg-burgundy-800 border border-burgundy-600 rounded-lg px-3 py-2 text-white mt-1"
+                className="input mt-1"
               />
             </label>
             <label className="flex items-center gap-2 mt-6">
@@ -345,9 +345,9 @@ export function AdminEpisodes() {
                 type="checkbox"
                 checked={formData.is_finale}
                 onChange={(e) => setFormData({ ...formData, is_finale: e.target.checked })}
-                className="w-5 h-5 rounded bg-burgundy-700 border-burgundy-500 text-gold-500"
+                className="w-5 h-5 rounded bg-cream-100 border-cream-300 text-burgundy-500"
               />
-              <span className="text-white">Is Finale</span>
+              <span className="text-neutral-700">Is Finale</span>
             </label>
           </div>
 
@@ -355,7 +355,7 @@ export function AdminEpisodes() {
             <button
               onClick={() => saveEpisode.mutate()}
               disabled={saveEpisode.isPending}
-              className="flex-1 bg-gold-500 hover:bg-gold-400 text-burgundy-900 font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="btn btn-primary flex-1"
             >
               {saveEpisode.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -368,7 +368,7 @@ export function AdminEpisodes() {
             </button>
             <button
               onClick={resetForm}
-              className="px-4 py-2 bg-burgundy-700 hover:bg-burgundy-600 text-white rounded-lg transition-colors"
+              className="btn btn-secondary"
             >
               Cancel
             </button>
@@ -381,30 +381,30 @@ export function AdminEpisodes() {
         {episodes?.map((episode: any) => (
           <div
             key={episode.id}
-            className={`bg-white/5 backdrop-blur-sm rounded-xl p-4 border ${
-              episode.is_scored ? 'border-green-500/30' : 'border-white/10'
+            className={`bg-white rounded-2xl shadow-card p-4 border ${
+              episode.is_scored ? 'border-green-300' : 'border-cream-200'
             }`}
           >
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-burgundy-800 rounded-full flex items-center justify-center">
-                  <span className="text-gold-500 font-bold">{episode.number}</span>
+                <div className="w-10 h-10 bg-cream-100 rounded-full flex items-center justify-center border border-cream-200">
+                  <span className="text-burgundy-500 font-bold">{episode.number}</span>
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-white font-medium">
+                    <h3 className="text-neutral-800 font-medium">
                       {episode.title || `Episode ${episode.number}`}
                     </h3>
                     {episode.is_finale && (
-                      <Star className="h-4 w-4 text-gold-500" />
+                      <Star className="h-4 w-4 text-burgundy-500" />
                     )}
                     {episode.is_scored && (
-                      <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">
+                      <span className="px-2 py-0.5 bg-green-100 text-green-600 text-xs rounded-full">
                         Scored
                       </span>
                     )}
                   </div>
-                  <p className="text-burgundy-200 text-sm">
+                  <p className="text-neutral-500 text-sm">
                     {formatDate(episode.air_date)} at {formatTime(episode.air_date)}
                   </p>
                 </div>
@@ -412,9 +412,9 @@ export function AdminEpisodes() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => startEdit(episode)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 hover:bg-cream-100 rounded-xl transition-colors"
                 >
-                  <Edit2 className="h-4 w-4 text-burgundy-300" />
+                  <Edit2 className="h-4 w-4 text-neutral-500" />
                 </button>
                 <button
                   onClick={() => {
@@ -422,14 +422,14 @@ export function AdminEpisodes() {
                       deleteEpisode.mutate(episode.id);
                     }
                   }}
-                  className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+                  className="p-2 hover:bg-red-50 rounded-xl transition-colors"
                 >
-                  <Trash2 className="h-4 w-4 text-red-400" />
+                  <Trash2 className="h-4 w-4 text-red-500" />
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-xs text-burgundy-300 mb-3">
+            <div className="grid grid-cols-2 gap-2 text-xs text-neutral-500 mb-3">
               <div>Picks Lock: {formatDate(episode.picks_lock_at)} {formatTime(episode.picks_lock_at)}</div>
               <div>Results: {formatDate(episode.results_posted_at)} {formatTime(episode.results_posted_at)}</div>
             </div>
@@ -437,7 +437,7 @@ export function AdminEpisodes() {
             {!episode.is_scored && (
               <Link
                 to={`/admin/episodes/${episode.id}/scoring`}
-                className="block w-full bg-gold-500/20 hover:bg-gold-500/30 text-gold-400 py-2 rounded-lg text-sm font-medium text-center transition-colors"
+                className="block w-full bg-burgundy-50 hover:bg-burgundy-100 text-burgundy-600 py-2 rounded-xl text-sm font-medium text-center transition-colors"
               >
                 Enter Scores
               </Link>

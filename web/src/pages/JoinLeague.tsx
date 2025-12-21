@@ -132,26 +132,26 @@ export default function JoinLeague() {
 
   if (sessionLoading || leagueLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-gold-500 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
       </div>
     );
   }
 
   if (leagueError || !league) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 flex items-center justify-center px-4">
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 max-w-md text-center">
-          <XCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-display font-bold text-white mb-2">
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-elevated p-8 border border-cream-200 max-w-md text-center">
+          <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-display font-bold text-neutral-800 mb-2">
             League Not Found
           </h1>
-          <p className="text-burgundy-200 mb-6">
+          <p className="text-neutral-500 mb-6">
             The invite code "{code}" doesn't match any league. Check the code and try again.
           </p>
           <Link
             to="/dashboard"
-            className="inline-block bg-gold-500 hover:bg-gold-400 text-burgundy-900 font-bold py-2 px-6 rounded-lg transition-colors"
+            className="btn btn-primary inline-block"
           >
             Go to Dashboard
           </Link>
@@ -162,18 +162,18 @@ export default function JoinLeague() {
 
   if (isMember) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 flex items-center justify-center px-4">
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 max-w-md text-center">
-          <CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-display font-bold text-white mb-2">
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-elevated p-8 border border-cream-200 max-w-md text-center">
+          <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-display font-bold text-neutral-800 mb-2">
             Already a Member
           </h1>
-          <p className="text-burgundy-200 mb-6">
+          <p className="text-neutral-500 mb-6">
             You're already a member of {league.name}!
           </p>
           <Link
             to={`/leagues/${league.id}`}
-            className="inline-block bg-gold-500 hover:bg-gold-400 text-burgundy-900 font-bold py-2 px-6 rounded-lg transition-colors"
+            className="btn btn-primary inline-block"
           >
             Go to League
           </Link>
@@ -185,14 +185,14 @@ export default function JoinLeague() {
   const isFull = memberCount !== undefined && memberCount >= league.max_players;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 flex items-center justify-center px-4">
-      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 max-w-md w-full">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center px-4">
+      <div className="bg-white rounded-2xl shadow-elevated p-8 border border-cream-200 max-w-md w-full">
         {/* League Info */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-display font-bold text-white mb-2">
+          <h1 className="text-2xl font-display font-bold text-neutral-800 mb-2">
             {league.name}
           </h1>
-          <p className="text-burgundy-200">
+          <p className="text-neutral-500">
             Season {league.seasons.number}: {league.seasons.name}
           </p>
         </div>
@@ -200,38 +200,38 @@ export default function JoinLeague() {
         {/* Stats */}
         <div className="flex justify-center gap-6 mb-8">
           <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-gold-500">
+            <div className="flex items-center justify-center gap-1 text-burgundy-500">
               <Users className="h-5 w-5" />
               <span className="text-xl font-bold">{memberCount}/{league.max_players}</span>
             </div>
-            <p className="text-burgundy-300 text-sm">Players</p>
+            <p className="text-neutral-500 text-sm">Players</p>
           </div>
 
           {league.require_donation && league.donation_amount && (
             <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-gold-500">
+              <div className="flex items-center justify-center gap-1 text-burgundy-500">
                 <DollarSign className="h-5 w-5" />
                 <span className="text-xl font-bold">{league.donation_amount}</span>
               </div>
-              <p className="text-burgundy-300 text-sm">Entry Fee</p>
+              <p className="text-neutral-500 text-sm">Entry Fee</p>
             </div>
           )}
         </div>
 
         {/* Donation Notes */}
         {league.donation_notes && (
-          <div className="bg-burgundy-800/50 rounded-lg p-4 mb-6">
-            <p className="text-burgundy-200 text-sm">{league.donation_notes}</p>
+          <div className="bg-cream-50 rounded-xl p-4 mb-6 border border-cream-200">
+            <p className="text-neutral-600 text-sm">{league.donation_notes}</p>
           </div>
         )}
 
         {/* Join Form */}
         {isFull ? (
           <div className="text-center">
-            <p className="text-red-400 mb-4">This league is full.</p>
+            <p className="text-red-500 mb-4">This league is full.</p>
             <Link
               to="/dashboard"
-              className="inline-block bg-burgundy-700 hover:bg-burgundy-600 text-white py-2 px-6 rounded-lg transition-colors"
+              className="btn btn-secondary inline-block"
             >
               Back to Dashboard
             </Link>
@@ -246,7 +246,7 @@ export default function JoinLeague() {
           >
             {/* Password field if league has one */}
             <div className="mb-6">
-              <label className="block text-burgundy-200 text-sm mb-2">
+              <label className="block text-neutral-700 text-sm font-medium mb-2">
                 <Lock className="h-4 w-4 inline mr-1" />
                 League Password (if required)
               </label>
@@ -255,20 +255,20 @@ export default function JoinLeague() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="w-full bg-burgundy-800 border border-burgundy-600 rounded-lg px-4 py-3 text-white placeholder-burgundy-400 focus:outline-none focus:border-gold-500"
+                className="input"
               />
             </div>
 
             {error && (
-              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mb-6">
-                <p className="text-red-200 text-sm">{error}</p>
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-6">
+                <p className="text-red-600 text-sm">{error}</p>
               </div>
             )}
 
             <button
               type="submit"
               disabled={joinMutation.isPending}
-              className="w-full bg-gold-500 hover:bg-gold-400 disabled:bg-gold-600 text-burgundy-900 font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="w-full btn btn-primary flex items-center justify-center gap-2"
             >
               {joinMutation.isPending ? (
                 <>

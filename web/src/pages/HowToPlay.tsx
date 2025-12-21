@@ -1,5 +1,6 @@
 import { Trophy, Users, Calendar, Star, Zap, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Navigation } from '@/components/Navigation';
 
 export default function HowToPlay() {
   const steps = [
@@ -44,13 +45,15 @@ export default function HowToPlay() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
+      <Navigation />
+
       {/* Header */}
       <div className="px-6 py-12 text-center">
-        <h1 className="text-4xl font-display font-bold text-white mb-4">
+        <h1 className="text-4xl font-display font-bold text-neutral-800 mb-4">
           How to Play
         </h1>
-        <p className="text-burgundy-200 text-lg max-w-2xl mx-auto">
+        <p className="text-neutral-500 text-lg max-w-2xl mx-auto">
           Fantasy Survivor for people who actually watch Survivor. 100+ rules. Real strategy. No luck required.
         </p>
       </div>
@@ -61,20 +64,20 @@ export default function HowToPlay() {
           {steps.map((step, index) => (
             <div
               key={step.title}
-              className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10"
+              className="bg-white rounded-2xl shadow-card p-6 border border-cream-200"
             >
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-gold-500 rounded-full flex items-center justify-center">
-                  <step.icon className="h-6 w-6 text-burgundy-900" />
+                <div className="flex-shrink-0 w-12 h-12 bg-burgundy-500 rounded-full flex items-center justify-center">
+                  <step.icon className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-gold-500 font-bold text-sm">Step {index + 1}</span>
+                    <span className="text-burgundy-500 font-bold text-sm">Step {index + 1}</span>
                   </div>
-                  <h3 className="text-xl font-display font-bold text-white mb-2">
+                  <h3 className="text-xl font-display font-bold text-neutral-800 mb-2">
                     {step.title}
                   </h3>
-                  <p className="text-burgundy-200">{step.description}</p>
+                  <p className="text-neutral-500">{step.description}</p>
                 </div>
               </div>
             </div>
@@ -84,21 +87,21 @@ export default function HowToPlay() {
 
       {/* Weekly Timeline */}
       <div className="max-w-4xl mx-auto px-6 pb-12">
-        <h2 className="text-2xl font-display font-bold text-white mb-6 text-center">
+        <h2 className="text-2xl font-display font-bold text-neutral-800 mb-6 text-center">
           Weekly Timeline
         </h2>
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+        <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
           <div className="space-y-4">
             {timeline.map((item, index) => (
               <div key={index} className="flex items-center gap-4">
-                <div className="w-32 text-gold-500 font-medium text-sm flex-shrink-0">
+                <div className="w-32 text-burgundy-500 font-medium text-sm flex-shrink-0">
                   {item.day}
                 </div>
                 <div className="flex-1 flex items-center">
-                  <div className="w-3 h-3 bg-gold-500 rounded-full" />
-                  <div className="flex-1 h-px bg-burgundy-600 ml-2" />
+                  <div className="w-3 h-3 bg-burgundy-500 rounded-full" />
+                  <div className="flex-1 h-px bg-cream-300 ml-2" />
                 </div>
-                <div className="flex-1 text-white">{item.event}</div>
+                <div className="flex-1 text-neutral-700">{item.event}</div>
               </div>
             ))}
           </div>
@@ -107,25 +110,25 @@ export default function HowToPlay() {
 
       {/* Key Rules */}
       <div className="max-w-4xl mx-auto px-6 pb-12">
-        <h2 className="text-2xl font-display font-bold text-white mb-6 text-center">
+        <h2 className="text-2xl font-display font-bold text-neutral-800 mb-6 text-center">
           Key Rules
         </h2>
         <div className="grid md:grid-cols-2 gap-4">
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-            <h3 className="text-gold-500 font-bold mb-2">Roster Size</h3>
-            <p className="text-burgundy-200 text-sm">2 castaways per player, drafted via snake format</p>
+          <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200">
+            <h3 className="text-burgundy-500 font-bold mb-2">Roster Size</h3>
+            <p className="text-neutral-500 text-sm">2 castaways per player, drafted via snake format</p>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-            <h3 className="text-gold-500 font-bold mb-2">Weekly Pick</h3>
-            <p className="text-burgundy-200 text-sm">Choose 1 castaway to play each week</p>
+          <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200">
+            <h3 className="text-burgundy-500 font-bold mb-2">Weekly Pick</h3>
+            <p className="text-neutral-500 text-sm">Choose 1 castaway to play each week</p>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-            <h3 className="text-gold-500 font-bold mb-2">Waiver Priority</h3>
-            <p className="text-burgundy-200 text-sm">Inverse standings — last place picks first</p>
+          <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200">
+            <h3 className="text-burgundy-500 font-bold mb-2">Waiver Priority</h3>
+            <p className="text-neutral-500 text-sm">Inverse standings — last place picks first</p>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-            <h3 className="text-gold-500 font-bold mb-2">Auto-Pick</h3>
-            <p className="text-burgundy-200 text-sm">Miss the deadline? System picks your highest-ranked active</p>
+          <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200">
+            <h3 className="text-burgundy-500 font-bold mb-2">Auto-Pick</h3>
+            <p className="text-neutral-500 text-sm">Miss the deadline? System picks your highest-ranked active</p>
           </div>
         </div>
       </div>
@@ -134,13 +137,13 @@ export default function HowToPlay() {
       <div className="max-w-4xl mx-auto px-6 pb-16 text-center">
         <Link
           to="/signup"
-          className="inline-block bg-gold-500 hover:bg-gold-400 text-burgundy-900 font-bold py-3 px-8 rounded-lg transition-colors"
+          className="btn btn-primary text-lg px-8 py-3"
         >
           Join Season 50
         </Link>
-        <p className="mt-4 text-burgundy-300 text-sm">
+        <p className="mt-4 text-neutral-400 text-sm">
           Already have an account?{' '}
-          <Link to="/login" className="text-gold-400 hover:text-gold-300">
+          <Link to="/login" className="text-burgundy-500 hover:text-burgundy-600 font-medium">
             Log in
           </Link>
         </p>

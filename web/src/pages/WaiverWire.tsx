@@ -182,24 +182,24 @@ export default function WaiverWire() {
 
   if (!waiverOpen) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 p-4 pb-24">
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
         <div className="flex items-center gap-3 mb-6">
           <Link
             to={`/leagues/${leagueId}`}
-            className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+            className="p-2 bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all border border-cream-200"
           >
-            <ArrowLeft className="h-5 w-5 text-white" />
+            <ArrowLeft className="h-5 w-5 text-neutral-600" />
           </Link>
           <div>
-            <h1 className="text-2xl font-display font-bold text-white">Waiver Wire</h1>
-            <p className="text-burgundy-200">{league?.name}</p>
+            <h1 className="text-2xl font-display font-bold text-neutral-800">Waiver Wire</h1>
+            <p className="text-neutral-500">{league?.name}</p>
           </div>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 text-center">
-          <Clock className="h-12 w-12 text-burgundy-400 mx-auto mb-4" />
-          <h2 className="text-xl font-display font-bold text-white mb-2">Waiver Window Closed</h2>
-          <p className="text-burgundy-200">
+        <div className="bg-white rounded-2xl shadow-card p-8 border border-cream-200 text-center">
+          <Clock className="h-12 w-12 text-burgundy-500 mx-auto mb-4" />
+          <h2 className="text-xl font-display font-bold text-neutral-800 mb-2">Waiver Window Closed</h2>
+          <p className="text-neutral-500">
             The waiver wire opens Saturday at 12pm PST after results are posted.
           </p>
         </div>
@@ -208,28 +208,28 @@ export default function WaiverWire() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 p-4 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link
           to={`/leagues/${leagueId}`}
-          className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+          className="p-2 bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all border border-cream-200"
         >
-          <ArrowLeft className="h-5 w-5 text-white" />
+          <ArrowLeft className="h-5 w-5 text-neutral-600" />
         </Link>
         <div>
-          <h1 className="text-2xl font-display font-bold text-white">Waiver Wire</h1>
-          <p className="text-burgundy-200">{league?.name}</p>
+          <h1 className="text-2xl font-display font-bold text-neutral-800">Waiver Wire</h1>
+          <p className="text-neutral-500">{league?.name}</p>
         </div>
       </div>
 
       {/* Status Alert */}
       {needsWaiver && (
-        <div className="bg-amber-500/20 border border-amber-500/50 rounded-xl p-4 mb-6 flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-amber-200 font-medium">Replacement Needed</p>
-            <p className="text-amber-200/80 text-sm">
+            <p className="text-amber-800 font-medium">Replacement Needed</p>
+            <p className="text-amber-700 text-sm">
               {myEliminated?.map(r => r.castaways?.name).join(', ')} {myEliminated?.length === 1 ? 'was' : 'were'} eliminated.
               Rank your preferences below.
             </p>
@@ -238,11 +238,11 @@ export default function WaiverWire() {
       )}
 
       {/* Waiver Deadline */}
-      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 mb-6">
+      <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-burgundy-200 text-sm">Waiver closes</p>
-            <p className="text-white font-medium">
+            <p className="text-neutral-500 text-sm">Waiver closes</p>
+            <p className="text-neutral-800 font-medium">
               {currentEpisode?.waiver_closes_at
                 ? new Date(currentEpisode.waiver_closes_at).toLocaleString('en-US', {
                     weekday: 'short',
@@ -255,17 +255,17 @@ export default function WaiverWire() {
             </p>
           </div>
           {existingRankings && (
-            <div className="flex items-center gap-2 text-green-400">
+            <div className="flex items-center gap-2 text-green-600">
               <Check className="h-5 w-5" />
-              <span className="text-sm">Submitted</span>
+              <span className="text-sm font-medium">Submitted</span>
             </div>
           )}
         </div>
       </div>
 
       {/* My Rankings */}
-      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 mb-6">
-        <h2 className="text-lg font-display font-bold text-white mb-4">My Rankings</h2>
+      <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 mb-6">
+        <h2 className="text-lg font-display font-bold text-neutral-800 mb-4">My Rankings</h2>
 
         {rankings.length > 0 ? (
           <div className="space-y-2 mb-4">
@@ -274,30 +274,30 @@ export default function WaiverWire() {
               return (
                 <div
                   key={castawayId}
-                  className="flex items-center gap-3 p-3 bg-burgundy-800/50 rounded-lg"
+                  className="flex items-center gap-3 p-3 bg-cream-50 rounded-xl border border-cream-200"
                 >
-                  <span className="w-6 h-6 bg-gold-500 rounded-full flex items-center justify-center text-burgundy-900 font-bold text-sm">
+                  <span className="w-6 h-6 bg-burgundy-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                     {index + 1}
                   </span>
-                  <span className="flex-1 text-white">{castaway?.name || 'Unknown'}</span>
+                  <span className="flex-1 text-neutral-800 font-medium">{castaway?.name || 'Unknown'}</span>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => moveUp(index)}
                       disabled={index === 0}
-                      className="p-1 hover:bg-white/10 rounded disabled:opacity-30"
+                      className="p-1 hover:bg-cream-200 rounded disabled:opacity-30 transition-colors"
                     >
-                      <ArrowUp className="h-4 w-4 text-burgundy-300" />
+                      <ArrowUp className="h-4 w-4 text-neutral-500" />
                     </button>
                     <button
                       onClick={() => moveDown(index)}
                       disabled={index === rankings.length - 1}
-                      className="p-1 hover:bg-white/10 rounded disabled:opacity-30"
+                      className="p-1 hover:bg-cream-200 rounded disabled:opacity-30 transition-colors"
                     >
-                      <ArrowDown className="h-4 w-4 text-burgundy-300" />
+                      <ArrowDown className="h-4 w-4 text-neutral-500" />
                     </button>
                     <button
                       onClick={() => removeFromRankings(castawayId)}
-                      className="p-1 hover:bg-red-500/20 rounded text-red-400 ml-2"
+                      className="p-1 hover:bg-red-100 rounded text-red-500 ml-2 transition-colors"
                     >
                       &times;
                     </button>
@@ -307,7 +307,7 @@ export default function WaiverWire() {
             })}
           </div>
         ) : (
-          <p className="text-burgundy-300 text-center py-4 mb-4">
+          <p className="text-neutral-500 text-center py-4 mb-4">
             Add castaways from the list below to rank your preferences.
           </p>
         )}
@@ -315,7 +315,7 @@ export default function WaiverWire() {
         <button
           onClick={() => submitRankings.mutate(rankings)}
           disabled={!hasChanges || submitRankings.isPending || rankings.length === 0}
-          className="w-full bg-gold-500 hover:bg-gold-400 disabled:bg-burgundy-600 text-burgundy-900 font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+          className="w-full btn btn-primary flex items-center justify-center gap-2"
         >
           {submitRankings.isPending ? (
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -329,8 +329,8 @@ export default function WaiverWire() {
       </div>
 
       {/* Available Castaways */}
-      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-        <h2 className="text-lg font-display font-bold text-white mb-4">Available Castaways</h2>
+      <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200">
+        <h2 className="text-lg font-display font-bold text-neutral-800 mb-4">Available Castaways</h2>
 
         {availableCastaways && availableCastaways.length > 0 ? (
           <div className="space-y-2">
@@ -339,15 +339,15 @@ export default function WaiverWire() {
               .map((castaway) => (
                 <div
                   key={castaway.id}
-                  className="flex items-center gap-3 p-3 bg-burgundy-800/50 rounded-lg"
+                  className="flex items-center gap-3 p-3 bg-cream-50 rounded-xl border border-cream-200"
                 >
                   <div className="flex-1">
-                    <p className="text-white font-medium">{castaway.name}</p>
-                    <p className="text-burgundy-300 text-sm">{castaway.tribe_original}</p>
+                    <p className="text-neutral-800 font-medium">{castaway.name}</p>
+                    <p className="text-neutral-500 text-sm">{castaway.tribe_original}</p>
                   </div>
                   <button
                     onClick={() => addToRankings(castaway.id)}
-                    className="px-3 py-1 bg-gold-500/20 hover:bg-gold-500/30 text-gold-400 rounded-lg text-sm font-medium transition-colors"
+                    className="px-3 py-1 bg-burgundy-500 hover:bg-burgundy-600 text-white rounded-lg text-sm font-medium transition-colors"
                   >
                     Add
                   </button>
@@ -355,7 +355,7 @@ export default function WaiverWire() {
               ))}
           </div>
         ) : (
-          <p className="text-burgundy-300 text-center py-4">
+          <p className="text-neutral-500 text-center py-4">
             No castaways available on waivers.
           </p>
         )}

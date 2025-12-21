@@ -49,24 +49,24 @@ export default function PublicLeaderboard() {
 
   if (leagueLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-gold-500 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
       </div>
     );
   }
 
   if (error || !league) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center p-4">
         <div className="text-center">
-          <Trophy className="h-16 w-16 text-burgundy-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-display font-bold text-white mb-2">Leaderboard Not Found</h1>
-          <p className="text-burgundy-200 mb-6">
+          <Trophy className="h-16 w-16 text-neutral-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-display font-bold text-neutral-800 mb-2">Leaderboard Not Found</h1>
+          <p className="text-neutral-500 mb-6">
             This league doesn't exist or isn't public.
           </p>
           <Link
             to="/"
-            className="inline-block bg-gold-500 hover:bg-gold-400 text-burgundy-900 font-bold px-6 py-3 rounded-lg transition-colors"
+            className="btn btn-primary inline-block"
           >
             Go Home
           </Link>
@@ -76,20 +76,20 @@ export default function PublicLeaderboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
       {/* Header */}
-      <div className="bg-burgundy-900/80 backdrop-blur-sm border-b border-white/10 sticky top-0 z-10">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-cream-200 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-display font-bold text-white">{league.name}</h1>
-              <p className="text-burgundy-200 text-sm">
+              <h1 className="text-xl font-display font-bold text-neutral-800">{league.name}</h1>
+              <p className="text-neutral-500 text-sm">
                 Season {league.seasons?.number} • {members?.length || 0} players
               </p>
             </div>
             <button
               onClick={shareUrl}
-              className="flex items-center gap-2 px-3 py-2 bg-gold-500/20 hover:bg-gold-500/30 text-gold-500 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-2 bg-burgundy-100 hover:bg-burgundy-200 text-burgundy-600 rounded-xl transition-colors"
             >
               <Share2 className="h-4 w-4" />
               {copied ? 'Copied!' : 'Share'}
@@ -105,66 +105,66 @@ export default function PublicLeaderboard() {
           <div className="flex items-end justify-center gap-2 mb-8 pt-8">
             {/* 2nd Place */}
             <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-gray-400/20 rounded-full flex items-center justify-center mb-2">
+              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-2 border border-gray-300">
                 <span className="text-2xl">🥈</span>
               </div>
-              <p className="text-white font-medium text-sm truncate max-w-20">
+              <p className="text-neutral-800 font-medium text-sm truncate max-w-20">
                 {members[1]?.users?.display_name}
               </p>
-              <p className="text-burgundy-300 text-xs">{members[1]?.total_points || 0} pts</p>
-              <div className="w-20 h-20 bg-gray-400/20 rounded-t-lg mt-2" />
+              <p className="text-neutral-500 text-xs">{members[1]?.total_points || 0} pts</p>
+              <div className="w-20 h-20 bg-gray-200 rounded-t-xl mt-2" />
             </div>
 
             {/* 1st Place */}
             <div className="flex flex-col items-center -mt-8">
-              <Crown className="h-8 w-8 text-gold-500 mb-1" />
-              <div className="w-20 h-20 bg-gold-500/20 rounded-full flex items-center justify-center mb-2 border-2 border-gold-500">
+              <Crown className="h-8 w-8 text-burgundy-500 mb-1" />
+              <div className="w-20 h-20 bg-burgundy-100 rounded-full flex items-center justify-center mb-2 border-2 border-burgundy-500">
                 <span className="text-3xl">🥇</span>
               </div>
-              <p className="text-white font-bold text-sm truncate max-w-24">
+              <p className="text-neutral-800 font-bold text-sm truncate max-w-24">
                 {members[0]?.users?.display_name}
               </p>
-              <p className="text-gold-500 text-xs font-medium">{members[0]?.total_points || 0} pts</p>
-              <div className="w-24 h-28 bg-gold-500/20 rounded-t-lg mt-2" />
+              <p className="text-burgundy-500 text-xs font-medium">{members[0]?.total_points || 0} pts</p>
+              <div className="w-24 h-28 bg-burgundy-100 rounded-t-xl mt-2" />
             </div>
 
             {/* 3rd Place */}
             <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-amber-700/20 rounded-full flex items-center justify-center mb-2">
+              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-2 border border-amber-300">
                 <span className="text-2xl">🥉</span>
               </div>
-              <p className="text-white font-medium text-sm truncate max-w-20">
+              <p className="text-neutral-800 font-medium text-sm truncate max-w-20">
                 {members[2]?.users?.display_name}
               </p>
-              <p className="text-burgundy-300 text-xs">{members[2]?.total_points || 0} pts</p>
-              <div className="w-20 h-16 bg-amber-700/20 rounded-t-lg mt-2" />
+              <p className="text-neutral-500 text-xs">{members[2]?.total_points || 0} pts</p>
+              <div className="w-20 h-16 bg-amber-100 rounded-t-xl mt-2" />
             </div>
           </div>
         )}
 
         {/* Full Standings */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
-          <div className="px-4 py-3 border-b border-white/10">
-            <h2 className="text-lg font-display font-bold text-white flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-gold-500" />
+        <div className="bg-white rounded-2xl shadow-card border border-cream-200">
+          <div className="px-4 py-3 border-b border-cream-200">
+            <h2 className="text-lg font-display font-bold text-neutral-800 flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-burgundy-500" />
               Full Standings
             </h2>
           </div>
 
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-cream-100">
             {members?.map((member: any, index: number) => (
               <div
                 key={member.id}
                 className={`flex items-center gap-3 px-4 py-3 ${
-                  index < 3 ? 'bg-gold-500/5' : ''
+                  index < 3 ? 'bg-burgundy-50' : ''
                 }`}
               >
                 <div className="w-8 h-8 flex items-center justify-center">
                   {index === 0 ? (
-                    <Crown className="h-5 w-5 text-gold-500" />
+                    <Crown className="h-5 w-5 text-burgundy-500" />
                   ) : (
                     <span className={`font-bold ${
-                      index < 3 ? 'text-gold-500' : 'text-burgundy-400'
+                      index < 3 ? 'text-burgundy-500' : 'text-neutral-400'
                     }`}>
                       {index + 1}
                     </span>
@@ -178,19 +178,19 @@ export default function PublicLeaderboard() {
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-8 h-8 bg-burgundy-700 rounded-full flex items-center justify-center">
-                    <Users className="h-4 w-4 text-burgundy-400" />
+                  <div className="w-8 h-8 bg-cream-100 rounded-full flex items-center justify-center border border-cream-200">
+                    <Users className="h-4 w-4 text-neutral-400" />
                   </div>
                 )}
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium truncate">
+                  <p className="text-neutral-800 font-medium truncate">
                     {member.users?.display_name}
                   </p>
                 </div>
 
                 <p className={`font-bold ${
-                  index === 0 ? 'text-gold-500' : 'text-white'
+                  index === 0 ? 'text-burgundy-500' : 'text-neutral-800'
                 }`}>
                   {member.total_points || 0}
                 </p>
@@ -200,21 +200,21 @@ export default function PublicLeaderboard() {
         </div>
 
         {/* Join CTA */}
-        <div className="mt-6 bg-gold-500/10 border border-gold-500/30 rounded-xl p-6 text-center">
-          <h3 className="text-white font-display font-bold mb-2">Join the Competition</h3>
-          <p className="text-burgundy-200 text-sm mb-4">
+        <div className="mt-6 bg-burgundy-50 border border-burgundy-200 rounded-2xl p-6 text-center">
+          <h3 className="text-neutral-800 font-display font-bold mb-2">Join the Competition</h3>
+          <p className="text-neutral-600 text-sm mb-4">
             Create your own league and compete with friends!
           </p>
           <Link
             to="/signup"
-            className="inline-block bg-gold-500 hover:bg-gold-400 text-burgundy-900 font-bold px-6 py-3 rounded-lg transition-colors"
+            className="btn btn-primary inline-block"
           >
             Sign Up Free
           </Link>
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-center text-burgundy-400 text-sm pb-8">
+        <div className="mt-8 text-center text-neutral-500 text-sm pb-8">
           <p>Reality Games Fantasy League</p>
           <p>Season {league.seasons?.number}: {league.seasons?.name}</p>
         </div>

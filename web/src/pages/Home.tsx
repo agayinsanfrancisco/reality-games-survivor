@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
+import { Navigation } from '@/components/Navigation';
 
 // Torch SVG component - extracted/inspired from Survivor torch imagery
 function TorchIcon({ className }: { className?: string }) {
@@ -42,35 +43,7 @@ export function Home() {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-b from-cream-100 to-cream-200 overflow-hidden">
-      {/* Navigation - elevated glass effect */}
-      <nav className="bg-white/70 backdrop-blur-md border-b border-cream-200/50 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="RGFL" className="h-10 w-auto" />
-            </Link>
-            <div className="hidden md:flex items-center gap-8">
-              <Link to="/" className="nav-link-active">Home</Link>
-              <Link to="/how-to-play" className="nav-link">How to Play</Link>
-              <Link to="/rules" className="nav-link">Scoring Rules</Link>
-            </div>
-            <div className="flex items-center gap-4">
-              {user ? (
-                <Link to="/dashboard" className="btn btn-primary shadow-elevated">
-                  Dashboard
-                </Link>
-              ) : (
-                <>
-                  <Link to="/login" className="nav-link">Login</Link>
-                  <Link to="/signup" className="btn btn-primary shadow-elevated">
-                    Sign Up
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navigation />
 
       {/* Hero - fills remaining viewport */}
       <div className="flex-1 flex items-center justify-center relative px-4">

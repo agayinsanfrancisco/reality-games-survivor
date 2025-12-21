@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { AppNav } from '@/components/AppNav';
+import { Navigation } from '@/components/Navigation';
 
 interface Stats {
   users: number;
@@ -183,10 +183,7 @@ export function AdminDashboard() {
   if (profile && profile.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
-        <AppNav
-          userName={profile?.display_name}
-          userInitial={profile?.display_name?.charAt(0).toUpperCase()}
-        />
+        <Navigation />
         <main className="max-w-4xl mx-auto px-4 py-16 text-center">
           <div className="bg-white rounded-2xl shadow-elevated p-12">
             <div className="w-20 h-20 mx-auto mb-6 bg-red-100 rounded-full flex items-center justify-center">
@@ -207,10 +204,7 @@ export function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
-      <AppNav
-        userName={profile?.display_name}
-        userInitial={profile?.display_name?.charAt(0).toUpperCase()}
-      />
+      <Navigation />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

@@ -55,63 +55,63 @@ export default function SeasonCastaways() {
 
   if (seasonLoading || castawaysLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-gold-500 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 p-4 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link
           to="/dashboard"
-          className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+          className="p-2 bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all border border-cream-200"
         >
-          <ArrowLeft className="h-5 w-5 text-white" />
+          <ArrowLeft className="h-5 w-5 text-neutral-600" />
         </Link>
         <div>
-          <h1 className="text-2xl font-display font-bold text-white flex items-center gap-2">
-            <Users className="h-6 w-6 text-gold-500" />
+          <h1 className="text-2xl font-display font-bold text-neutral-800 flex items-center gap-2">
+            <Users className="h-6 w-6 text-burgundy-500" />
             Castaways
           </h1>
-          <p className="text-burgundy-200">Season {season?.number}: {season?.name}</p>
+          <p className="text-neutral-500">Season {season?.number}: {season?.name}</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 text-center">
-          <p className="text-2xl font-bold text-white">{castaways?.length || 0}</p>
-          <p className="text-burgundy-300 text-xs">Total</p>
+        <div className="bg-white rounded-2xl shadow-card p-3 border border-cream-200 text-center">
+          <p className="text-2xl font-bold text-neutral-800">{castaways?.length || 0}</p>
+          <p className="text-neutral-500 text-xs">Total</p>
         </div>
-        <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-green-400">{activeCount}</p>
-          <p className="text-burgundy-300 text-xs">Active</p>
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-3 text-center">
+          <p className="text-2xl font-bold text-green-600">{activeCount}</p>
+          <p className="text-neutral-500 text-xs">Active</p>
         </div>
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-red-400">{eliminatedCount}</p>
-          <p className="text-burgundy-300 text-xs">Eliminated</p>
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-3 text-center">
+          <p className="text-2xl font-bold text-red-600">{eliminatedCount}</p>
+          <p className="text-neutral-500 text-xs">Eliminated</p>
         </div>
       </div>
 
       {/* Search & Filter */}
       <div className="flex gap-2 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-burgundy-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search castaways..."
-            className="w-full bg-burgundy-800 border border-burgundy-600 rounded-lg pl-10 pr-4 py-2 text-white placeholder-burgundy-400 focus:outline-none focus:border-gold-500"
+            className="input pl-10"
           />
         </div>
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value as any)}
-          className="bg-burgundy-800 border border-burgundy-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-500"
+          className="input px-3 py-2 w-32"
         >
           <option value="all">All</option>
           <option value="active">Active</option>
@@ -124,12 +124,12 @@ export default function SeasonCastaways() {
         {filteredCastaways?.map((castaway: any) => (
           <div
             key={castaway.id}
-            className={`bg-white/5 backdrop-blur-sm rounded-xl p-4 border ${
+            className={`bg-white rounded-2xl shadow-card p-4 border ${
               castaway.status === 'eliminated'
-                ? 'border-red-500/30 opacity-75'
+                ? 'border-red-200 opacity-75'
                 : castaway.status === 'winner'
-                ? 'border-gold-500/50'
-                : 'border-white/10'
+                ? 'border-amber-400'
+                : 'border-cream-200'
             }`}
           >
             <div className="flex items-start gap-3">
@@ -142,23 +142,23 @@ export default function SeasonCastaways() {
                   }`}
                 />
               ) : (
-                <div className="w-14 h-14 bg-burgundy-700 rounded-full flex items-center justify-center">
-                  <Users className="h-6 w-6 text-burgundy-400" />
+                <div className="w-14 h-14 bg-cream-100 rounded-full flex items-center justify-center border border-cream-200">
+                  <Users className="h-6 w-6 text-neutral-400" />
                 </div>
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
                   {castaway.status === 'winner' && (
-                    <Trophy className="h-4 w-4 text-gold-500" />
+                    <Trophy className="h-4 w-4 text-amber-500" />
                   )}
                   {castaway.status === 'eliminated' && (
-                    <Skull className="h-4 w-4 text-red-400" />
+                    <Skull className="h-4 w-4 text-red-500" />
                   )}
-                  <h3 className="text-white font-medium truncate">{castaway.name}</h3>
+                  <h3 className="text-neutral-800 font-medium truncate">{castaway.name}</h3>
                 </div>
-                <p className="text-burgundy-300 text-sm">{castaway.tribe_original}</p>
+                <p className="text-neutral-500 text-sm">{castaway.tribe_original}</p>
                 {castaway.age && castaway.hometown && (
-                  <p className="text-burgundy-400 text-xs truncate">
+                  <p className="text-neutral-400 text-xs truncate">
                     {castaway.age}, {castaway.hometown}
                   </p>
                 )}
@@ -166,8 +166,8 @@ export default function SeasonCastaways() {
             </div>
 
             {castaway.status === 'eliminated' && castaway.episodes && (
-              <div className="mt-2 pt-2 border-t border-burgundy-700">
-                <p className="text-red-400 text-xs">
+              <div className="mt-2 pt-2 border-t border-cream-200">
+                <p className="text-red-600 text-xs">
                   Eliminated: Episode {castaway.episodes.number}
                   {castaway.placement && ` • ${castaway.placement}${getOrdinal(castaway.placement)} place`}
                 </p>
@@ -175,8 +175,8 @@ export default function SeasonCastaways() {
             )}
 
             {castaway.status === 'winner' && (
-              <div className="mt-2 pt-2 border-t border-gold-500/30">
-                <p className="text-gold-500 text-xs font-medium">
+              <div className="mt-2 pt-2 border-t border-amber-200">
+                <p className="text-amber-600 text-xs font-medium">
                   Sole Survivor
                 </p>
               </div>
@@ -186,9 +186,9 @@ export default function SeasonCastaways() {
       </div>
 
       {filteredCastaways?.length === 0 && (
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 text-center">
-          <Users className="h-12 w-12 text-burgundy-400 mx-auto mb-4" />
-          <p className="text-burgundy-200">No castaways found.</p>
+        <div className="bg-white rounded-2xl shadow-card p-8 border border-cream-200 text-center">
+          <Users className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
+          <p className="text-neutral-500">No castaways found.</p>
         </div>
       )}
     </div>

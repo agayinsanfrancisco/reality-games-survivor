@@ -55,67 +55,67 @@ export function AdminLeagues() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-gold-500 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 p-4 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link
           to="/admin"
-          className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+          className="p-2 bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all border border-cream-200"
         >
-          <ArrowLeft className="h-5 w-5 text-white" />
+          <ArrowLeft className="h-5 w-5 text-neutral-600" />
         </Link>
         <div>
-          <h1 className="text-2xl font-display font-bold text-white flex items-center gap-2">
-            <Users className="h-6 w-6 text-gold-500" />
+          <h1 className="text-2xl font-display font-bold text-neutral-800 flex items-center gap-2">
+            <Users className="h-6 w-6 text-burgundy-500" />
             All Leagues
           </h1>
-          <p className="text-burgundy-200">{leagues?.length || 0} total leagues</p>
+          <p className="text-neutral-500">{leagues?.length || 0} total leagues</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-2 mb-6">
-        <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10 text-center">
-          <p className="text-xl font-bold text-white">{stats.total}</p>
-          <p className="text-burgundy-300 text-xs">Total</p>
+        <div className="bg-white rounded-2xl shadow-card p-3 border border-cream-200 text-center">
+          <p className="text-xl font-bold text-neutral-800">{stats.total}</p>
+          <p className="text-neutral-500 text-xs">Total</p>
         </div>
-        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 text-center">
-          <p className="text-xl font-bold text-green-400">{stats.active}</p>
-          <p className="text-burgundy-300 text-xs">Active</p>
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-3 text-center">
+          <p className="text-xl font-bold text-green-600">{stats.active}</p>
+          <p className="text-neutral-500 text-xs">Active</p>
         </div>
-        <div className="bg-gold-500/10 border border-gold-500/30 rounded-lg p-3 text-center">
-          <p className="text-xl font-bold text-gold-400">{stats.drafting}</p>
-          <p className="text-burgundy-300 text-xs">Drafting</p>
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-center">
+          <p className="text-xl font-bold text-amber-600">{stats.drafting}</p>
+          <p className="text-neutral-500 text-xs">Drafting</p>
         </div>
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-center">
-          <p className="text-xl font-bold text-blue-400">{stats.paid}</p>
-          <p className="text-burgundy-300 text-xs">Paid</p>
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-center">
+          <p className="text-xl font-bold text-blue-600">{stats.paid}</p>
+          <p className="text-neutral-500 text-xs">Paid</p>
         </div>
       </div>
 
       {/* Search & Filter */}
       <div className="flex gap-2 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-burgundy-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search leagues..."
-            className="w-full bg-burgundy-800 border border-burgundy-600 rounded-lg pl-10 pr-4 py-2 text-white placeholder-burgundy-400 focus:outline-none focus:border-gold-500"
+            className="input pl-10"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-burgundy-800 border border-burgundy-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-gold-500"
+          className="input px-3 py-2 w-36"
         >
           <option value="all">All Status</option>
           <option value="forming">Forming</option>
@@ -130,26 +130,26 @@ export function AdminLeagues() {
         {filteredLeagues?.map((league: any) => (
           <div
             key={league.id}
-            className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10"
+            className="bg-white rounded-2xl shadow-card p-4 border border-cream-200"
           >
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
                 {league.is_global && (
-                  <Globe className="h-4 w-4 text-gold-500" />
+                  <Globe className="h-4 w-4 text-burgundy-500" />
                 )}
-                <h3 className="text-white font-medium">{league.name}</h3>
+                <h3 className="text-neutral-800 font-medium">{league.name}</h3>
               </div>
               <span className={`px-2 py-0.5 rounded-full text-xs ${
-                league.status === 'active' ? 'bg-green-500/20 text-green-400' :
-                league.status === 'drafting' ? 'bg-gold-500/20 text-gold-400' :
-                league.status === 'completed' ? 'bg-burgundy-500/20 text-burgundy-300' :
-                'bg-blue-500/20 text-blue-400'
+                league.status === 'active' ? 'bg-green-100 text-green-600' :
+                league.status === 'drafting' ? 'bg-amber-100 text-amber-600' :
+                league.status === 'completed' ? 'bg-neutral-100 text-neutral-600' :
+                'bg-blue-100 text-blue-600'
               }`}>
                 {league.status}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-sm text-burgundy-300 mb-3">
+            <div className="grid grid-cols-2 gap-2 text-sm text-neutral-500 mb-3">
               <div className="flex items-center gap-1">
                 <Crown className="h-4 w-4" />
                 <span>{league.users?.display_name}</span>
@@ -159,17 +159,17 @@ export function AdminLeagues() {
                 <span>{memberCounts?.[league.id] || 0}/{league.max_players} players</span>
               </div>
               <div>
-                <span className="text-burgundy-400">Code:</span>{' '}
-                <span className="font-mono text-gold-500">{league.code}</span>
+                <span className="text-neutral-400">Code:</span>{' '}
+                <span className="font-mono text-burgundy-500">{league.code}</span>
               </div>
               <div>
-                <span className="text-burgundy-400">Season:</span>{' '}
+                <span className="text-neutral-400">Season:</span>{' '}
                 <span>{league.seasons?.number}</span>
               </div>
             </div>
 
             {league.require_donation && (
-              <div className="flex items-center gap-1 text-sm text-green-400 mb-3">
+              <div className="flex items-center gap-1 text-sm text-green-600 mb-3">
                 <DollarSign className="h-4 w-4" />
                 <span>${league.donation_amount} entry fee</span>
               </div>
@@ -178,13 +178,13 @@ export function AdminLeagues() {
             <div className="flex gap-2">
               <Link
                 to={`/leagues/${league.id}`}
-                className="flex-1 bg-burgundy-700 hover:bg-burgundy-600 text-white py-2 rounded-lg text-sm font-medium text-center transition-colors"
+                className="btn btn-secondary flex-1 text-center"
               >
                 View League
               </Link>
               <Link
                 to={`/leagues/${league.id}/settings`}
-                className="flex-1 bg-gold-500/20 hover:bg-gold-500/30 text-gold-400 py-2 rounded-lg text-sm font-medium text-center transition-colors"
+                className="btn btn-primary flex-1 text-center"
               >
                 Settings
               </Link>
@@ -193,9 +193,9 @@ export function AdminLeagues() {
         ))}
 
         {filteredLeagues?.length === 0 && (
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 text-center">
-            <Users className="h-12 w-12 text-burgundy-400 mx-auto mb-4" />
-            <p className="text-burgundy-200">No leagues found.</p>
+          <div className="bg-white rounded-2xl shadow-card p-8 border border-cream-200 text-center">
+            <Users className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
+            <p className="text-neutral-500">No leagues found.</p>
           </div>
         )}
       </div>

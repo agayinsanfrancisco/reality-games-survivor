@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { AppNav } from '@/components/AppNav';
+import { Navigation } from '@/components/Navigation';
 
 interface Episode {
   id: string;
@@ -234,7 +234,7 @@ export function AdminScoring() {
   if (profile && profile.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
-        <AppNav userName={profile?.display_name} userInitial={profile?.display_name?.charAt(0).toUpperCase()} />
+        <Navigation />
         <main className="max-w-4xl mx-auto px-4 py-16 text-center">
           <div className="bg-white rounded-2xl shadow-elevated p-12">
             <h1 className="text-2xl font-display text-neutral-800 mb-3">Access Denied</h1>
@@ -248,10 +248,7 @@ export function AdminScoring() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
-      <AppNav
-        userName={profile?.display_name}
-        userInitial={profile?.display_name?.charAt(0).toUpperCase()}
-      />
+      <Navigation />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

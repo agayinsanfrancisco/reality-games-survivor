@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/lib/auth';
-import { AppNav } from '@/components/AppNav';
+import { PublicNav } from '@/components/PublicNav';
 
 interface ScoringRule {
   id: string;
@@ -13,11 +12,6 @@ interface ScoringRule {
   points: number;
   category: string | null;
   is_negative: boolean;
-}
-
-interface UserProfile {
-  id: string;
-  display_name: string;
 }
 
 const categoryOrder = [
@@ -32,22 +26,7 @@ const categoryOrder = [
 ];
 
 export function ScoringRules() {
-  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  const { data: profile } = useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, display_name')
-        .eq('id', user!.id)
-        .single();
-      if (error) throw error;
-      return data as UserProfile;
-    },
-    enabled: !!user?.id,
-  });
 
   const { data: rules, isLoading } = useQuery({
     queryKey: ['scoringRules'],
@@ -81,24 +60,13 @@ export function ScoringRules() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
-      <AppNav
-        userName={profile?.display_name}
-        userInitial={profile?.display_name?.charAt(0).toUpperCase()}
-      />
+      <PublicNav />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8 animate-fade-in">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <Link
-                to="/dashboard"
-                className="text-neutral-400 hover:text-neutral-600 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </Link>
               <h1 className="text-2xl font-display text-neutral-800">
                 Scoring Rules
               </h1>

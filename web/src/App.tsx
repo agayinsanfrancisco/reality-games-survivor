@@ -11,7 +11,6 @@ import { Dashboard } from './pages/Dashboard';
 import { Draft } from './pages/Draft';
 import { WeeklyPick } from './pages/WeeklyPick';
 import { Leaderboard } from './pages/Leaderboard';
-import { ScoringRules } from './pages/ScoringRules';
 import { NotFound } from './pages/NotFound';
 import HowToPlay from './pages/HowToPlay';
 import JoinLeague from './pages/JoinLeague';
@@ -82,7 +81,6 @@ export default function App() {
           <Route path="/leagues/:leagueId/invite" element={<InviteLink />} />
           <Route path="/leagues/:leagueId/history" element={<LeagueHistory />} />
           <Route path="/leagues/:leagueId/episodes/:episodeId" element={<EpisodeResults />} />
-          <Route path="/rules" element={<ScoringRules />} />
           <Route path="/profile/payments" element={<PaymentHistory />} />
           <Route path="/profile/notifications" element={<Notifications />} />
           <Route path="/seasons/:seasonId/schedule" element={<SeasonSchedule />} />

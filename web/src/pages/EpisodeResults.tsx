@@ -99,27 +99,27 @@ export default function EpisodeResults() {
 
   if (episodeLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-gold-500 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 p-4 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link
           to={`/leagues/${leagueId}`}
-          className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+          className="p-2 bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all border border-cream-200"
         >
-          <ArrowLeft className="h-5 w-5 text-white" />
+          <ArrowLeft className="h-5 w-5 text-neutral-600" />
         </Link>
         <div>
-          <h1 className="text-2xl font-display font-bold text-white">
+          <h1 className="text-2xl font-display font-bold text-neutral-800">
             Episode {episode?.number} Results
           </h1>
-          <p className="text-burgundy-200">{episode?.title || league?.name}</p>
+          <p className="text-neutral-500">{episode?.title || league?.name}</p>
         </div>
       </div>
 
@@ -127,45 +127,45 @@ export default function EpisodeResults() {
       {myPick && (
         <div className={`rounded-xl p-4 mb-6 ${
           (myPick.points_earned || 0) > 0
-            ? 'bg-green-500/20 border border-green-500/30'
+            ? 'bg-green-50 border border-green-200'
             : (myPick.points_earned || 0) < 0
-            ? 'bg-red-500/20 border border-red-500/30'
-            : 'bg-white/5 border border-white/10'
+            ? 'bg-red-50 border border-red-200'
+            : 'bg-white border border-cream-200'
         }`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-burgundy-200 text-sm">Your Pick</p>
-              <p className="text-white font-bold text-lg">{myPick.castaways?.name}</p>
+              <p className="text-neutral-500 text-sm">Your Pick</p>
+              <p className="text-neutral-800 font-bold text-lg">{myPick.castaways?.name}</p>
             </div>
             <div className="text-right">
               <div className="flex items-center gap-2">
                 {(myPick.points_earned || 0) > 0 ? (
-                  <TrendingUp className="h-5 w-5 text-green-400" />
+                  <TrendingUp className="h-5 w-5 text-green-500" />
                 ) : (myPick.points_earned || 0) < 0 ? (
-                  <TrendingDown className="h-5 w-5 text-red-400" />
+                  <TrendingDown className="h-5 w-5 text-red-500" />
                 ) : (
-                  <Minus className="h-5 w-5 text-burgundy-400" />
+                  <Minus className="h-5 w-5 text-neutral-400" />
                 )}
                 <span className={`text-2xl font-bold ${
                   (myPick.points_earned || 0) > 0
-                    ? 'text-green-400'
+                    ? 'text-green-600'
                     : (myPick.points_earned || 0) < 0
-                    ? 'text-red-400'
-                    : 'text-white'
+                    ? 'text-red-600'
+                    : 'text-neutral-800'
                 }`}>
                   {(myPick.points_earned || 0) > 0 ? '+' : ''}{myPick.points_earned || 0}
                 </span>
               </div>
-              <p className="text-burgundy-300 text-sm">points</p>
+              <p className="text-neutral-500 text-sm">points</p>
             </div>
           </div>
         </div>
       )}
 
       {/* League Picks Leaderboard */}
-      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 mb-6">
-        <h2 className="text-lg font-display font-bold text-white mb-4 flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-gold-500" />
+      <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 mb-6">
+        <h2 className="text-lg font-display font-bold text-neutral-800 mb-4 flex items-center gap-2">
+          <Trophy className="h-5 w-5 text-amber-500" />
           Episode Standings
         </h2>
 
@@ -174,29 +174,29 @@ export default function EpisodeResults() {
             {picks.map((pick: any, index: number) => (
               <div
                 key={pick.id}
-                className={`flex items-center gap-3 p-3 rounded-lg ${
+                className={`flex items-center gap-3 p-3 rounded-xl ${
                   pick.user_id === currentUser?.id
-                    ? 'bg-gold-500/20 border border-gold-500/30'
-                    : 'bg-burgundy-800/50'
+                    ? 'bg-burgundy-50 border border-burgundy-200'
+                    : 'bg-cream-50 border border-cream-200'
                 }`}
               >
                 <div className="w-8 h-8 flex items-center justify-center">
                   {index === 0 ? (
-                    <Trophy className="h-5 w-5 text-gold-500" />
+                    <Trophy className="h-5 w-5 text-amber-500" />
                   ) : (
-                    <span className="text-burgundy-300 font-bold">{index + 1}</span>
+                    <span className="text-neutral-500 font-bold">{index + 1}</span>
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="text-white font-medium">{pick.users?.display_name}</p>
-                  <p className="text-burgundy-300 text-sm">{pick.castaways?.name}</p>
+                  <p className="text-neutral-800 font-medium">{pick.users?.display_name}</p>
+                  <p className="text-neutral-500 text-sm">{pick.castaways?.name}</p>
                 </div>
                 <span className={`font-bold ${
                   (pick.points_earned || 0) > 0
-                    ? 'text-green-400'
+                    ? 'text-green-600'
                     : (pick.points_earned || 0) < 0
-                    ? 'text-red-400'
-                    : 'text-burgundy-300'
+                    ? 'text-red-600'
+                    : 'text-neutral-500'
                 }`}>
                   {(pick.points_earned || 0) > 0 ? '+' : ''}{pick.points_earned || 0}
                 </span>
@@ -204,14 +204,14 @@ export default function EpisodeResults() {
             ))}
           </div>
         ) : (
-          <p className="text-burgundy-300 text-center py-4">No picks for this episode yet.</p>
+          <p className="text-neutral-500 text-center py-4">No picks for this episode yet.</p>
         )}
       </div>
 
       {/* Castaway Scoring Breakdown */}
-      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-        <h2 className="text-lg font-display font-bold text-white mb-4 flex items-center gap-2">
-          <Users className="h-5 w-5 text-gold-500" />
+      <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200">
+        <h2 className="text-lg font-display font-bold text-neutral-800 mb-4 flex items-center gap-2">
+          <Users className="h-5 w-5 text-burgundy-500" />
           Scoring Breakdown
         </h2>
 
@@ -220,7 +220,7 @@ export default function EpisodeResults() {
             {Object.values(scoresByCastaway)
               .sort((a: any, b: any) => b.total - a.total)
               .map((data: any) => (
-                <div key={data.castaway.id} className="bg-burgundy-800/50 rounded-lg p-4">
+                <div key={data.castaway.id} className="bg-cream-50 rounded-xl p-4 border border-cream-200">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       {data.castaway.photo_url ? (
@@ -230,17 +230,17 @@ export default function EpisodeResults() {
                           className="w-10 h-10 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-10 h-10 bg-burgundy-700 rounded-full flex items-center justify-center">
-                          <Users className="h-5 w-5 text-burgundy-400" />
+                        <div className="w-10 h-10 bg-cream-200 rounded-full flex items-center justify-center">
+                          <Users className="h-5 w-5 text-neutral-400" />
                         </div>
                       )}
                       <div>
-                        <p className="text-white font-medium">{data.castaway.name}</p>
-                        <p className="text-burgundy-300 text-sm">{data.castaway.tribe_original}</p>
+                        <p className="text-neutral-800 font-medium">{data.castaway.name}</p>
+                        <p className="text-neutral-500 text-sm">{data.castaway.tribe_original}</p>
                       </div>
                     </div>
                     <span className={`text-xl font-bold ${
-                      data.total > 0 ? 'text-green-400' : data.total < 0 ? 'text-red-400' : 'text-white'
+                      data.total > 0 ? 'text-green-600' : data.total < 0 ? 'text-red-600' : 'text-neutral-800'
                     }`}>
                       {data.total > 0 ? '+' : ''}{data.total}
                     </span>
@@ -249,11 +249,11 @@ export default function EpisodeResults() {
                   <div className="space-y-1">
                     {data.scores.map((score: any) => (
                       <div key={score.id} className="flex items-center justify-between text-sm">
-                        <span className="text-burgundy-200">
+                        <span className="text-neutral-600">
                           {score.scoring_rules?.name}
                           {score.quantity > 1 && ` (x${score.quantity})`}
                         </span>
-                        <span className={score.points >= 0 ? 'text-green-400' : 'text-red-400'}>
+                        <span className={score.points >= 0 ? 'text-green-600' : 'text-red-600'}>
                           {score.points >= 0 ? '+' : ''}{score.points}
                         </span>
                       </div>
@@ -263,7 +263,7 @@ export default function EpisodeResults() {
               ))}
           </div>
         ) : (
-          <p className="text-burgundy-300 text-center py-8">
+          <p className="text-neutral-500 text-center py-8">
             {episode?.is_scored
               ? 'No scores recorded for this episode.'
               : 'Scoring not yet finalized. Check back after Friday at noon!'}

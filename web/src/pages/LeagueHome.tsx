@@ -72,16 +72,16 @@ export default function LeagueHome() {
 
   if (leagueLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-gold-500 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
       </div>
     );
   }
 
   if (!league) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 flex items-center justify-center">
-        <p className="text-white">League not found</p>
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
+        <p className="text-neutral-800">League not found</p>
       </div>
     );
   }
@@ -89,41 +89,41 @@ export default function LeagueHome() {
   const myMembership = members?.find(m => m.user_id === currentUser?.id);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 p-4 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-white">{league.name}</h1>
-        <p className="text-burgundy-200">
+        <h1 className="text-2xl font-display font-bold text-neutral-800">{league.name}</h1>
+        <p className="text-neutral-500">
           Season {league.seasons?.number}: {league.seasons?.name}
         </p>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 text-center">
-          <Trophy className="h-6 w-6 text-gold-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-white">{myMembership?.rank || '-'}</p>
-          <p className="text-burgundy-300 text-sm">Your Rank</p>
+        <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
+          <Trophy className="h-6 w-6 text-burgundy-500 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-neutral-800">{myMembership?.rank || '-'}</p>
+          <p className="text-neutral-500 text-sm">Your Rank</p>
         </div>
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 text-center">
-          <Users className="h-6 w-6 text-gold-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-white">{members?.length || 0}</p>
-          <p className="text-burgundy-300 text-sm">Players</p>
+        <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
+          <Users className="h-6 w-6 text-burgundy-500 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-neutral-800">{members?.length || 0}</p>
+          <p className="text-neutral-500 text-sm">Players</p>
         </div>
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 text-center">
-          <Calendar className="h-6 w-6 text-gold-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-white">{myMembership?.total_points || 0}</p>
-          <p className="text-burgundy-300 text-sm">Points</p>
+        <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
+          <Calendar className="h-6 w-6 text-burgundy-500 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-neutral-800">{myMembership?.total_points || 0}</p>
+          <p className="text-neutral-500 text-sm">Points</p>
         </div>
       </div>
 
       {/* My Team */}
-      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 mb-6">
+      <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-display font-bold text-white">My Team</h2>
+          <h2 className="text-lg font-display font-bold text-neutral-800">My Team</h2>
           <Link
             to={`/leagues/${id}/team`}
-            className="text-gold-500 hover:text-gold-400 text-sm flex items-center gap-1"
+            className="text-burgundy-500 hover:text-burgundy-600 text-sm flex items-center gap-1"
           >
             View All <ArrowRight className="h-4 w-4" />
           </Link>
@@ -134,21 +134,21 @@ export default function LeagueHome() {
             {myRoster.map((roster: any) => (
               <div
                 key={roster.id}
-                className={`p-3 rounded-lg ${
+                className={`p-3 rounded-xl ${
                   roster.castaways?.status === 'eliminated'
-                    ? 'bg-red-500/20 border border-red-500/30'
-                    : 'bg-burgundy-800/50'
+                    ? 'bg-red-50 border border-red-200'
+                    : 'bg-cream-50 border border-cream-200'
                 }`}
               >
-                <p className="text-white font-medium">{roster.castaways?.name}</p>
-                <p className="text-burgundy-300 text-sm capitalize">
+                <p className="text-neutral-800 font-medium">{roster.castaways?.name}</p>
+                <p className="text-neutral-500 text-sm capitalize">
                   {roster.castaways?.status}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-burgundy-300 text-center py-4">
+          <p className="text-neutral-500 text-center py-4">
             Draft hasn't started yet
           </p>
         )}
@@ -158,25 +158,25 @@ export default function LeagueHome() {
       <div className="grid grid-cols-2 gap-3 mb-6">
         <Link
           to={`/leagues/${id}/pick`}
-          className="bg-gold-500 hover:bg-gold-400 text-burgundy-900 font-bold py-4 rounded-xl text-center transition-colors"
+          className="btn btn-primary py-4 text-center"
         >
           Make Pick
         </Link>
         <Link
           to={`/leagues/${id}/draft`}
-          className="bg-burgundy-700 hover:bg-burgundy-600 text-white font-bold py-4 rounded-xl text-center transition-colors"
+          className="btn btn-secondary py-4 text-center"
         >
           Draft Room
         </Link>
       </div>
 
       {/* Standings Preview */}
-      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+      <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-display font-bold text-white">Standings</h2>
+          <h2 className="text-lg font-display font-bold text-neutral-800">Standings</h2>
           <Link
             to={`/leagues/${id}/leaderboard`}
-            className="text-gold-500 hover:text-gold-400 text-sm flex items-center gap-1"
+            className="text-burgundy-500 hover:text-burgundy-600 text-sm flex items-center gap-1"
           >
             Full Leaderboard <ArrowRight className="h-4 w-4" />
           </Link>
@@ -186,23 +186,23 @@ export default function LeagueHome() {
           {members?.slice(0, 5).map((member: any, index: number) => (
             <div
               key={member.id}
-              className={`flex items-center gap-3 p-3 rounded-lg ${
+              className={`flex items-center gap-3 p-3 rounded-xl ${
                 member.user_id === currentUser?.id
-                  ? 'bg-gold-500/20 border border-gold-500/30'
-                  : 'bg-burgundy-800/50'
+                  ? 'bg-burgundy-50 border border-burgundy-200'
+                  : 'bg-cream-50 border border-cream-200'
               }`}
             >
               <div className="w-8 h-8 flex items-center justify-center">
                 {index === 0 ? (
-                  <Crown className="h-5 w-5 text-gold-500" />
+                  <Crown className="h-5 w-5 text-amber-500" />
                 ) : (
-                  <span className="text-burgundy-300 font-bold">{index + 1}</span>
+                  <span className="text-neutral-500 font-bold">{index + 1}</span>
                 )}
               </div>
               <div className="flex-1">
-                <p className="text-white font-medium">{member.users?.display_name}</p>
+                <p className="text-neutral-800 font-medium">{member.users?.display_name}</p>
               </div>
-              <p className="text-gold-500 font-bold">{member.total_points || 0}</p>
+              <p className="text-burgundy-500 font-bold">{member.total_points || 0}</p>
             </div>
           ))}
         </div>

@@ -77,32 +77,32 @@ export function AdminGlobal() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-gold-500 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
       </div>
     );
   }
 
   if (!globalLeague) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 p-4 pb-24">
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
         <div className="flex items-center gap-3 mb-6">
           <Link
             to="/admin"
-            className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+            className="p-2 bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all border border-cream-200"
           >
-            <ArrowLeft className="h-5 w-5 text-white" />
+            <ArrowLeft className="h-5 w-5 text-neutral-600" />
           </Link>
-          <h1 className="text-2xl font-display font-bold text-white">Global League</h1>
+          <h1 className="text-2xl font-display font-bold text-neutral-800">Global League</h1>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 border border-white/10 text-center">
-          <Globe className="h-16 w-16 text-burgundy-400 mx-auto mb-4" />
-          <h2 className="text-xl font-display font-bold text-white mb-2">No Global League Found</h2>
-          <p className="text-burgundy-200 mb-6">
+        <div className="bg-white rounded-2xl shadow-card p-8 border border-cream-200 text-center">
+          <Globe className="h-16 w-16 text-neutral-400 mx-auto mb-4" />
+          <h2 className="text-xl font-display font-bold text-neutral-800 mb-2">No Global League Found</h2>
+          <p className="text-neutral-500 mb-6">
             Create a global league to enable cross-league rankings.
           </p>
-          <button className="bg-gold-500 hover:bg-gold-400 text-burgundy-900 font-bold px-6 py-3 rounded-lg transition-colors">
+          <button className="btn btn-primary">
             Create Global League
           </button>
         </div>
@@ -111,21 +111,21 @@ export function AdminGlobal() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 p-4 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link
           to="/admin"
-          className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+          className="p-2 bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all border border-cream-200"
         >
-          <ArrowLeft className="h-5 w-5 text-white" />
+          <ArrowLeft className="h-5 w-5 text-neutral-600" />
         </Link>
         <div>
-          <h1 className="text-2xl font-display font-bold text-white flex items-center gap-2">
-            <Globe className="h-6 w-6 text-gold-500" />
+          <h1 className="text-2xl font-display font-bold text-neutral-800 flex items-center gap-2">
+            <Globe className="h-6 w-6 text-burgundy-500" />
             Global League
           </h1>
-          <p className="text-burgundy-200">
+          <p className="text-neutral-500">
             Season {globalLeague.seasons?.number}: {globalLeague.seasons?.name}
           </p>
         </div>
@@ -133,52 +133,52 @@ export function AdminGlobal() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-gold-500/10 border border-gold-500/30 rounded-xl p-4">
+        <div className="bg-burgundy-50 border border-burgundy-200 rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Users className="h-5 w-5 text-gold-500" />
-            <span className="text-gold-300 text-sm">Total Players</span>
+            <Users className="h-5 w-5 text-burgundy-500" />
+            <span className="text-burgundy-600 text-sm">Total Players</span>
           </div>
-          <p className="text-3xl font-bold text-white">{stats?.totalPlayers || 0}</p>
+          <p className="text-3xl font-bold text-neutral-800">{stats?.totalPlayers || 0}</p>
         </div>
-        <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="h-5 w-5 text-green-400" />
-            <span className="text-green-300 text-sm">Average Score</span>
+            <TrendingUp className="h-5 w-5 text-green-500" />
+            <span className="text-green-600 text-sm">Average Score</span>
           </div>
-          <p className="text-3xl font-bold text-white">{stats?.averageScore || 0}</p>
+          <p className="text-3xl font-bold text-neutral-800">{stats?.averageScore || 0}</p>
         </div>
       </div>
 
       {/* Top Scorer */}
-      <div className="bg-gradient-to-r from-gold-500/20 to-amber-500/20 border border-gold-500/30 rounded-xl p-4 mb-6">
+      <div className="bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 rounded-2xl p-4 mb-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-gold-500/30 rounded-full flex items-center justify-center">
-            <Crown className="h-8 w-8 text-gold-500" />
+          <div className="w-16 h-16 bg-amber-200 rounded-full flex items-center justify-center">
+            <Crown className="h-8 w-8 text-amber-600" />
           </div>
           <div className="flex-1">
-            <p className="text-gold-300 text-sm">Current Leader</p>
-            <p className="text-2xl font-bold text-white">{stats?.topScorer}</p>
-            <p className="text-gold-400 font-medium">{stats?.topScore} points</p>
+            <p className="text-amber-700 text-sm">Current Leader</p>
+            <p className="text-2xl font-bold text-neutral-800">{stats?.topScorer}</p>
+            <p className="text-amber-600 font-medium">{stats?.topScore} points</p>
           </div>
-          <Star className="h-8 w-8 text-gold-500" />
+          <Star className="h-8 w-8 text-amber-500" />
         </div>
       </div>
 
       {/* Top 100 Standings */}
-      <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
-        <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
-          <h2 className="text-lg font-display font-bold text-white flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-gold-500" />
+      <div className="bg-white rounded-2xl shadow-card border border-cream-200">
+        <div className="px-4 py-3 border-b border-cream-200 flex items-center justify-between">
+          <h2 className="text-lg font-display font-bold text-neutral-800 flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-burgundy-500" />
             Top 100 Global Rankings
           </h2>
         </div>
 
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-cream-100">
           {standings?.map((member: any, index: number) => (
             <div
               key={member.id}
               className={`flex items-center gap-3 px-4 py-3 ${
-                index < 3 ? 'bg-gold-500/5' : ''
+                index < 3 ? 'bg-amber-50' : ''
               }`}
             >
               <div className="w-8 h-8 flex items-center justify-center">
@@ -190,7 +190,7 @@ export function AdminGlobal() {
                   <span className="text-2xl">🥉</span>
                 ) : (
                   <span className={`font-bold ${
-                    index < 10 ? 'text-gold-500' : 'text-burgundy-400'
+                    index < 10 ? 'text-burgundy-500' : 'text-neutral-400'
                   }`}>
                     {index + 1}
                   </span>
@@ -204,20 +204,20 @@ export function AdminGlobal() {
                   className="w-8 h-8 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-8 h-8 bg-burgundy-700 rounded-full flex items-center justify-center">
-                  <Users className="h-4 w-4 text-burgundy-400" />
+                <div className="w-8 h-8 bg-cream-100 rounded-full flex items-center justify-center border border-cream-200">
+                  <Users className="h-4 w-4 text-neutral-400" />
                 </div>
               )}
 
               <div className="flex-1 min-w-0">
-                <p className="text-white font-medium truncate">
+                <p className="text-neutral-800 font-medium truncate">
                   {member.users?.display_name}
                 </p>
               </div>
 
               <p className={`font-bold ${
-                index === 0 ? 'text-gold-500 text-lg' :
-                index < 3 ? 'text-gold-400' : 'text-white'
+                index === 0 ? 'text-amber-600 text-lg' :
+                index < 3 ? 'text-amber-600' : 'text-neutral-800'
               }`}>
                 {member.total_points || 0}
               </p>
@@ -227,31 +227,31 @@ export function AdminGlobal() {
 
         {(!standings || standings.length === 0) && (
           <div className="p-8 text-center">
-            <Medal className="h-12 w-12 text-burgundy-400 mx-auto mb-4" />
-            <p className="text-burgundy-200">No rankings yet. Scoring will begin after the premiere.</p>
+            <Medal className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
+            <p className="text-neutral-500">No rankings yet. Scoring will begin after the premiere.</p>
           </div>
         )}
       </div>
 
       {/* League Info */}
-      <div className="mt-6 bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-        <h3 className="text-white font-medium mb-3">League Details</h3>
+      <div className="mt-6 bg-white rounded-2xl shadow-card p-4 border border-cream-200">
+        <h3 className="text-neutral-800 font-medium mb-3">League Details</h3>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
-            <span className="text-burgundy-400">Code:</span>{' '}
-            <span className="text-white font-mono">{globalLeague.code}</span>
+            <span className="text-neutral-400">Code:</span>{' '}
+            <span className="text-neutral-800 font-mono">{globalLeague.code}</span>
           </div>
           <div>
-            <span className="text-burgundy-400">Status:</span>{' '}
-            <span className="text-white">{globalLeague.status}</span>
+            <span className="text-neutral-400">Status:</span>{' '}
+            <span className="text-neutral-800">{globalLeague.status}</span>
           </div>
           <div>
-            <span className="text-burgundy-400">Created:</span>{' '}
-            <span className="text-white">{new Date(globalLeague.created_at).toLocaleDateString()}</span>
+            <span className="text-neutral-400">Created:</span>{' '}
+            <span className="text-neutral-800">{new Date(globalLeague.created_at).toLocaleDateString()}</span>
           </div>
           <div>
-            <span className="text-burgundy-400">Max Players:</span>{' '}
-            <span className="text-white">{globalLeague.max_players}</span>
+            <span className="text-neutral-400">Max Players:</span>{' '}
+            <span className="text-neutral-800">{globalLeague.max_players}</span>
           </div>
         </div>
       </div>

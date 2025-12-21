@@ -136,26 +136,26 @@ export function AdminJobs() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
-        return <CheckCircle className="h-5 w-5 text-green-400" />;
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'failed':
-        return <XCircle className="h-5 w-5 text-red-400" />;
+        return <XCircle className="h-5 w-5 text-red-500" />;
       case 'running':
-        return <Loader2 className="h-5 w-5 text-gold-400 animate-spin" />;
+        return <Loader2 className="h-5 w-5 text-burgundy-500 animate-spin" />;
       default:
-        return <Clock className="h-5 w-5 text-burgundy-400" />;
+        return <Clock className="h-5 w-5 text-neutral-400" />;
     }
   };
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'success':
-        return 'bg-green-500/20 text-green-400';
+        return 'bg-green-100 text-green-600';
       case 'failed':
-        return 'bg-red-500/20 text-red-400';
+        return 'bg-red-100 text-red-600';
       case 'running':
-        return 'bg-gold-500/20 text-gold-400';
+        return 'bg-burgundy-100 text-burgundy-600';
       default:
-        return 'bg-burgundy-500/20 text-burgundy-300';
+        return 'bg-neutral-100 text-neutral-600';
     }
   };
 
@@ -167,41 +167,41 @@ export function AdminJobs() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-burgundy-900 via-burgundy-800 to-burgundy-900 p-4 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link
           to="/admin"
-          className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+          className="p-2 bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all border border-cream-200"
         >
-          <ArrowLeft className="h-5 w-5 text-white" />
+          <ArrowLeft className="h-5 w-5 text-neutral-600" />
         </Link>
         <div>
-          <h1 className="text-2xl font-display font-bold text-white flex items-center gap-2">
-            <Zap className="h-6 w-6 text-gold-500" />
+          <h1 className="text-2xl font-display font-bold text-neutral-800 flex items-center gap-2">
+            <Zap className="h-6 w-6 text-burgundy-500" />
             System Jobs
           </h1>
-          <p className="text-burgundy-200">{jobs.length} scheduled jobs</p>
+          <p className="text-neutral-500">{jobs.length} scheduled jobs</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-2 mb-6">
-        <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10 text-center">
-          <p className="text-xl font-bold text-white">{stats.total}</p>
-          <p className="text-burgundy-300 text-xs">Total</p>
+        <div className="bg-white rounded-2xl shadow-card p-3 border border-cream-200 text-center">
+          <p className="text-xl font-bold text-neutral-800">{stats.total}</p>
+          <p className="text-neutral-500 text-xs">Total</p>
         </div>
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-center">
-          <p className="text-xl font-bold text-blue-400">{stats.enabled}</p>
-          <p className="text-burgundy-300 text-xs">Enabled</p>
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-center">
+          <p className="text-xl font-bold text-blue-600">{stats.enabled}</p>
+          <p className="text-neutral-500 text-xs">Enabled</p>
         </div>
-        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 text-center">
-          <p className="text-xl font-bold text-green-400">{stats.success}</p>
-          <p className="text-burgundy-300 text-xs">Success</p>
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-3 text-center">
+          <p className="text-xl font-bold text-green-600">{stats.success}</p>
+          <p className="text-neutral-500 text-xs">Success</p>
         </div>
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-center">
-          <p className="text-xl font-bold text-red-400">{stats.failed}</p>
-          <p className="text-burgundy-300 text-xs">Failed</p>
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-3 text-center">
+          <p className="text-xl font-bold text-red-600">{stats.failed}</p>
+          <p className="text-neutral-500 text-xs">Failed</p>
         </div>
       </div>
 
@@ -210,16 +210,16 @@ export function AdminJobs() {
         {jobs.map((job) => (
           <div
             key={job.name}
-            className={`bg-white/5 backdrop-blur-sm rounded-xl p-4 border transition-opacity ${
-              job.enabled ? 'border-white/10' : 'border-white/5 opacity-50'
+            className={`bg-white rounded-2xl shadow-card p-4 border transition-opacity ${
+              job.enabled ? 'border-cream-200' : 'border-cream-100 opacity-50'
             }`}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 {getStatusIcon(runningJob === job.name ? 'running' : job.status)}
                 <div>
-                  <h3 className="text-white font-medium font-mono">{job.name}</h3>
-                  <p className="text-burgundy-300 text-sm">{job.description}</p>
+                  <h3 className="text-neutral-800 font-medium font-mono">{job.name}</h3>
+                  <p className="text-neutral-500 text-sm">{job.description}</p>
                 </div>
               </div>
               <span className={`px-2 py-0.5 rounded-full text-xs ${getStatusBadgeClass(runningJob === job.name ? 'running' : job.status)}`}>
@@ -227,7 +227,7 @@ export function AdminJobs() {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-sm text-burgundy-300 mb-3">
+            <div className="grid grid-cols-2 gap-2 text-sm text-neutral-500 mb-3">
               <div className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
                 <span>{job.schedule}</span>
@@ -251,7 +251,7 @@ export function AdminJobs() {
               <button
                 onClick={() => runJob.mutate(job.name)}
                 disabled={runningJob === job.name || !job.enabled}
-                className="flex-1 bg-gold-500/20 hover:bg-gold-500/30 disabled:bg-burgundy-700 disabled:text-burgundy-400 text-gold-400 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                className="btn btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {runningJob === job.name ? (
                   <>
@@ -267,11 +267,9 @@ export function AdminJobs() {
               </button>
               <button
                 onClick={() => toggleJob(job.name)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  job.enabled
-                    ? 'bg-burgundy-700 hover:bg-burgundy-600 text-white'
-                    : 'bg-green-500/20 hover:bg-green-500/30 text-green-400'
-                }`}
+                className={`btn ${
+                  job.enabled ? 'btn-secondary' : 'bg-green-100 text-green-600 hover:bg-green-200'
+                } px-4`}
               >
                 {job.enabled ? 'Disable' : 'Enable'}
               </button>
@@ -281,12 +279,12 @@ export function AdminJobs() {
       </div>
 
       {/* Info */}
-      <div className="mt-6 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-2xl p-4">
         <div className="flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-200">
+          <AlertCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-blue-800">
             <p className="font-medium mb-1">About System Jobs</p>
-            <p className="text-blue-200/80">
+            <p className="text-blue-600">
               Jobs are scheduled using Supabase pg_cron. Manual runs are useful for testing
               or recovering from failures. All times are in PST.
             </p>

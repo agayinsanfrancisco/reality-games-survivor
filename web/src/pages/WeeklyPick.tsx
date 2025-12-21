@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { AppNav } from '@/components/AppNav';
+import { Navigation } from '@/components/Navigation';
 
 interface Castaway {
   id: string;
@@ -241,10 +241,7 @@ export function WeeklyPick() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
-      <AppNav
-        userName={profile?.display_name}
-        userInitial={profile?.display_name?.charAt(0).toUpperCase()}
-      />
+      <Navigation />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
