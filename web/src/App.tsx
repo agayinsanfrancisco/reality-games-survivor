@@ -8,6 +8,8 @@ import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Dashboard } from './pages/Dashboard';
+import { Draft } from './pages/Draft';
+import { WeeklyPick } from './pages/WeeklyPick';
 import { NotFound } from './pages/NotFound';
 
 export default function App() {
@@ -24,6 +26,9 @@ export default function App() {
           <Route element={<Layout />}>
             <Route path="/dashboard" element={<Dashboard />} />
           </Route>
+          {/* Full-page protected routes (no Layout wrapper) */}
+          <Route path="/leagues/:leagueId/draft" element={<Draft />} />
+          <Route path="/leagues/:leagueId/pick" element={<WeeklyPick />} />
         </Route>
 
         {/* 404 */}
