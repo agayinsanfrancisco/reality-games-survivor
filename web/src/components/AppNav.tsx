@@ -30,22 +30,16 @@ export function AppNav({ userName }: AppNavProps) {
               Home
             </Link>
             <Link
-              to="/draft"
-              className={isActive('/draft') ? 'nav-link-active' : 'nav-link'}
+              to="/rules"
+              className={isActive('/rules') ? 'nav-link-active' : 'nav-link'}
             >
-              Snake Draft
+              Scoring Rules
             </Link>
             <Link
-              to="/picks"
-              className={isActive('/picks') ? 'nav-link-active' : 'nav-link'}
+              to="/how-to-play"
+              className={isActive('/how-to-play') ? 'nav-link-active' : 'nav-link'}
             >
-              Weekly Picks
-            </Link>
-            <Link
-              to="/league"
-              className={isActive('/league') ? 'nav-link-active' : 'nav-link'}
-            >
-              League
+              How to Play
             </Link>
           </div>
 

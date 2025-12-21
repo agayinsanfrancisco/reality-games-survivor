@@ -175,7 +175,7 @@ export default function LeagueHome() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-display font-bold text-white">Standings</h2>
           <Link
-            to="/leaderboard"
+            to={`/leagues/${id}/leaderboard`}
             className="text-gold-500 hover:text-gold-400 text-sm flex items-center gap-1"
           >
             Full Leaderboard <ArrowRight className="h-4 w-4" />

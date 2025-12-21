@@ -65,7 +65,7 @@ export default function App() {
           <Route element={<Layout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/leagues/:leagueId/leaderboard" element={<Leaderboard />} />
           </Route>
           {/* Full-page protected routes (no Layout wrapper) */}
           <Route path="/join/:code" element={<JoinLeague />} />

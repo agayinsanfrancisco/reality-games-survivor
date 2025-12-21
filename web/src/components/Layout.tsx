@@ -18,11 +18,11 @@ export function Layout() {
               <Link to="/dashboard" className="text-neutral-300 hover:text-white transition-colors">
                 Dashboard
               </Link>
-              <Link to="/leagues" className="text-neutral-300 hover:text-white transition-colors">
-                Leagues
+              <Link to="/rules" className="text-neutral-300 hover:text-white transition-colors">
+                Scoring Rules
               </Link>
-              <Link to="/picks" className="text-neutral-300 hover:text-white transition-colors">
-                Picks
+              <Link to="/how-to-play" className="text-neutral-300 hover:text-white transition-colors">
+                How to Play
               </Link>
 
               <div className="flex items-center gap-3 pl-6 border-l border-neutral-700">
