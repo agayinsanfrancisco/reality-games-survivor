@@ -146,7 +146,7 @@ export function Navigation() {
                     : 'text-neutral-600 hover:bg-cream-100'
                 }`}
               >
-                <LayoutDashboard className="h-4 w-4" />
+                <Home className="h-4 w-4" />
                 Dashboard
               </Link>
               <Link
