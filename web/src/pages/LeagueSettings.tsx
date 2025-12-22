@@ -66,7 +66,7 @@ export default function LeagueSettings() {
         .eq('id', leagueId)
         .single();
       if (error) throw error;
-      return data;
+      return data as typeof data & { description?: string; photo_url?: string };
     },
     enabled: !!leagueId,
   });

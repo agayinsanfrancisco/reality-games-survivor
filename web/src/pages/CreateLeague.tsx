@@ -107,7 +107,7 @@ export default function CreateLeague() {
         const { checkout_url } = await checkoutResponse.json();
         // Redirect to Stripe - webhook will add user as member
         window.location.href = checkout_url;
-        return { ...data, redirectingToPayment: true };
+        return { ...data, redirectingToPayment: true } as typeof data & { redirectingToPayment: boolean };
       }
 
       // No donation required - add creator as member immediately
@@ -120,7 +120,7 @@ export default function CreateLeague() {
 
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       // Don't navigate if redirecting to payment
       if (data?.redirectingToPayment) return;
 

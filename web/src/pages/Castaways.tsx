@@ -440,7 +440,7 @@ export default function Castaways() {
                               )}
                             </div>
                             <div className="flex flex-wrap gap-1">
-                              {castaway.previous_seasons.map((season, idx) => (
+                              {castaway.previous_seasons.map((season: string, idx: number) => (
                                 <span
                                   key={idx}
                                   className="text-xs bg-cream-100 text-neutral-600 px-2 py-1 rounded-full"
