@@ -12,6 +12,12 @@ const isMainDomain = () => {
          hostname === 'www.realitygamesfantasyleague.com';
 };
 
+// Check if we're on the shortlink domain - redirect to survivor app
+const isShortlink = () => {
+  const hostname = window.location.hostname;
+  return hostname === 'rgfl.app' || hostname === 'www.rgfl.app';
+};
+
 const SURVIVOR_APP_URL = 'https://survivor.realitygamesfantasyleague.com';
 
 // RGFL Logo with Torch
@@ -265,6 +271,12 @@ function SurvivorHome() {
 }
 
 export function Home() {
+  // Redirect shortlink to survivor app (preserves path)
+  if (isShortlink()) {
+    window.location.href = SURVIVOR_APP_URL + window.location.pathname;
+    return null;
+  }
+
   // Show splash page on main domain, full app on survivor subdomain
   if (isMainDomain()) {
     return <SplashPage />;
