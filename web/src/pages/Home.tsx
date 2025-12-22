@@ -3,6 +3,17 @@ import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
 import { Flame } from 'lucide-react';
 
+// Check if we're on the main domain (splash page) or survivor subdomain (full app)
+const isMainDomain = () => {
+  const hostname = window.location.hostname;
+  // Main domain: realitygamesfantasyleague.com (no subdomain)
+  // Survivor app: survivor.realitygamesfantasyleague.com
+  return hostname === 'realitygamesfantasyleague.com' ||
+         hostname === 'www.realitygamesfantasyleague.com';
+};
+
+const SURVIVOR_APP_URL = 'https://survivor.realitygamesfantasyleague.com';
+
 // RGFL Logo with Torch
 function RGFLLogo({ className }: { className?: string }) {
   return (
@@ -45,15 +56,12 @@ function RGFLLogo({ className }: { className?: string }) {
   );
 }
 
-export function Home() {
-  const { user } = useAuth();
-
+// Splash page for main domain (realitygamesfantasyleague.com)
+function SplashPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream-100 via-cream-50 to-white">
-      <Navigation />
-
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 via-cream-50 to-white flex flex-col">
       {/* Hero Section - Big Logo & Tagline */}
-      <section className="relative overflow-hidden">
+      <section className="flex-1 flex items-center justify-center relative overflow-hidden">
         {/* Background glow */}
         <div className="absolute inset-0 bg-gradient-radial from-orange-100/30 via-transparent to-transparent pointer-events-none" />
 
@@ -95,21 +103,12 @@ export function Home() {
                 100+ scoring rules that reward real strategy. Draft your team, make weekly picks, and compete with friends.
               </p>
 
-              {user ? (
-                <Link
-                  to="/dashboard"
-                  className="inline-block bg-white text-burgundy-600 font-bold text-lg px-10 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
-                >
-                  Go to Dashboard
-                </Link>
-              ) : (
-                <Link
-                  to="/signup"
-                  className="inline-block bg-white text-burgundy-600 font-bold text-lg px-10 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
-                >
-                  Join for Survivor Season 50
-                </Link>
-              )}
+              <a
+                href={SURVIVOR_APP_URL}
+                className="inline-block bg-white text-burgundy-600 font-bold text-lg px-10 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
+              >
+                Join for Survivor Season 50
+              </a>
 
               <p className="text-burgundy-300 text-xs mt-6">
                 Premiere: February 25, 2026
@@ -117,45 +116,127 @@ export function Home() {
             </div>
 
             {/* Secondary links */}
-            {!user && (
-              <div className="mt-8 flex items-center justify-center gap-6 text-sm">
-                <Link
-                  to="/how-to-play"
-                  className="text-neutral-500 hover:text-burgundy-600 transition-colors font-medium"
-                >
-                  How It Works
-                </Link>
-                <span className="text-neutral-300">|</span>
-                <Link
-                  to="/login"
-                  className="text-neutral-500 hover:text-burgundy-600 transition-colors font-medium"
-                >
-                  Already have an account? Log in
-                </Link>
-              </div>
-            )}
+            <div className="mt-8 flex items-center justify-center gap-6 text-sm">
+              <a
+                href={`${SURVIVOR_APP_URL}/how-to-play`}
+                className="text-neutral-500 hover:text-burgundy-600 transition-colors font-medium"
+              >
+                How It Works
+              </a>
+              <span className="text-neutral-300">|</span>
+              <a
+                href={`${SURVIVOR_APP_URL}/login`}
+                className="text-neutral-500 hover:text-burgundy-600 transition-colors font-medium"
+              >
+                Already have an account? Log in
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* What Makes Us Different */}
-      <section className="py-16 lg:py-20 bg-cream-50">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="font-display text-2xl lg:text-3xl text-neutral-800 mb-6">
-            Why Reality Games?
-          </h2>
-          <div className="grid sm:grid-cols-3 gap-8">
+      {/* Footer */}
+      <footer className="py-8 bg-cream-100 border-t border-cream-200">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-neutral-400 text-sm">
+              © 2025 Reality Games Fantasy League. Not affiliated with CBS or Survivor.
+            </p>
+            <div className="flex items-center gap-6 text-sm">
+              <a href={`${SURVIVOR_APP_URL}/contact`} className="text-neutral-500 hover:text-burgundy-600 transition-colors">
+                Contact
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+// Full app home page for survivor subdomain
+function SurvivorHome() {
+  const { user } = useAuth();
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 via-cream-50 to-white">
+      <Navigation />
+
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-radial from-orange-100/30 via-transparent to-transparent pointer-events-none" />
+
+        <div className="max-w-5xl mx-auto px-4 py-16 lg:py-24">
+          <div className="text-center animate-fade-in">
+            {/* Logo */}
+            <div className="flex justify-center mb-6">
+              <RGFLLogo className="h-40 sm:h-48 drop-shadow-xl" />
+            </div>
+
+            {/* Season Title */}
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl text-neutral-800 leading-tight tracking-tight mb-2">
+              SURVIVOR SEASON 50
+            </h1>
+            <p className="text-xl sm:text-2xl text-burgundy-600 font-display mb-6">
+              In the Hands of the Fans
+            </p>
+
+            <p className="text-lg text-neutral-600 max-w-2xl mx-auto leading-relaxed mb-10">
+              100+ scoring rules that reward real strategy. Draft your team, make weekly picks, and compete with friends.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+              {user ? (
+                <Link
+                  to="/dashboard"
+                  className="btn btn-primary text-lg px-10 py-4 shadow-float hover:shadow-elevated-lg transition-all duration-300 hover:-translate-y-0.5"
+                >
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/signup"
+                    className="btn btn-primary text-lg px-10 py-4 shadow-float hover:shadow-elevated-lg transition-all duration-300 hover:-translate-y-0.5"
+                  >
+                    Join Now
+                  </Link>
+                  <Link
+                    to="/how-to-play"
+                    className="btn btn-secondary text-lg px-10 py-4 transition-all duration-300 hover:-translate-y-0.5"
+                  >
+                    How It Works
+                  </Link>
+                </>
+              )}
+            </div>
+
+            <p className="text-sm text-neutral-500">
+              Premiere: February 25, 2026
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-12 bg-cream-50">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-4xl font-display font-bold text-burgundy-600 mb-2">100+</div>
-              <p className="text-neutral-600">Scoring rules that reward real strategy, not luck</p>
+              <div className="text-3xl font-display font-bold text-burgundy-600">100+</div>
+              <p className="text-neutral-600 text-sm mt-1">Scoring Rules</p>
             </div>
             <div>
-              <div className="text-4xl font-display font-bold text-burgundy-600 mb-2">Built</div>
-              <p className="text-neutral-600">By superfans who've watched every season</p>
+              <div className="text-3xl font-display font-bold text-burgundy-600">18</div>
+              <p className="text-neutral-600 text-sm mt-1">Castaways</p>
             </div>
             <div>
-              <div className="text-4xl font-display font-bold text-burgundy-600 mb-2">Free</div>
-              <p className="text-neutral-600">Create private leagues with friends</p>
+              <div className="text-3xl font-display font-bold text-burgundy-600">13</div>
+              <p className="text-neutral-600 text-sm mt-1">Episodes</p>
+            </div>
+            <div>
+              <div className="text-3xl font-display font-bold text-burgundy-600">Free</div>
+              <p className="text-neutral-600 text-sm mt-1">To Play</p>
             </div>
           </div>
         </div>
@@ -181,4 +262,13 @@ export function Home() {
       </footer>
     </div>
   );
+}
+
+export function Home() {
+  // Show splash page on main domain, full app on survivor subdomain
+  if (isMainDomain()) {
+    return <SplashPage />;
+  }
+
+  return <SurvivorHome />;
 }
