@@ -31,38 +31,107 @@ VALUES (
 );
 
 -- ============================================
--- CASTAWAYS (24 legendary players)
+-- CASTAWAYS (24 legendary players with trivia)
 -- ============================================
-INSERT INTO castaways (season_id, name, age, hometown, occupation, tribe_original, status) VALUES
+INSERT INTO castaways (season_id, name, age, hometown, occupation, tribe_original, status, previous_seasons, best_placement, fun_fact) VALUES
 -- Tuku Tribe (Blue)
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Rob Mariano', 48, 'Boston, MA', 'TV Personality', 'Tuku', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Sandra Diaz-Twine', 50, 'Stamford, CT', 'Military Veteran', 'Tuku', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Tony Vlachos', 50, 'Jersey City, NJ', 'Police Officer', 'Tuku', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Cirie Fields', 53, 'Jersey City, NJ', 'Nurse', 'Tuku', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Tyson Apostol', 45, 'Lindon, UT', 'Podcaster', 'Tuku', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Sarah Lacina', 40, 'Marion, IA', 'Police Officer', 'Tuku', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Ben Driebergen', 43, 'Boise, ID', 'Marine Veteran', 'Tuku', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Natalie Anderson', 38, 'Edgewater, NJ', 'Crossfit Trainer', 'Tuku', 'active'),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Rob Mariano', 48, 'Boston, MA', 'TV Personality', 'Tuku', 'active',
+  ARRAY['Marquesas (S4)', 'All-Stars (S8)', 'Heroes vs Villains (S20)', 'Redemption Island (S22)', 'Winners at War (S40)'],
+  1, 'Proposed to Amber on the All-Stars finale, they married and have 4 daughters'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Sandra Diaz-Twine', 50, 'Stamford, CT', 'Military Veteran', 'Tuku', 'active',
+  ARRAY['Pearl Islands (S7)', 'Heroes vs Villains (S20)', 'Game Changers (S34)', 'Island of the Idols (S39)', 'Winners at War (S40)'],
+  1, 'Only player to win Survivor twice, famous for "As long as it ain''t me" strategy'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Tony Vlachos', 50, 'Jersey City, NJ', 'Police Officer', 'Tuku', 'active',
+  ARRAY['Cagayan (S28)', 'Game Changers (S34)', 'Winners at War (S40)'],
+  1, 'Known for building spy shacks/bunkers to eavesdrop on tribemates'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Cirie Fields', 53, 'Jersey City, NJ', 'Nurse', 'Tuku', 'active',
+  ARRAY['Panama (S12)', 'Micronesia (S16)', 'Heroes vs Villains (S20)', 'Game Changers (S34)'],
+  3, 'Started as someone "afraid to get off the couch," became one of the best to never win'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Tyson Apostol', 45, 'Lindon, UT', 'Podcaster', 'Tuku', 'active',
+  ARRAY['Tocantins (S18)', 'Heroes vs Villains (S20)', 'Blood vs Water (S27)', 'Winners at War (S40)'],
+  1, 'Professional cyclist who once voted himself out by mistake in Heroes vs Villains'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Sarah Lacina', 40, 'Marion, IA', 'Police Officer', 'Tuku', 'active',
+  ARRAY['Cagayan (S28)', 'Game Changers (S34)', 'Winners at War (S40)'],
+  1, 'First player to win the Game Changers season playing like a criminal instead of cop'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Ben Driebergen', 43, 'Boise, ID', 'Marine Veteran', 'Tuku', 'active',
+  ARRAY['Heroes vs Healers vs Hustlers (S35)', 'Winners at War (S40)'],
+  1, 'Found 3 idols in his winning season, won fire-making challenge to reach Final 3'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Natalie Anderson', 38, 'Edgewater, NJ', 'Crossfit Trainer', 'Tuku', 'active',
+  ARRAY['San Juan del Sur (S29)', 'Winners at War (S40)'],
+  1, 'Won San Juan del Sur after her twin sister Nadiya was voted out first'),
 
 -- Gata Tribe (Yellow)
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Parvati Shallow', 42, 'Los Angeles, CA', 'TV Host', 'Gata', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Kim Spradlin-Wolfe', 42, 'San Antonio, TX', 'Interior Designer', 'Gata', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Jeremy Collins', 46, 'Foxboro, MA', 'Firefighter', 'Gata', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Michele Fitzgerald', 34, 'Freehold, NJ', 'Social Media Manager', 'Gata', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Wendell Holland', 39, 'Philadelphia, PA', 'Furniture Designer', 'Gata', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Sophie Clarke', 34, 'Willsboro, NY', 'Healthcare Consultant', 'Gata', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Yul Kwon', 49, 'San Mateo, CA', 'Tech Executive', 'Gata', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Denise Stapley', 54, 'Cedar Rapids, IA', 'Therapist', 'Gata', 'active'),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Parvati Shallow', 42, 'Los Angeles, CA', 'TV Host', 'Gata', 'active',
+  ARRAY['Cook Islands (S13)', 'Micronesia (S16)', 'Heroes vs Villains (S20)', 'Winners at War (S40)'],
+  1, 'Pioneered the "Black Widow Brigade" alliance and flirting strategy'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Kim Spradlin-Wolfe', 42, 'San Antonio, TX', 'Interior Designer', 'Gata', 'active',
+  ARRAY['One World (S24)', 'Winners at War (S40)'],
+  1, 'Considered to have played the most dominant winning game ever in One World'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Jeremy Collins', 46, 'Foxboro, MA', 'Firefighter', 'Gata', 'active',
+  ARRAY['San Juan del Sur (S29)', 'Cambodia (S31)', 'Winners at War (S40)'],
+  1, 'Won Cambodia by successfully playing his meat shield strategy'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Michele Fitzgerald', 34, 'Freehold, NJ', 'Social Media Manager', 'Gata', 'active',
+  ARRAY['Kaoh Rong (S32)', 'Winners at War (S40)'],
+  1, 'Won despite not receiving votes at final tribal until the winner reveal'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Wendell Holland', 39, 'Philadelphia, PA', 'Furniture Designer', 'Gata', 'active',
+  ARRAY['Ghost Island (S36)', 'Winners at War (S40)'],
+  1, 'Won Ghost Island in the first ever tie-breaker vote at Final Tribal Council'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Sophie Clarke', 34, 'Willsboro, NY', 'Healthcare Consultant', 'Gata', 'active',
+  ARRAY['South Pacific (S23)', 'Winners at War (S40)'],
+  1, 'Beat Coach in South Pacific by calling out his religious hypocrisy'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Yul Kwon', 49, 'San Mateo, CA', 'Tech Executive', 'Gata', 'active',
+  ARRAY['Cook Islands (S13)', 'Winners at War (S40)'],
+  1, 'Led the famous "Aitu Four" comeback from 4 vs 8 to win Cook Islands'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Denise Stapley', 54, 'Cedar Rapids, IA', 'Therapist', 'Gata', 'active',
+  ARRAY['Philippines (S25)', 'Winners at War (S40)'],
+  1, 'Attended every single tribal council in Philippines and still won'),
 
 -- Lavo Tribe (Red)
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Ethan Zohn', 51, 'Lexington, MA', 'Soccer Coach', 'Lavo', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Tina Wesson', 62, 'Knoxville, TN', 'Personal Trainer', 'Lavo', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Earl Cole', 55, 'Los Angeles, CA', 'Executive Recruiter', 'Lavo', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'JT Thomas', 39, 'Samson, AL', 'Cattle Rancher', 'Lavo', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Vecepia Towery', 58, 'Portland, OR', 'Office Manager', 'Lavo', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Danni Boatwright', 50, 'Tonganoxie, KS', 'Sports Radio Host', 'Lavo', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Adam Klein', 32, 'San Francisco, CA', 'Podcaster', 'Lavo', 'active'),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Nick Wilson', 35, 'Williamsburg, KY', 'Public Defender', 'Lavo', 'active');
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Ethan Zohn', 51, 'Lexington, MA', 'Soccer Coach', 'Lavo', 'active',
+  ARRAY['Africa (S3)', 'All-Stars (S8)', 'Winners at War (S40)'],
+  1, 'Cancer survivor who used his winnings to start Grassroot Soccer charity'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Tina Wesson', 62, 'Knoxville, TN', 'Personal Trainer', 'Lavo', 'active',
+  ARRAY['The Australian Outback (S2)', 'All-Stars (S8)', 'Blood vs Water (S27)'],
+  1, 'First female winner of Survivor, returned with daughter Katie'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Earl Cole', 55, 'Los Angeles, CA', 'Executive Recruiter', 'Lavo', 'active',
+  ARRAY['Fiji (S14)'],
+  1, 'First unanimous winner in Survivor history, never watched the show before playing'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'JT Thomas', 39, 'Samson, AL', 'Cattle Rancher', 'Lavo', 'active',
+  ARRAY['Tocantins (S18)', 'Heroes vs Villains (S20)', 'Game Changers (S34)'],
+  1, 'Won Tocantins with zero votes against him, infamous for giving idol to Russell'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Vecepia Towery', 58, 'Portland, OR', 'Office Manager', 'Lavo', 'active',
+  ARRAY['Marquesas (S4)'],
+  1, 'First African American winner of Survivor, known for her under-the-radar game'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Danni Boatwright', 50, 'Tonganoxie, KS', 'Sports Radio Host', 'Lavo', 'active',
+  ARRAY['Guatemala (S11)', 'Winners at War (S40)'],
+  1, 'Won Guatemala while hiding her strategy from producers by speaking in code'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Adam Klein', 32, 'San Francisco, CA', 'Podcaster', 'Lavo', 'active',
+  ARRAY['Millennials vs Gen X (S33)', 'Winners at War (S40)'],
+  1, 'Dedicated his win to his mother who passed away from lung cancer days after filming'),
+
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Nick Wilson', 35, 'Williamsburg, KY', 'Public Defender', 'Lavo', 'active',
+  ARRAY['David vs Goliath (S37)', 'Winners at War (S40)'],
+  1, 'Named all his alliances after famous duos (Mason-Dixon, Rockstars, etc.)');
 
 -- ============================================
 -- EPISODES (14 episodes for Season 50)

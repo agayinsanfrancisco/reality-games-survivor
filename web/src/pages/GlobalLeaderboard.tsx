@@ -11,8 +11,13 @@ interface PlayerStats {
   totalPoints: number;
   leagueCount: number;
   averagePoints: number;
+  weightedScore: number; // Bayesian weighted average
   hasEliminatedCastaway: boolean;
 }
+
+// Confidence factor for Bayesian weighted average
+// Players need ~3 leagues to have their score weighted at full value
+const CONFIDENCE_FACTOR = 3;
 
 export default function GlobalLeaderboard() {
   const { user } = useAuth();
@@ -80,7 +85,7 @@ export default function GlobalLeaderboard() {
       });
 
       // Convert to array and calculate averages
-      const stats: PlayerStats[] = Array.from(playerMap.entries()).map(([userId, data]) => ({
+      const statsRaw = Array.from(playerMap.entries()).map(([userId, data]) => ({
         userId,
         displayName: data.displayName,
         avatarUrl: data.avatarUrl,
@@ -90,8 +95,24 @@ export default function GlobalLeaderboard() {
         hasEliminatedCastaway: data.hasEliminatedCastaway,
       }));
 
-      // Sort by average points descending
-      return stats.sort((a, b) => b.averagePoints - a.averagePoints);
+      // Calculate global average for Bayesian weighting
+      const totalAllPoints = statsRaw.reduce((sum, p) => sum + p.totalPoints, 0);
+      const totalAllLeagues = statsRaw.reduce((sum, p) => sum + p.leagueCount, 0);
+      const globalAverage = totalAllLeagues > 0 ? totalAllPoints / totalAllLeagues : 0;
+
+      // Apply Bayesian weighted average
+      // Formula: (avg * leagueCount + globalAvg * C) / (leagueCount + C)
+      // This pulls players with few leagues toward the global average
+      const stats: PlayerStats[] = statsRaw.map(p => ({
+        ...p,
+        weightedScore: Math.round(
+          (p.averagePoints * p.leagueCount + globalAverage * CONFIDENCE_FACTOR) /
+          (p.leagueCount + CONFIDENCE_FACTOR)
+        ),
+      }));
+
+      // Sort by weighted score descending
+      return stats.sort((a, b) => b.weightedScore - a.weightedScore);
     },
   });
 
@@ -172,7 +193,7 @@ export default function GlobalLeaderboard() {
             </h1>
           </div>
           <p className="text-neutral-500">
-            Rankings by average points across all leagues
+            Rankings weighted by performance and number of leagues
           </p>
         </div>
 
@@ -186,9 +207,9 @@ export default function GlobalLeaderboard() {
           <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
             <TrendingUp className="h-6 w-6 text-green-500 mx-auto mb-2" />
             <p className="text-2xl font-bold text-neutral-800">
-              {leaderboard && leaderboard.length > 0 ? leaderboard[0].averagePoints : 0}
+              {leaderboard && leaderboard.length > 0 ? leaderboard[0].weightedScore : 0}
             </p>
-            <p className="text-neutral-500 text-sm">Top Avg Points</p>
+            <p className="text-neutral-500 text-sm">Top Score</p>
           </div>
           <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
             <Flame className="h-6 w-6 text-orange-500 mx-auto mb-2" />
@@ -202,7 +223,7 @@ export default function GlobalLeaderboard() {
         {/* Top 3 Podium */}
         {leaderboard && leaderboard.length >= 3 && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold text-neutral-700 mb-4">Top Survivors</h2>
+            <h2 className="text-lg font-semibold text-neutral-700 mb-4">Top Players</h2>
             <div className="grid grid-cols-3 gap-4">
               {/* Second Place */}
               <div className="bg-gradient-to-b from-gray-100 to-gray-50 rounded-2xl p-6 border-2 border-gray-200 text-center mt-8">
@@ -213,8 +234,8 @@ export default function GlobalLeaderboard() {
                   <span className="text-gray-600 font-bold text-lg">2</span>
                 </div>
                 <p className="font-semibold text-neutral-800 truncate">{leaderboard[1].displayName}</p>
-                <p className="text-2xl font-display text-gray-600 mt-1">{leaderboard[1].averagePoints}</p>
-                <p className="text-xs text-neutral-400">avg pts</p>
+                <p className="text-2xl font-display text-gray-600 mt-1">{leaderboard[1].weightedScore}</p>
+                <p className="text-xs text-neutral-400">{leaderboard[1].leagueCount} {leaderboard[1].leagueCount === 1 ? 'league' : 'leagues'}</p>
               </div>
 
               {/* First Place */}
@@ -226,8 +247,8 @@ export default function GlobalLeaderboard() {
                   <Trophy className="h-7 w-7 text-yellow-700" />
                 </div>
                 <p className="font-bold text-neutral-800 truncate">{leaderboard[0].displayName}</p>
-                <p className="text-3xl font-display text-yellow-700 mt-1">{leaderboard[0].averagePoints}</p>
-                <p className="text-xs text-neutral-500">avg pts</p>
+                <p className="text-3xl font-display text-yellow-700 mt-1">{leaderboard[0].weightedScore}</p>
+                <p className="text-xs text-neutral-500">{leaderboard[0].leagueCount} {leaderboard[0].leagueCount === 1 ? 'league' : 'leagues'}</p>
               </div>
 
               {/* Third Place */}
@@ -239,8 +260,8 @@ export default function GlobalLeaderboard() {
                   <span className="text-orange-600 font-bold text-lg">3</span>
                 </div>
                 <p className="font-semibold text-neutral-800 truncate">{leaderboard[2].displayName}</p>
-                <p className="text-2xl font-display text-orange-600 mt-1">{leaderboard[2].averagePoints}</p>
-                <p className="text-xs text-neutral-400">avg pts</p>
+                <p className="text-2xl font-display text-orange-600 mt-1">{leaderboard[2].weightedScore}</p>
+                <p className="text-xs text-neutral-400">{leaderboard[2].leagueCount} {leaderboard[2].leagueCount === 1 ? 'league' : 'leagues'}</p>
               </div>
             </div>
           </div>
@@ -251,7 +272,7 @@ export default function GlobalLeaderboard() {
           <div className="p-5 border-b border-cream-100 flex items-center justify-between">
             <div>
               <h2 className="font-semibold text-neutral-800">All Players</h2>
-              <p className="text-sm text-neutral-500">Ranked by average points across leagues</p>
+              <p className="text-sm text-neutral-500">Ranked by weighted score (more leagues = more accurate ranking)</p>
             </div>
             <div className="flex items-center gap-2 text-sm text-neutral-500">
               <TorchIcon lit={true} /> = Active
@@ -314,12 +335,12 @@ export default function GlobalLeaderboard() {
                       </p>
                     </div>
 
-                    {/* Average Points */}
+                    {/* Weighted Score */}
                     <div className="text-right">
                       <p className={`text-2xl font-display ${rank <= 3 ? rankStyle.text : 'text-neutral-800'}`}>
-                        {player.averagePoints}
+                        {player.weightedScore}
                       </p>
-                      <p className="text-xs text-neutral-400">avg pts</p>
+                      <p className="text-xs text-neutral-400">score</p>
                     </div>
                   </div>
                 );
@@ -348,8 +369,8 @@ export default function GlobalLeaderboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-3xl font-display">{userStats.averagePoints}</p>
-                    <p className="text-burgundy-100 text-sm">avg pts</p>
+                    <p className="text-3xl font-display">{userStats.weightedScore}</p>
+                    <p className="text-burgundy-100 text-sm">score</p>
                   </div>
                 </div>
               </div>

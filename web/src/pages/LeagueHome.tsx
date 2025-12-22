@@ -524,7 +524,7 @@ export default function LeagueHome() {
                           {isYou && <span className="ml-2 text-xs text-burgundy-500">(You)</span>}
                           {member.user_id === league.commissioner_id && (
                             <span className="ml-2 text-xs bg-burgundy-100 text-burgundy-600 px-2 py-0.5 rounded-full">
-                              Commissioner
+                              Creator
                             </span>
                           )}
                         </p>

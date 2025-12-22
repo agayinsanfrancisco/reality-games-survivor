@@ -14,11 +14,11 @@ import { WeeklyPick } from './pages/WeeklyPick';
 import { Leaderboard } from './pages/Leaderboard';
 import { NotFound } from './pages/NotFound';
 import HowToPlay from './pages/HowToPlay';
+import ScoringRules from './pages/ScoringRules';
 import JoinLeague from './pages/JoinLeague';
 import Profile from './pages/Profile';
 import LeagueHome from './pages/LeagueHome';
 import MyTeam from './pages/MyTeam';
-import WaiverWire from './pages/WaiverWire';
 import EpisodeResults from './pages/EpisodeResults';
 import CreateLeague from './pages/CreateLeague';
 import LeagueSettings from './pages/LeagueSettings';
@@ -63,6 +63,8 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/register" element={<Signup />} />
         <Route path="/how-to-play" element={<HowToPlay />} />
+        <Route path="/scoring" element={<ScoringRules />} />
+        <Route path="/scoring-rules" element={<ScoringRules />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/update-password" element={<UpdatePassword />} />
         <Route path="/sms" element={<SMSCommands />} />
@@ -88,7 +90,6 @@ export default function App() {
           <Route path="/leagues/:leagueId/draft/settings" element={<DraftSettings />} />
           <Route path="/leagues/:leagueId/pick" element={<WeeklyPick />} />
           <Route path="/leagues/:leagueId/team" element={<MyTeam />} />
-          <Route path="/leagues/:leagueId/waivers" element={<WaiverWire />} />
           <Route path="/leagues/:leagueId/settings" element={<LeagueSettings />} />
           <Route path="/leagues/:leagueId/invite" element={<InviteLink />} />
           <Route path="/leagues/:leagueId/history" element={<LeagueHistory />} />

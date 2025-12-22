@@ -65,6 +65,10 @@ export default function CreateLeague() {
     mutationFn: async () => {
       if (!currentUser || !activeSeason) throw new Error('Missing data');
 
+      // Get session for API calls
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
       const { data, error } = await supabase
         .from('leagues')
         .insert({
@@ -85,7 +89,28 @@ export default function CreateLeague() {
 
       if (error) throw error;
 
-      // Auto-add creator as member
+      // If donation required, redirect to Stripe checkout (creator pays too)
+      if (requireDonation && parseFloat(donationAmount) > 0) {
+        const checkoutResponse = await fetch(`/api/leagues/${data.id}/join/checkout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (!checkoutResponse.ok) {
+          const checkoutData = await checkoutResponse.json();
+          throw new Error(checkoutData.error || 'Failed to create checkout session');
+        }
+
+        const { checkout_url } = await checkoutResponse.json();
+        // Redirect to Stripe - webhook will add user as member
+        window.location.href = checkout_url;
+        return { ...data, redirectingToPayment: true };
+      }
+
+      // No donation required - add creator as member immediately
       await supabase
         .from('league_members')
         .insert({
@@ -96,6 +121,9 @@ export default function CreateLeague() {
       return data;
     },
     onSuccess: (data) => {
+      // Don't navigate if redirecting to payment
+      if (data?.redirectingToPayment) return;
+
       setCreatedLeague(data);
       // Navigate to league page and show share modal
       navigate(`/leagues/${data.id}`, { state: { showShare: true } });
@@ -344,7 +372,12 @@ export default function CreateLeague() {
             {createLeague.isPending ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Creating...
+                {requireDonation ? 'Redirecting to payment...' : 'Creating...'}
+              </>
+            ) : requireDonation && donationAmount ? (
+              <>
+                <Heart className="h-5 w-5" />
+                Create & Pay ${donationAmount}
               </>
             ) : (
               <>

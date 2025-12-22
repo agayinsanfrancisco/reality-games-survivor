@@ -3,8 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Settings, Users, DollarSign, Lock, Copy, Check, Loader2,
-  Trash2, Shuffle, Crown, Globe, Eye, EyeOff, UserMinus, ArrowRightLeft,
-  X, AlertTriangle
+  Trash2, Crown, Globe, Eye, EyeOff, UserMinus, ArrowRightLeft,
+  X, AlertTriangle, FileText, ImageIcon, Upload
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Navigation } from '@/components/Navigation';
@@ -16,14 +16,15 @@ export default function LeagueSettings() {
 
   // Form state
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
   const [password, setPassword] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [maxPlayers, setMaxPlayers] = useState(12);
   const [requireDonation, setRequireDonation] = useState(false);
   const [donationAmount, setDonationAmount] = useState('');
-  const [donationNotes, setDonationNotes] = useState('');
-  const [payoutMethod, setPayoutMethod] = useState('');
   const [copied, setCopied] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Transfer ownership modal
   const [showTransferModal, setShowTransferModal] = useState(false);
@@ -90,12 +91,12 @@ export default function LeagueSettings() {
   useEffect(() => {
     if (league) {
       setName(league.name || '');
+      setDescription(league.description || '');
+      setPhotoUrl(league.photo_url || '');
       setIsPublic(league.is_public || false);
       setMaxPlayers(league.max_players || 12);
       setRequireDonation(league.require_donation || false);
       setDonationAmount(league.donation_amount?.toString() || '');
-      setDonationNotes(league.donation_notes || '');
-      setPayoutMethod(league.payout_method || '');
     }
   }, [league]);
 
@@ -108,18 +109,25 @@ export default function LeagueSettings() {
   const updateLeague = useMutation({
     mutationFn: async () => {
       if (!leagueId) throw new Error('No league ID');
+
+      // Creators can only update description and photo after league creation
+      // Admins can update everything
       const updates: any = {
-        name,
-        is_public: isPublic,
-        max_players: maxPlayers,
-        require_donation: requireDonation,
-        donation_amount: requireDonation ? parseFloat(donationAmount) : null,
-        donation_notes: requireDonation ? donationNotes : null,
-        payout_method: payoutMethod || null,
+        description,
+        photo_url: photoUrl || null,
       };
 
-      if (password) {
-        updates.password_hash = password;
+      // Only admins can modify these settings after league is created
+      if (isAdmin) {
+        updates.name = name;
+        updates.is_public = isPublic;
+        updates.max_players = maxPlayers;
+        updates.require_donation = requireDonation;
+        updates.donation_amount = requireDonation ? parseFloat(donationAmount) : null;
+
+        if (password) {
+          updates.password_hash = password;
+        }
       }
 
       const { error } = await supabase
@@ -134,36 +142,34 @@ export default function LeagueSettings() {
     },
   });
 
-  // Randomize draft order mutation
-  const randomizeDraftOrder = useMutation({
-    mutationFn: async () => {
-      if (!leagueId || !members) throw new Error('Missing data');
+  // Handle photo upload
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !leagueId) return;
 
-      const shuffled = [...members].sort(() => Math.random() - 0.5);
-      const updates = shuffled.map((member, index) => ({
-        id: member.id,
-        draft_position: index + 1,
-      }));
+    setUploadingPhoto(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${leagueId}.${fileExt}`;
+      const filePath = `league-photos/${fileName}`;
 
-      for (const update of updates) {
-        const { error } = await supabase
-          .from('league_members')
-          .update({ draft_position: update.draft_position })
-          .eq('id', update.id);
-        if (error) throw error;
-      }
+      const { error: uploadError } = await supabase.storage
+        .from('public')
+        .upload(filePath, file, { upsert: true });
 
-      // Update league draft_order
-      const draftOrder = shuffled.map(m => m.user_id);
-      await supabase
-        .from('leagues')
-        .update({ draft_order: draftOrder })
-        .eq('id', leagueId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['league-members', leagueId] });
-    },
-  });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('public')
+        .getPublicUrl(filePath);
+
+      setPhotoUrl(publicUrl);
+    } catch (error) {
+      console.error('Upload error:', error);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   // Remove member mutation
   const removeMember = useMutation({
@@ -260,7 +266,7 @@ export default function LeagueSettings() {
         <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
           <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
             <h1 className="text-xl font-display font-bold text-neutral-800 mb-2">Access Denied</h1>
-            <p className="text-neutral-500 mb-4">Only the league commissioner or admin can access settings.</p>
+            <p className="text-neutral-500 mb-4">Only the league creator or admin can access settings.</p>
             <Link
               to={`/leagues/${leagueId}`}
               className="text-burgundy-500 hover:text-burgundy-600"
@@ -296,7 +302,7 @@ export default function LeagueSettings() {
             {league?.name}
             <span className="inline-flex items-center gap-1 bg-burgundy-100 text-burgundy-600 text-xs px-2 py-0.5 rounded-full">
               <Crown className="h-3 w-3" />
-              {isCommissioner ? 'Commissioner' : 'Admin'}
+              {isCommissioner ? 'Creator' : 'Admin'}
             </span>
           </p>
         </div>
@@ -323,137 +329,188 @@ export default function LeagueSettings() {
           </div>
         </div>
 
-        {/* League Info */}
-        <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
-          <label className="block mb-4">
-            <span className="text-neutral-800 font-medium flex items-center gap-2 mb-2">
-              <Users className="h-5 w-5 text-burgundy-500" />
-              League Name
-            </span>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="input"
-            />
-          </label>
-
-          <label className="block">
-            <span className="text-neutral-800 font-medium flex items-center gap-2 mb-2">
-              <Lock className="h-5 w-5 text-burgundy-500" />
-              New Password
-            </span>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Leave blank to keep current"
-              className="input"
-            />
-          </label>
-        </div>
-
-        {/* Visibility & Access */}
+        {/* League Photo & Description (Always Editable) */}
         <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
           <h3 className="text-neutral-800 font-medium mb-4 flex items-center gap-2">
-            <Globe className="h-5 w-5 text-burgundy-500" />
-            Visibility & Access
+            <ImageIcon className="h-5 w-5 text-burgundy-500" />
+            League Branding
           </h3>
 
-          <label className="flex items-center justify-between cursor-pointer mb-4 p-3 bg-cream-50 rounded-xl border border-cream-200">
-            <div className="flex items-center gap-3">
-              {isPublic ? (
-                <Eye className="h-5 w-5 text-burgundy-500" />
+          {/* Photo Upload */}
+          <div className="mb-6">
+            <span className="text-neutral-500 text-sm mb-2 block">League Photo</span>
+            <div className="flex items-center gap-4">
+              {photoUrl ? (
+                <img
+                  src={photoUrl}
+                  alt="League"
+                  className="w-20 h-20 rounded-xl object-cover border-2 border-cream-200"
+                />
               ) : (
-                <EyeOff className="h-5 w-5 text-neutral-400" />
+                <div className="w-20 h-20 rounded-xl bg-cream-100 border-2 border-dashed border-cream-300 flex items-center justify-center">
+                  <ImageIcon className="h-8 w-8 text-neutral-300" />
+                </div>
               )}
-              <div>
-                <span className="text-neutral-800 font-medium block">Public League</span>
-                <span className="text-neutral-500 text-sm">Anyone can view standings</span>
-              </div>
+              <label className="flex-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                  disabled={uploadingPhoto}
+                />
+                <div className="flex items-center justify-center gap-2 bg-cream-100 hover:bg-cream-200 border border-cream-200 rounded-xl py-3 px-4 cursor-pointer transition-colors">
+                  {uploadingPhoto ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-neutral-500" />
+                  ) : (
+                    <Upload className="h-5 w-5 text-neutral-500" />
+                  )}
+                  <span className="text-neutral-600 text-sm font-medium">
+                    {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
+                  </span>
+                </div>
+              </label>
             </div>
-            <input
-              type="checkbox"
-              checked={isPublic}
-              onChange={(e) => setIsPublic(e.target.checked)}
-              className="w-5 h-5 rounded bg-cream-100 border-cream-300 text-burgundy-500 focus:ring-burgundy-500"
-            />
-          </label>
+          </div>
 
+          {/* Description */}
           <label className="block">
-            <span className="text-neutral-500 text-sm mb-2 block">Max Players</span>
-            <select
-              value={maxPlayers}
-              onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
-              disabled={(members?.length || 0) > 0 && league?.draft_status !== 'pending'}
-              className="input disabled:opacity-50"
-            >
-              {[4, 6, 8, 10, 12, 16, 20, 24].map(n => (
-                <option key={n} value={n} disabled={n < (members?.length || 0)}>
-                  {n} players
-                </option>
-              ))}
-            </select>
-            {(members?.length || 0) > 0 && (
-              <p className="text-neutral-400 text-xs mt-1">
-                Currently {members?.length} of {maxPlayers} players
-              </p>
-            )}
-          </label>
-        </div>
-
-        {/* Donation Settings */}
-        <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
-          <label className="flex items-center justify-between cursor-pointer mb-4">
-            <div className="flex items-center gap-3">
-              <DollarSign className="h-5 w-5 text-burgundy-500" />
-              <span className="text-neutral-800 font-medium">Require Donation</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={requireDonation}
-              onChange={(e) => setRequireDonation(e.target.checked)}
-              disabled={league?.draft_status !== 'pending'}
-              className="w-5 h-5 rounded bg-cream-100 border-cream-300 text-burgundy-500 focus:ring-burgundy-500 disabled:opacity-50"
+            <span className="text-neutral-800 font-medium flex items-center gap-2 mb-2">
+              <FileText className="h-5 w-5 text-burgundy-500" />
+              Description
+            </span>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Tell members what your league is about..."
+              className="input min-h-[100px] resize-none"
+              maxLength={500}
             />
+            <p className="text-neutral-400 text-xs mt-1 text-right">{description.length}/500</p>
           </label>
-
-          {requireDonation && (
-            <div className="space-y-4 pt-4 border-t border-cream-200">
-              <label className="block">
-                <span className="text-neutral-500 text-sm mb-2 block">Amount ($)</span>
-                <input
-                  type="number"
-                  value={donationAmount}
-                  onChange={(e) => setDonationAmount(e.target.value)}
-                  disabled={league?.draft_status !== 'pending'}
-                  className="input disabled:opacity-50"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-neutral-500 text-sm mb-2 block">Distribution Notes</span>
-                <textarea
-                  value={donationNotes}
-                  onChange={(e) => setDonationNotes(e.target.value)}
-                  rows={2}
-                  className="input resize-none"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-neutral-500 text-sm mb-2 block">Payout Method (Venmo, PayPal, etc.)</span>
-                <input
-                  type="text"
-                  value={payoutMethod}
-                  onChange={(e) => setPayoutMethod(e.target.value)}
-                  placeholder="@venmo-username"
-                  className="input"
-                />
-              </label>
-            </div>
-          )}
         </div>
+
+        {/* Admin-Only Settings */}
+        {isAdmin && (
+          <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
+              <p className="text-amber-700 text-sm font-medium">Admin-only settings</p>
+            </div>
+
+            <label className="block mb-4">
+              <span className="text-neutral-800 font-medium flex items-center gap-2 mb-2">
+                <Users className="h-5 w-5 text-burgundy-500" />
+                League Name
+              </span>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="input"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-neutral-800 font-medium flex items-center gap-2 mb-2">
+                <Lock className="h-5 w-5 text-burgundy-500" />
+                New Password
+              </span>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Leave blank to keep current"
+                className="input"
+              />
+            </label>
+          </div>
+        )}
+
+        {/* Visibility & Access - Admin Only */}
+        {isAdmin && (
+          <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
+            <h3 className="text-neutral-800 font-medium mb-4 flex items-center gap-2">
+              <Globe className="h-5 w-5 text-burgundy-500" />
+              Visibility & Access
+            </h3>
+
+            <label className="flex items-center justify-between cursor-pointer mb-4 p-3 bg-cream-50 rounded-xl border border-cream-200">
+              <div className="flex items-center gap-3">
+                {isPublic ? (
+                  <Eye className="h-5 w-5 text-burgundy-500" />
+                ) : (
+                  <EyeOff className="h-5 w-5 text-neutral-400" />
+                )}
+                <div>
+                  <span className="text-neutral-800 font-medium block">Public League</span>
+                  <span className="text-neutral-500 text-sm">Anyone can view standings</span>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={isPublic}
+                onChange={(e) => setIsPublic(e.target.checked)}
+                className="w-5 h-5 rounded bg-cream-100 border-cream-300 text-burgundy-500 focus:ring-burgundy-500"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-neutral-500 text-sm mb-2 block">Max Players</span>
+              <select
+                value={maxPlayers}
+                onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
+                disabled={(members?.length || 0) > 0 && league?.draft_status !== 'pending'}
+                className="input disabled:opacity-50"
+              >
+                {[4, 6, 8, 10, 12, 16, 20, 24].map(n => (
+                  <option key={n} value={n} disabled={n < (members?.length || 0)}>
+                    {n} players
+                  </option>
+                ))}
+              </select>
+              {(members?.length || 0) > 0 && (
+                <p className="text-neutral-400 text-xs mt-1">
+                  Currently {members?.length} of {maxPlayers} players
+                </p>
+              )}
+            </label>
+          </div>
+        )}
+
+        {/* Donation Settings - Admin Only */}
+        {isAdmin && (
+          <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
+            <label className="flex items-center justify-between cursor-pointer mb-4">
+              <div className="flex items-center gap-3">
+                <DollarSign className="h-5 w-5 text-burgundy-500" />
+                <span className="text-neutral-800 font-medium">Require Donation</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={requireDonation}
+                onChange={(e) => setRequireDonation(e.target.checked)}
+                disabled={league?.draft_status !== 'pending'}
+                className="w-5 h-5 rounded bg-cream-100 border-cream-300 text-burgundy-500 focus:ring-burgundy-500 disabled:opacity-50"
+              />
+            </label>
+
+            {requireDonation && (
+              <div className="space-y-4 pt-4 border-t border-cream-200">
+                <label className="block">
+                  <span className="text-neutral-500 text-sm mb-2 block">Amount ($)</span>
+                  <input
+                    type="number"
+                    value={donationAmount}
+                    onChange={(e) => setDonationAmount(e.target.value)}
+                    disabled={league?.draft_status !== 'pending'}
+                    className="input disabled:opacity-50"
+                  />
+                </label>
+
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Member Management */}
         <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
@@ -471,11 +528,6 @@ export default function LeagueSettings() {
                   className="flex items-center justify-between p-3 bg-cream-50 rounded-xl border border-cream-200"
                 >
                   <div className="flex items-center gap-3">
-                    {league?.draft_status === 'pending' && member.draft_position && (
-                      <span className="w-6 h-6 bg-burgundy-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                        {member.draft_position}
-                      </span>
-                    )}
                     <span className="text-neutral-800">{member.users?.display_name}</span>
                     {isYou && (
                       <span className="inline-flex items-center gap-1 bg-burgundy-100 text-burgundy-600 text-xs px-2 py-0.5 rounded-full">
@@ -508,30 +560,6 @@ export default function LeagueSettings() {
           )}
         </div>
 
-        {/* Draft Order (only if draft pending) */}
-        {league?.draft_status === 'pending' && (
-          <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-neutral-800 font-medium">Draft Order</h3>
-              <button
-                onClick={() => randomizeDraftOrder.mutate()}
-                disabled={randomizeDraftOrder.isPending}
-                className="flex items-center gap-2 text-burgundy-500 hover:text-burgundy-600 text-sm"
-              >
-                {randomizeDraftOrder.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Shuffle className="h-4 w-4" />
-                )}
-                Randomize
-              </button>
-            </div>
-            <p className="text-neutral-500 text-sm">
-              Draft positions are shown in the Members section above. Use "Randomize" to shuffle the order.
-            </p>
-          </div>
-        )}
-
         {/* Save Button */}
         <button
           onClick={() => updateLeague.mutate()}
@@ -557,7 +585,7 @@ export default function LeagueSettings() {
               Transfer Ownership
             </h3>
             <p className="text-amber-600 text-sm mb-4">
-              Transfer commissioner role to another member. You will lose all commissioner privileges.
+              Transfer ownership to another member. You will lose all creator privileges.
             </p>
             <button
               onClick={() => setShowTransferModal(true)}
@@ -614,7 +642,7 @@ export default function LeagueSettings() {
             </div>
 
             <p className="text-neutral-500 text-sm mb-4">
-              Select a member to become the new commissioner. This action cannot be undone.
+              Select a member to become the new league creator. This action cannot be undone.
             </p>
 
             <div className="space-y-2 mb-6 max-h-48 overflow-y-auto">
@@ -652,7 +680,7 @@ export default function LeagueSettings() {
               </button>
               <button
                 onClick={() => {
-                  if (transferTargetId && confirm('Are you sure? You will lose commissioner privileges.')) {
+                  if (transferTargetId && confirm('Are you sure? You will lose creator privileges.')) {
                     transferOwnership.mutate(transferTargetId);
                   }
                 }}

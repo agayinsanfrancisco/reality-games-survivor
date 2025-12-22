@@ -181,7 +181,7 @@ export default function DraftSettings() {
         <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-display font-bold text-neutral-800 mb-2">Access Denied</h2>
-          <p className="text-neutral-600">Only the league commissioner can manage draft settings.</p>
+          <p className="text-neutral-600">Only the league creator can manage draft settings.</p>
         </div>
       </div>
       </>

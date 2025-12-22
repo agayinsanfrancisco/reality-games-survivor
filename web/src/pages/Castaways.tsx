@@ -17,6 +17,9 @@ import {
   TrendingDown,
   Minus,
   Star,
+  History,
+  Award,
+  Sparkles,
 } from 'lucide-react';
 
 interface Castaway {
@@ -30,6 +33,9 @@ interface Castaway {
   status: 'active' | 'eliminated' | 'winner';
   placement: number | null;
   episodes: { number: number } | null;
+  previous_seasons: string[] | null;
+  best_placement: number | null;
+  fun_fact: string | null;
 }
 
 interface EpisodeScoreData {
@@ -412,59 +418,107 @@ export default function Castaways() {
 
                 {/* Expanded Details */}
                 {isExpanded && (
-                  <div className="p-4 border-t border-cream-100 bg-cream-50">
-                    <h4 className="text-sm font-semibold text-neutral-700 mb-3 flex items-center gap-2">
-                      <Star className="h-4 w-4 text-burgundy-500" />
-                      Weekly Performance
-                    </h4>
-
-                    {stats?.byEpisode && Object.keys(stats.byEpisode).length > 0 ? (
-                      <div className="space-y-2">
-                        {Object.entries(stats.byEpisode)
-                          .sort(([a], [b]) => Number(a) - Number(b))
-                          .map(([epNum, pts]) => (
-                            <div
-                              key={epNum}
-                              className="flex items-center gap-3 p-2 bg-white rounded-lg border border-cream-200"
-                            >
-                              <div className="w-16 text-center">
-                                <p className="text-xs text-neutral-500">Episode</p>
-                                <p className="font-bold text-neutral-800">{epNum}</p>
-                              </div>
-                              <div className="flex-1 h-2 bg-cream-100 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full transition-all ${
-                                    Number(pts) >= 0 ? 'bg-green-500' : 'bg-red-500'
-                                  }`}
-                                  style={{
-                                    width: `${Math.min(Math.abs(Number(pts)) / 50 * 100, 100)}%`,
-                                  }}
-                                />
-                              </div>
-                              <div className={`w-16 text-right font-bold ${
-                                Number(pts) >= 0 ? 'text-green-600' : 'text-red-600'
-                              }`}>
-                                {Number(pts) >= 0 ? '+' : ''}{pts}
-                              </div>
+                  <div className="p-4 border-t border-cream-100 bg-cream-50 space-y-4">
+                    {/* Trivia Section */}
+                    {(castaway.previous_seasons?.length || castaway.fun_fact) && (
+                      <div className="space-y-3">
+                        {/* Previous Seasons */}
+                        {castaway.previous_seasons && castaway.previous_seasons.length > 0 && (
+                          <div className="bg-white rounded-lg border border-cream-200 p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <History className="h-4 w-4 text-burgundy-500" />
+                              <span className="text-sm font-semibold text-neutral-700">
+                                {castaway.previous_seasons.length} Previous Season{castaway.previous_seasons.length > 1 ? 's' : ''}
+                              </span>
+                              {castaway.best_placement && (
+                                <span className="ml-auto flex items-center gap-1 text-xs">
+                                  <Award className="h-3 w-3 text-yellow-500" />
+                                  <span className={castaway.best_placement === 1 ? 'text-yellow-600 font-semibold' : 'text-neutral-500'}>
+                                    Best: {castaway.best_placement === 1 ? 'Winner' : `${getOrdinal(castaway.best_placement)} place`}
+                                  </span>
+                                </span>
+                              )}
                             </div>
-                          ))}
+                            <div className="flex flex-wrap gap-1">
+                              {castaway.previous_seasons.map((season, idx) => (
+                                <span
+                                  key={idx}
+                                  className="text-xs bg-cream-100 text-neutral-600 px-2 py-1 rounded-full"
+                                >
+                                  {season}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                        {/* Total Summary */}
-                        <div className="mt-4 pt-4 border-t border-cream-200 flex justify-between items-center">
-                          <span className="font-medium text-neutral-600">Season Total</span>
-                          <span className={`text-2xl font-bold ${
-                            stats.total >= 0 ? 'text-green-600' : 'text-red-600'
-                          }`}>
-                            {stats.total >= 0 ? '+' : ''}{stats.total}
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-6 bg-white rounded-lg border border-cream-200">
-                        <Star className="h-8 w-8 text-neutral-300 mx-auto mb-2" />
-                        <p className="text-neutral-400 text-sm">No scores recorded yet</p>
+                        {/* Fun Fact */}
+                        {castaway.fun_fact && (
+                          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200 p-3">
+                            <div className="flex items-start gap-2">
+                              <Sparkles className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                              <p className="text-sm text-neutral-700">{castaway.fun_fact}</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
+
+                    {/* Weekly Performance */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-neutral-700 mb-3 flex items-center gap-2">
+                        <Star className="h-4 w-4 text-burgundy-500" />
+                        Weekly Performance
+                      </h4>
+
+                      {stats?.byEpisode && Object.keys(stats.byEpisode).length > 0 ? (
+                        <div className="space-y-2">
+                          {Object.entries(stats.byEpisode)
+                            .sort(([a], [b]) => Number(a) - Number(b))
+                            .map(([epNum, pts]) => (
+                              <div
+                                key={epNum}
+                                className="flex items-center gap-3 p-2 bg-white rounded-lg border border-cream-200"
+                              >
+                                <div className="w-16 text-center">
+                                  <p className="text-xs text-neutral-500">Episode</p>
+                                  <p className="font-bold text-neutral-800">{epNum}</p>
+                                </div>
+                                <div className="flex-1 h-2 bg-cream-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all ${
+                                      Number(pts) >= 0 ? 'bg-green-500' : 'bg-red-500'
+                                    }`}
+                                    style={{
+                                      width: `${Math.min(Math.abs(Number(pts)) / 50 * 100, 100)}%`,
+                                    }}
+                                  />
+                                </div>
+                                <div className={`w-16 text-right font-bold ${
+                                  Number(pts) >= 0 ? 'text-green-600' : 'text-red-600'
+                                }`}>
+                                  {Number(pts) >= 0 ? '+' : ''}{pts}
+                                </div>
+                              </div>
+                            ))}
+
+                          {/* Total Summary */}
+                          <div className="mt-4 pt-4 border-t border-cream-200 flex justify-between items-center">
+                            <span className="font-medium text-neutral-600">Season Total</span>
+                            <span className={`text-2xl font-bold ${
+                              stats.total >= 0 ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {stats.total >= 0 ? '+' : ''}{stats.total}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 bg-white rounded-lg border border-cream-200">
+                          <Star className="h-8 w-8 text-neutral-300 mx-auto mb-2" />
+                          <p className="text-neutral-400 text-sm">No scores recorded yet</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

@@ -66,6 +66,8 @@ export function Draft() {
   const [rankings, setRankings] = useState<string[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Fetch league details
   const { data: league, isLoading: leagueLoading } = useQuery({
@@ -166,6 +168,9 @@ export function Draft() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['draft-rankings', league?.season_id, user?.id] });
       setHasChanges(false);
+      setShowConfirmation(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
     },
   });
 
@@ -355,9 +360,15 @@ export function Draft() {
             </h1>
             <p className="text-neutral-500">{league?.name}</p>
           </div>
+          {saveSuccess && (
+            <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-xl">
+              <Check className="h-5 w-5" />
+              <span className="font-medium">Saved!</span>
+            </div>
+          )}
           {hasChanges && !isPastDeadline && (
             <button
-              onClick={() => saveRankings.mutate()}
+              onClick={() => setShowConfirmation(true)}
               disabled={saveRankings.isPending}
               className="btn btn-primary flex items-center gap-2"
             >
@@ -544,7 +555,7 @@ export function Draft() {
             <div className="max-w-3xl mx-auto flex items-center justify-between">
               <p className="text-neutral-500 text-sm">You have unsaved changes</p>
               <button
-                onClick={() => saveRankings.mutate()}
+                onClick={() => setShowConfirmation(true)}
                 disabled={saveRankings.isPending}
                 className="btn btn-primary flex items-center gap-2"
               >
@@ -555,6 +566,62 @@ export function Draft() {
                 )}
                 Save Rankings
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Confirmation Modal */}
+        {showConfirmation && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-elevated max-w-md w-full p-6">
+              <h3 className="text-xl font-display font-bold text-neutral-800 mb-2">
+                Confirm Your Rankings
+              </h3>
+              <p className="text-neutral-600 mb-4">
+                Are you sure you want to save your rankings? This will apply to <strong>all your leagues</strong> this season.
+              </p>
+
+              {/* Top 5 Preview */}
+              <div className="bg-cream-50 rounded-xl p-4 mb-6">
+                <p className="text-sm font-medium text-neutral-700 mb-3">Your Top 5 Picks:</p>
+                <div className="space-y-2">
+                  {rankings.slice(0, 5).map((castawayId, index) => {
+                    const castaway = castawayMap.get(castawayId);
+                    if (!castaway) return null;
+                    return (
+                      <div key={castawayId} className="flex items-center gap-3">
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                          index < 2 ? 'bg-burgundy-100 text-burgundy-600' : 'bg-cream-200 text-neutral-600'
+                        }`}>
+                          {index + 1}
+                        </span>
+                        <span className="text-neutral-800">{castaway.name}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirmation(false)}
+                  className="flex-1 btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => saveRankings.mutate()}
+                  disabled={saveRankings.isPending}
+                  className="flex-1 btn btn-primary flex items-center justify-center gap-2"
+                >
+                  {saveRankings.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                  Confirm & Save
+                </button>
+              </div>
             </div>
           </div>
         )}

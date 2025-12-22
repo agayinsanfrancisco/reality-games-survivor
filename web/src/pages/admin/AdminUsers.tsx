@@ -196,7 +196,7 @@ export function AdminUsers() {
         </div>
         <div className="bg-burgundy-50 border border-burgundy-200 rounded-2xl p-3 text-center">
           <p className="text-xl font-bold text-burgundy-600">{stats.commissioners}</p>
-          <p className="text-neutral-500 text-xs">Commissioners</p>
+          <p className="text-neutral-500 text-xs">League Creators</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-2xl p-3 text-center">
           <p className="text-xl font-bold text-red-600">{stats.admins}</p>
@@ -227,7 +227,7 @@ export function AdminUsers() {
         >
           <option value="all">All Roles</option>
           <option value="player">Players</option>
-          <option value="commissioner">Commissioners</option>
+          <option value="commissioner">League Creators</option>
           <option value="admin">Admins</option>
         </select>
       </div>
@@ -281,7 +281,7 @@ export function AdminUsers() {
                         onClick={() => updateRole.mutate({ userId: user.id, role: 'commissioner' })}
                         className="w-full px-3 py-2 text-left text-sm text-neutral-800 hover:bg-cream-50 flex items-center gap-2"
                       >
-                        <ShieldCheck className="h-4 w-4" /> Set Commissioner
+                        <ShieldCheck className="h-4 w-4" /> Set League Creator
                       </button>
                       <button
                         onClick={() => updateRole.mutate({ userId: user.id, role: 'admin' })}

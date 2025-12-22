@@ -25,7 +25,7 @@ export default function HowToPlay() {
     {
       icon: Star,
       title: 'Earn Points',
-      description: 'Your picked castaway earns points based on 100+ scoring rules. Every idol play, challenge win, and strategic move counts.',
+      description: 'Your picked castaway earns points based on 100+ scoring rules. Every idol play, challenge win, and strategic move counts. See the full list on our Scoring Rules page.',
     },
     {
       icon: Award,
@@ -104,6 +104,22 @@ export default function HowToPlay() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Scoring Rules Link */}
+      <div className="max-w-4xl mx-auto px-6 pb-8">
+        <Link
+          to="/scoring"
+          className="block bg-white rounded-2xl shadow-card p-6 border border-cream-200 hover:shadow-card-hover transition-all text-center"
+        >
+          <Star className="h-8 w-8 text-burgundy-500 mx-auto mb-3" />
+          <h3 className="text-lg font-display font-bold text-neutral-800 mb-2">
+            View All 100+ Scoring Rules
+          </h3>
+          <p className="text-neutral-500">
+            See exactly how points are earned and lost for every game action.
+          </p>
+        </Link>
       </div>
 
       {/* CTA */}

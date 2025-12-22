@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { lockPicks } from './lockPicks.js';
 import { autoPick } from './autoPick.js';
 import { finalizeDrafts } from './finalizeDrafts.js';
+import { autoRandomizeRankings } from './autoRandomizeRankings.js';
 import { processWaivers } from './processWaivers.js';
 import { sendPickReminders, sendDraftReminders, sendWaiverReminders } from './sendReminders.js';
 import { sendEpisodeResults } from './sendResults.js';
@@ -88,6 +89,38 @@ const jobs: ScheduledJob[] = [
 const oneTimeJobs: Map<string, NodeJS.Timeout> = new Map();
 
 /**
+ * Schedule auto-randomize rankings one-time job
+ * Jan 5, 2026 12pm PST (draft order deadline)
+ */
+export function scheduleAutoRandomizeRankings(targetDate?: Date): void {
+  const target = targetDate || new Date('2026-01-05T20:00:00Z'); // Jan 5 12pm PST = Jan 5 8pm UTC
+  const now = new Date();
+
+  if (target <= now) {
+    console.log('Draft order deadline has passed, running auto-randomize immediately');
+    autoRandomizeRankings().catch(console.error);
+    return;
+  }
+
+  const delay = target.getTime() - now.getTime();
+  console.log(
+    `Scheduling auto-randomize rankings for ${target.toISOString()} (${Math.round(delay / 1000 / 60 / 60)} hours)`
+  );
+
+  const timeoutId = setTimeout(async () => {
+    console.log('Running scheduled auto-randomize rankings');
+    try {
+      const result = await autoRandomizeRankings();
+      console.log('Auto-randomize rankings result:', result);
+    } catch (err) {
+      console.error('Auto-randomize rankings failed:', err);
+    }
+  }, delay);
+
+  oneTimeJobs.set('auto-randomize-rankings', timeoutId);
+}
+
+/**
  * Schedule the draft finalization one-time job
  * Mar 2, 2026 8pm PST
  */
@@ -157,7 +190,8 @@ export function startScheduler(): void {
     console.log(`Scheduled job: ${job.name} (${job.schedule})`);
   }
 
-  // Schedule one-time draft finalization
+  // Schedule one-time jobs
+  scheduleAutoRandomizeRankings();
   scheduleDraftFinalize();
 
   console.log(`Scheduler started with ${jobs.filter((j) => j.enabled).length} jobs`);
@@ -187,6 +221,9 @@ export async function runJob(jobName: string): Promise<any> {
   // Check one-time jobs
   if (jobName === 'draft-finalize') {
     return finalizeDrafts();
+  }
+  if (jobName === 'auto-randomize-rankings') {
+    return autoRandomizeRankings();
   }
 
   const job = jobs.find((j) => j.name === jobName);
@@ -229,7 +266,16 @@ export function getJobStatus(): Array<{
     lastResult: j.lastResult,
   }));
 
-  // Add one-time job
+  // Add one-time jobs
+  status.push({
+    name: 'auto-randomize-rankings',
+    schedule: 'One-time: Jan 5, 2026 12pm PST',
+    description: 'Auto-generate random rankings for users who haven\'t submitted',
+    enabled: oneTimeJobs.has('auto-randomize-rankings'),
+    lastRun: undefined,
+    lastResult: undefined,
+  });
+
   status.push({
     name: 'draft-finalize',
     schedule: 'One-time: Mar 2, 2026 8pm PST',
@@ -247,5 +293,6 @@ export default {
   stopScheduler,
   runJob,
   getJobStatus,
+  scheduleAutoRandomizeRankings,
   scheduleDraftFinalize,
 };

@@ -129,7 +129,6 @@ export default function SeasonSchedule() {
           <p><strong className="text-neutral-800">Wed 3:00 PM</strong> — Picks lock</p>
           <p><strong className="text-neutral-800">Wed 8:00 PM</strong> — Episode airs</p>
           <p><strong className="text-neutral-800">Fri 12:00 PM</strong> — Results posted</p>
-          <p><strong className="text-neutral-800">Sat 12:00 PM</strong> — Waiver opens</p>
         </div>
       </div>
 

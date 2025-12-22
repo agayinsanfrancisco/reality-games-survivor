@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
-import { Loader2, Save, Grid3X3 } from 'lucide-react';
+import { Loader2, Save, Grid3X3, ChevronDown, ChevronRight, Star } from 'lucide-react';
 
 interface Episode {
   id: string;
@@ -62,9 +62,24 @@ export function AdminScoring() {
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [skipNextScoreReset, setSkipNextScoreReset] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({ 'Most Common': true });
   const previousCastawayRef = useRef<string | null>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scoresRef = useRef<Record<string, number>>(scores);
+
+  // Most commonly used scoring rule codes
+  const MOST_COMMON_CODES = [
+    'SURVIVED_EPISODE',
+    'VOTE_CORRECT',
+    'VOTE_RECEIVED',
+    'WON_IMMUNITY_IND',
+    'WON_IMMUNITY_TRIBE',
+    'WON_REWARD',
+    'FOUND_IDOL',
+    'PLAYED_IDOL_SELF',
+    'ELIMINATED',
+    'CONFESSIONAL',
+  ];
 
   // Keep scoresRef in sync with scores state
   useEffect(() => {
@@ -158,15 +173,46 @@ export function AdminScoring() {
     enabled: !!selectedEpisodeId,
   });
 
-  // Group rules by category
+  // Get most common rules
+  const mostCommonRules = useMemo(() => {
+    if (!scoringRules) return [];
+    return MOST_COMMON_CODES
+      .map(code => scoringRules.find(r => r.code === code))
+      .filter((r): r is ScoringRule => r !== undefined);
+  }, [scoringRules]);
+
+  // Group rules by category (excluding most common from their original categories)
   const groupedRules = useMemo(() => {
-    return scoringRules?.reduce((acc, rule) => {
+    const groups = scoringRules?.reduce((acc, rule) => {
       const category = rule.category || 'Other';
       if (!acc[category]) acc[category] = [];
       acc[category].push(rule);
       return acc;
     }, {} as Record<string, ScoringRule[]>) || {};
+
+    // Sort categories alphabetically, but keep a sensible order
+    const categoryOrder = ['Survival', 'Tribal Council', 'Challenges', 'Strategy', 'Social', 'Advantages', 'Finale', 'Other'];
+    const orderedGroups: Record<string, ScoringRule[]> = {};
+
+    categoryOrder.forEach(cat => {
+      if (groups[cat]) orderedGroups[cat] = groups[cat];
+    });
+
+    // Add any remaining categories not in our order
+    Object.keys(groups).forEach(cat => {
+      if (!orderedGroups[cat]) orderedGroups[cat] = groups[cat];
+    });
+
+    return orderedGroups;
   }, [scoringRules]);
+
+  // Toggle category expansion
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category],
+    }));
+  };
 
   // Initialize scores from existing data when castaway changes
   useEffect(() => {
@@ -491,64 +537,166 @@ export function AdminScoring() {
                   </div>
                 </div>
 
-                {/* Scoring Rules */}
-                {Object.entries(groupedRules).map(([category, rules]) => (
-                  <div key={category} className="bg-white rounded-2xl shadow-elevated overflow-hidden">
-                    <div className="p-5 border-b border-cream-100 bg-cream-50">
-                      <h3 className="font-semibold text-neutral-800">{category}</h3>
-                    </div>
-                    <div className="divide-y divide-cream-100">
-                      {rules.map((rule) => {
-                        const quantity = scores[rule.id] || 0;
-                        const ruleTotal = rule.points * quantity;
-                        return (
-                          <div key={rule.id} className="p-5 flex items-center gap-4">
-                            <div className={`w-14 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${
-                              rule.is_negative ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                            }`}>
-                              {rule.points >= 0 ? '+' : ''}{rule.points}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-medium text-neutral-800">{rule.name}</p>
-                              {rule.description && (
-                                <p className="text-xs text-neutral-500 mt-0.5">{rule.description}</p>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => updateScore(rule.id, quantity - 1)}
-                                  className="w-8 h-8 rounded-lg bg-cream-100 text-neutral-600 hover:bg-cream-200 flex items-center justify-center font-bold"
-                                >
-                                  −
-                                </button>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={quantity}
-                                  onChange={(e) => updateScore(rule.id, parseInt(e.target.value) || 0)}
-                                  className="w-14 h-10 text-center border border-cream-200 rounded-lg focus:ring-2 focus:ring-burgundy-500"
-                                />
-                                <button
-                                  onClick={() => updateScore(rule.id, quantity + 1)}
-                                  className="w-8 h-8 rounded-lg bg-cream-100 text-neutral-600 hover:bg-cream-200 flex items-center justify-center font-bold"
-                                >
-                                  +
-                                </button>
+                {/* Most Common Rules (Always Expanded) */}
+                {mostCommonRules.length > 0 && (
+                  <div className="bg-white rounded-2xl shadow-elevated overflow-hidden border-2 border-burgundy-200">
+                    <button
+                      onClick={() => toggleCategory('Most Common')}
+                      className="w-full p-4 border-b border-cream-100 bg-gradient-to-r from-burgundy-50 to-cream-50 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Star className="h-5 w-5 text-burgundy-500 fill-burgundy-500" />
+                        <h3 className="font-semibold text-burgundy-700">Most Common Rules</h3>
+                        <span className="text-xs bg-burgundy-100 text-burgundy-600 px-2 py-0.5 rounded-full">
+                          {mostCommonRules.length} rules
+                        </span>
+                      </div>
+                      {expandedCategories['Most Common'] ? (
+                        <ChevronDown className="h-5 w-5 text-burgundy-400" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5 text-burgundy-400" />
+                      )}
+                    </button>
+                    {expandedCategories['Most Common'] && (
+                      <div className="divide-y divide-cream-100">
+                        {mostCommonRules.map((rule) => {
+                          const quantity = scores[rule.id] || 0;
+                          const ruleTotal = rule.points * quantity;
+                          return (
+                            <div key={rule.id} className="p-4 flex items-center gap-4 hover:bg-cream-50 transition-colors">
+                              <div className={`w-14 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${
+                                rule.is_negative ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                              }`}>
+                                {rule.points >= 0 ? '+' : ''}{rule.points}
                               </div>
-                              {/* Show calculated points for this rule */}
-                              {quantity > 0 && (
-                                <div className={`w-16 text-right font-bold ${ruleTotal >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                  = {ruleTotal >= 0 ? '+' : ''}{ruleTotal}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-neutral-800">{rule.name}</p>
+                                {rule.description && (
+                                  <p className="text-xs text-neutral-500 mt-0.5 truncate">{rule.description}</p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => updateScore(rule.id, quantity - 1)}
+                                    className="w-8 h-8 rounded-lg bg-cream-100 text-neutral-600 hover:bg-cream-200 flex items-center justify-center font-bold"
+                                  >
+                                    −
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={quantity}
+                                    onChange={(e) => updateScore(rule.id, parseInt(e.target.value) || 0)}
+                                    className="w-14 h-10 text-center border border-cream-200 rounded-lg focus:ring-2 focus:ring-burgundy-500"
+                                  />
+                                  <button
+                                    onClick={() => updateScore(rule.id, quantity + 1)}
+                                    className="w-8 h-8 rounded-lg bg-cream-100 text-neutral-600 hover:bg-cream-200 flex items-center justify-center font-bold"
+                                  >
+                                    +
+                                  </button>
                                 </div>
-                              )}
+                                {quantity > 0 && (
+                                  <div className={`w-16 text-right font-bold ${ruleTotal >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    = {ruleTotal >= 0 ? '+' : ''}{ruleTotal}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                ))}
+                )}
+
+                {/* Scoring Rules by Category (Accordion) */}
+                {Object.entries(groupedRules).map(([category, rules]) => {
+                  const isExpanded = expandedCategories[category] ?? false;
+                  const categoryTotal = rules.reduce((sum, rule) => {
+                    const qty = scores[rule.id] || 0;
+                    return sum + (rule.points * qty);
+                  }, 0);
+                  const hasScores = rules.some(rule => (scores[rule.id] || 0) > 0);
+
+                  return (
+                    <div key={category} className="bg-white rounded-2xl shadow-elevated overflow-hidden">
+                      <button
+                        onClick={() => toggleCategory(category)}
+                        className="w-full p-4 border-b border-cream-100 bg-cream-50 flex items-center justify-between hover:bg-cream-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          {isExpanded ? (
+                            <ChevronDown className="h-5 w-5 text-neutral-400" />
+                          ) : (
+                            <ChevronRight className="h-5 w-5 text-neutral-400" />
+                          )}
+                          <h3 className="font-semibold text-neutral-800">{category}</h3>
+                          <span className="text-xs bg-cream-200 text-neutral-500 px-2 py-0.5 rounded-full">
+                            {rules.length} rules
+                          </span>
+                        </div>
+                        {hasScores && (
+                          <span className={`font-bold text-sm ${categoryTotal >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {categoryTotal >= 0 ? '+' : ''}{categoryTotal}
+                          </span>
+                        )}
+                      </button>
+                      {isExpanded && (
+                        <div className="divide-y divide-cream-100">
+                          {rules.map((rule) => {
+                            const quantity = scores[rule.id] || 0;
+                            const ruleTotal = rule.points * quantity;
+                            return (
+                              <div key={rule.id} className="p-4 flex items-center gap-4 hover:bg-cream-50 transition-colors">
+                                <div className={`w-14 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${
+                                  rule.is_negative ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                                }`}>
+                                  {rule.points >= 0 ? '+' : ''}{rule.points}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-neutral-800">{rule.name}</p>
+                                  {rule.description && (
+                                    <p className="text-xs text-neutral-500 mt-0.5 truncate">{rule.description}</p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => updateScore(rule.id, quantity - 1)}
+                                      className="w-8 h-8 rounded-lg bg-cream-100 text-neutral-600 hover:bg-cream-200 flex items-center justify-center font-bold"
+                                    >
+                                      −
+                                    </button>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      value={quantity}
+                                      onChange={(e) => updateScore(rule.id, parseInt(e.target.value) || 0)}
+                                      className="w-14 h-10 text-center border border-cream-200 rounded-lg focus:ring-2 focus:ring-burgundy-500"
+                                    />
+                                    <button
+                                      onClick={() => updateScore(rule.id, quantity + 1)}
+                                      className="w-8 h-8 rounded-lg bg-cream-100 text-neutral-600 hover:bg-cream-200 flex items-center justify-center font-bold"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                  {quantity > 0 && (
+                                    <div className={`w-16 text-right font-bold ${ruleTotal >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                      = {ruleTotal >= 0 ? '+' : ''}{ruleTotal}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
