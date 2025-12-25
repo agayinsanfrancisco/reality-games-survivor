@@ -75,6 +75,19 @@ interface Episode {
 // Game phase detection
 type GamePhase = 'pre_registration' | 'registration' | 'pre_draft' | 'draft' | 'pre_season' | 'active' | 'post_season';
 
+// Weekly phase detection (for active game)
+type WeeklyPhase = 'make_pick' | 'picks_locked' | 'awaiting_results' | 'results_posted' | 'waiver_open';
+
+interface WeeklyPhaseInfo {
+  phase: WeeklyPhase;
+  label: string;
+  description: string;
+  ctaLabel: string;
+  ctaPath: string;
+  color: 'burgundy' | 'orange' | 'amber' | 'green' | 'blue';
+  countdown?: { label: string; targetTime: Date };
+}
+
 function getGamePhase(season: Season | null, nextEpisode: Episode | null): GamePhase {
   if (!season) return 'pre_registration';
 
@@ -86,6 +99,75 @@ function getGamePhase(season: Season | null, nextEpisode: Episode | null): GameP
   if (now < premiere) return 'pre_draft';
   if (nextEpisode) return 'active';
   return 'post_season';
+}
+
+function getWeeklyPhase(episode: Episode | null, previousEpisode: Episode | null): WeeklyPhaseInfo | null {
+  if (!episode) return null;
+
+  const now = new Date();
+  const picksLock = new Date(episode.picks_lock_at);
+  const airDate = new Date(episode.air_date);
+
+  // Calculate approximate times (using typical schedule from CLAUDE.md)
+  const resultsPosted = new Date(airDate);
+  resultsPosted.setDate(resultsPosted.getDate() + 2); // Friday (2 days after Wednesday air)
+  resultsPosted.setHours(12, 0, 0, 0);
+
+  const waiverOpens = new Date(resultsPosted);
+  waiverOpens.setDate(waiverOpens.getDate() + 1); // Saturday
+  waiverOpens.setHours(12, 0, 0, 0);
+
+  // Check if previous episode was just scored (results posted phase)
+  if (previousEpisode?.is_scored && now < waiverOpens) {
+    return {
+      phase: 'results_posted',
+      label: 'Results Posted',
+      description: `Episode ${previousEpisode.number} scores are in! Check your points.`,
+      ctaLabel: 'View Results',
+      ctaPath: '/episodes',
+      color: 'green',
+    };
+  }
+
+  // Before picks lock - make your pick
+  if (now < picksLock) {
+    return {
+      phase: 'make_pick',
+      label: 'Make Your Pick',
+      description: `Choose your castaway for Episode ${episode.number}`,
+      ctaLabel: 'Make Pick',
+      ctaPath: '/pick',
+      color: 'burgundy',
+      countdown: { label: 'Picks lock in', targetTime: picksLock },
+    };
+  }
+
+  // Between picks lock and episode airing
+  if (now < airDate) {
+    return {
+      phase: 'picks_locked',
+      label: 'Picks Locked',
+      description: 'Your pick is locked. Episode airs tonight!',
+      ctaLabel: 'View Pick',
+      ctaPath: '/pick',
+      color: 'orange',
+      countdown: { label: 'Episode airs in', targetTime: airDate },
+    };
+  }
+
+  // After episode aired but before results
+  if (!episode.is_scored) {
+    return {
+      phase: 'awaiting_results',
+      label: 'Awaiting Results',
+      description: 'Episode has aired. Results coming Friday!',
+      ctaLabel: 'View Teams',
+      ctaPath: '/team',
+      color: 'amber',
+    };
+  }
+
+  return null;
 }
 
 function getCountdownText(targetDate: Date): string {
@@ -210,6 +292,24 @@ export function Dashboard() {
     enabled: !!activeSeason?.id,
   });
 
+  // Fetch most recent scored episode for results display
+  const { data: previousEpisode } = useQuery({
+    queryKey: ['previous-episode', activeSeason?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('episodes')
+        .select('*')
+        .eq('season_id', activeSeason!.id)
+        .eq('is_scored', true)
+        .order('air_date', { ascending: false })
+        .limit(1)
+        .single();
+      if (error && error.code !== 'PGRST116') throw error;
+      return data as Episode | null;
+    },
+    enabled: !!activeSeason?.id,
+  });
+
   // Fetch castaway count for the active season
   const { data: castawayCount } = useQuery({
     queryKey: ['castaway-count', activeSeason?.id],
@@ -234,6 +334,7 @@ export function Dashboard() {
   const nonGlobalLeagues = myLeagues?.filter(l => !l.league.is_global) || [];
   const globalLeague = myLeagues?.find(l => l.league.is_global);
   const gamePhase = getGamePhase(activeSeason || null, nextEpisode || null);
+  const weeklyPhase = gamePhase === 'active' ? getWeeklyPhase(nextEpisode || null, previousEpisode || null) : null;
 
   // Calculate stats
   const totalPoints = globalLeague?.total_points || 0;
@@ -250,6 +351,52 @@ export function Dashboard() {
           Check standings, track scores, and see how your strategy is playing out.
         </p>
       </div>
+
+      {/* Weekly Phase Banner */}
+      {weeklyPhase && (
+        <div className={`rounded-2xl p-6 mb-8 ${
+          weeklyPhase.color === 'burgundy' ? 'bg-gradient-to-r from-burgundy-500 to-burgundy-600 text-white' :
+          weeklyPhase.color === 'orange' ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' :
+          weeklyPhase.color === 'amber' ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white' :
+          weeklyPhase.color === 'green' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' :
+          'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+        }`}>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <div className={`w-3 h-3 rounded-full ${
+                  weeklyPhase.phase === 'make_pick' ? 'bg-white animate-pulse' :
+                  weeklyPhase.phase === 'picks_locked' ? 'bg-white/80' :
+                  'bg-white/60'
+                }`} />
+                <span className="text-sm font-semibold opacity-90 uppercase tracking-wide">
+                  {weeklyPhase.label}
+                </span>
+              </div>
+              <p className="text-lg font-medium">{weeklyPhase.description}</p>
+              {weeklyPhase.countdown && (
+                <p className="text-sm opacity-80 mt-1">
+                  {weeklyPhase.countdown.label}: {getCountdownText(weeklyPhase.countdown.targetTime)}
+                </p>
+              )}
+            </div>
+            {nonGlobalLeagues.length > 0 && (
+              <Link
+                to={`/leagues/${nonGlobalLeagues[0].league_id}${weeklyPhase.ctaPath}`}
+                className={`btn ${
+                  weeklyPhase.color === 'burgundy' ? 'bg-white text-burgundy-600 hover:bg-cream-100' :
+                  weeklyPhase.color === 'orange' ? 'bg-white text-orange-600 hover:bg-cream-100' :
+                  weeklyPhase.color === 'amber' ? 'bg-white text-amber-600 hover:bg-cream-100' :
+                  weeklyPhase.color === 'green' ? 'bg-white text-green-600 hover:bg-cream-100' :
+                  'bg-white text-blue-600 hover:bg-cream-100'
+                } font-semibold`}
+              >
+                {weeklyPhase.ctaLabel}
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

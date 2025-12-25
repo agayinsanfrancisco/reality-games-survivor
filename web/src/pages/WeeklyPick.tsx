@@ -92,7 +92,7 @@ export function WeeklyPick() {
   });
 
   // Fetch user's roster for this league
-  const { data: roster } = useQuery({
+  const { data: roster, isLoading: rosterLoading } = useQuery({
     queryKey: ['roster', leagueId, user?.id],
     queryFn: async () => {
       if (!leagueId || !user?.id) throw new Error('Missing data');
@@ -106,6 +106,22 @@ export function WeeklyPick() {
       return data as RosterEntry[];
     },
     enabled: !!leagueId && !!user?.id,
+  });
+
+  // Check if draft is complete for this league
+  const { data: draftStatus } = useQuery({
+    queryKey: ['draftStatus', leagueId],
+    queryFn: async () => {
+      if (!leagueId) throw new Error('No league ID');
+      const { data, error } = await supabase
+        .from('leagues')
+        .select('draft_status, status')
+        .eq('id', leagueId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!leagueId,
   });
 
   // Fetch user's current pick for this episode
@@ -232,7 +248,11 @@ export function WeeklyPick() {
   const timeExpired = currentEpisode?.picks_lock_at && new Date(currentEpisode.picks_lock_at) <= new Date();
   const isLocked = currentPick?.status === 'locked' || timeExpired;
   const activeCastaways = roster?.filter(r => r.castaways?.status === 'active') || [];
-  const isLoading = !league;
+  const isLoading = !league || rosterLoading;
+
+  // Draft and league status checks
+  const draftCompleted = draftStatus?.draft_status === 'completed';
+  const leagueActive = draftStatus?.status === 'active';
 
   // Loading state
   if (isLoading) {
@@ -271,7 +291,22 @@ export function WeeklyPick() {
           </div>
         </div>
 
-        {!currentEpisode ? (
+        {/* Draft not completed */}
+        {!draftCompleted ? (
+          <div className="bg-white rounded-2xl shadow-elevated p-12 text-center animate-slide-up">
+            <div className="w-20 h-20 mx-auto mb-6 bg-amber-100 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-10 h-10 text-amber-600" />
+            </div>
+            <h2 className="text-2xl font-display text-neutral-800 mb-3">Complete Your Draft First</h2>
+            <p className="text-neutral-500 mb-8">
+              You need to complete the draft before you can make weekly picks.
+              Head to the draft room to select your castaways!
+            </p>
+            <Link to={`/leagues/${leagueId}/draft`} className="btn btn-primary shadow-card">
+              Go to Draft Room
+            </Link>
+          </div>
+        ) : !currentEpisode ? (
           <div className="bg-white rounded-2xl shadow-elevated p-12 text-center animate-slide-up">
             <div className="w-20 h-20 mx-auto mb-6 bg-cream-100 rounded-full flex items-center justify-center">
               <Clock className="w-10 h-10 text-neutral-400" />
@@ -380,8 +415,21 @@ export function WeeklyPick() {
 
               <div className="p-6 space-y-4">
                 {activeCastaways.length === 0 ? (
-                  <div className="text-center py-8 text-neutral-500">
-                    No active castaways on your roster. You may need to complete the draft first.
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-orange-100 rounded-full flex items-center justify-center">
+                      <AlertCircle className="w-8 h-8 text-orange-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-neutral-800 mb-2">No Active Castaways</h3>
+                    <p className="text-neutral-500 mb-4">
+                      {roster && roster.length > 0
+                        ? "All your castaways have been eliminated. Check the waiver wire to pick up a new player!"
+                        : "Your roster is empty. This shouldn't happen - please contact support."}
+                    </p>
+                    {roster && roster.length > 0 && (
+                      <Link to={`/leagues/${leagueId}/waivers`} className="btn btn-secondary">
+                        Go to Waiver Wire
+                      </Link>
+                    )}
                   </div>
                 ) : (
                   activeCastaways.map((entry) => (

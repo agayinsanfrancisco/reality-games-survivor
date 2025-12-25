@@ -4,6 +4,8 @@ import { AuthProvider } from './lib/auth';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/AdminRoute';
+import ErrorBoundary from './components/ErrorBoundary';
+import { ToastProvider } from './components/Toast';
 
 // Pages
 import { Home } from './pages/Home';
@@ -55,9 +57,11 @@ import { AdminScoringGrid } from './pages/admin/AdminScoringGrid';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Analytics />
-      <Routes>
+    <ErrorBoundary>
+      <ToastProvider>
+        <AuthProvider>
+          <Analytics />
+          <Routes>
         {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -122,7 +126,9 @@ export default function App() {
 
         {/* 404 */}
         <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AuthProvider>
+          </Routes>
+        </AuthProvider>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }

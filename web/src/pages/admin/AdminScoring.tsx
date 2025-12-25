@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
-import { Loader2, Save, Grid3X3, ChevronDown, ChevronRight, Star } from 'lucide-react';
+import { Loader2, Save, Grid3X3, ChevronDown, ChevronRight, Star, CheckCircle, AlertTriangle, X } from 'lucide-react';
+import { apiWithAuth } from '@/lib/api';
 
 interface Episode {
   id: string;
@@ -62,6 +63,8 @@ export function AdminScoring() {
   const [isSaving, setIsSaving] = useState(false);
   const [skipNextScoreReset, setSkipNextScoreReset] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({ 'Most Common': true });
+  const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+  const [finalizeResult, setFinalizeResult] = useState<{ success: boolean; eliminated: string[] } | null>(null);
   const previousCastawayRef = useRef<string | null>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scoresRef = useRef<Record<string, number>>(scores);
@@ -292,6 +295,36 @@ export function AdminScoring() {
     },
   });
 
+  // Finalize scores mutation
+  const finalizeMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedEpisodeId) throw new Error('No episode selected');
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const result = await apiWithAuth<{ finalized: boolean; eliminated: string[]; standings_updated: boolean }>(
+        `/episodes/${selectedEpisodeId}/scoring/finalize`,
+        session.access_token,
+        { method: 'POST' }
+      );
+
+      if (result.error) throw new Error(result.error);
+      return result.data;
+    },
+    onSuccess: (data) => {
+      setFinalizeResult({ success: true, eliminated: data?.eliminated || [] });
+      setShowFinalizeModal(false);
+      queryClient.invalidateQueries({ queryKey: ['episodes'] });
+      queryClient.invalidateQueries({ queryKey: ['episodeScores'] });
+      queryClient.invalidateQueries({ queryKey: ['castaways'] });
+    },
+    onError: (error: Error) => {
+      setFinalizeResult({ success: false, eliminated: [] });
+      console.error('Finalize error:', error);
+    },
+  });
+
   // Auto-save when switching castaways
   useEffect(() => {
     const previousCastaway = previousCastawayRef.current;
@@ -399,13 +432,35 @@ export function AdminScoring() {
             </div>
             <p className="text-neutral-500">Enter scores for each castaway</p>
           </div>
-          <Link
-            to={`/admin/scoring/grid${selectedEpisodeId ? `?episode=${selectedEpisodeId}` : ''}`}
-            className="btn btn-secondary flex items-center gap-2"
-          >
-            <Grid3X3 className="h-4 w-4" />
-            Grid View
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to={`/admin/scoring/grid${selectedEpisodeId ? `?episode=${selectedEpisodeId}` : ''}`}
+              className="btn btn-secondary flex items-center gap-2"
+            >
+              <Grid3X3 className="h-4 w-4" />
+              Grid View
+            </Link>
+            {selectedEpisodeId && !selectedEpisode?.is_scored && (
+              <button
+                onClick={() => setShowFinalizeModal(true)}
+                className="btn btn-primary flex items-center gap-2"
+                disabled={finalizeMutation.isPending}
+              >
+                {finalizeMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle className="h-4 w-4" />
+                )}
+                Finalize Scores
+              </button>
+            )}
+            {selectedEpisode?.is_scored && (
+              <span className="flex items-center gap-2 text-green-600 font-medium">
+                <CheckCircle className="h-5 w-5" />
+                Finalized
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-8">
@@ -699,6 +754,134 @@ export function AdminScoring() {
             )}
           </div>
         </div>
+
+        {/* Finalize Confirmation Modal */}
+        {showFinalizeModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-elevated max-w-md w-full p-6 animate-slide-up">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                    <AlertTriangle className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-display font-bold text-neutral-800">
+                      Finalize Episode {selectedEpisode?.number}?
+                    </h3>
+                    <p className="text-sm text-neutral-500">
+                      {selectedEpisode?.title || 'This action cannot be undone'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowFinalizeModal(false)}
+                  className="text-neutral-400 hover:text-neutral-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                <p className="text-sm text-amber-800">
+                  <strong>Warning:</strong> Finalizing will:
+                </p>
+                <ul className="text-sm text-amber-700 mt-2 space-y-1">
+                  <li>• Lock all scores for this episode</li>
+                  <li>• Update all players' points and rankings</li>
+                  <li>• Mark eliminated castaways</li>
+                  <li>• Make results visible to all users</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowFinalizeModal(false)}
+                  className="flex-1 btn btn-secondary"
+                  disabled={finalizeMutation.isPending}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => finalizeMutation.mutate()}
+                  className="flex-1 btn btn-primary flex items-center justify-center gap-2"
+                  disabled={finalizeMutation.isPending}
+                >
+                  {finalizeMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Finalizing...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      Finalize Scores
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success/Error Result Modal */}
+        {finalizeResult && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-elevated max-w-md w-full p-6 animate-slide-up">
+              {finalizeResult.success ? (
+                <>
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="h-8 w-8 text-green-600" />
+                    </div>
+                    <h3 className="text-xl font-display font-bold text-neutral-800 mb-2">
+                      Scores Finalized!
+                    </h3>
+                    <p className="text-neutral-500">
+                      Episode {selectedEpisode?.number} has been scored and all standings updated.
+                    </p>
+                  </div>
+
+                  {finalizeResult.eliminated.length > 0 && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                      <p className="text-sm font-medium text-red-800 mb-2">
+                        Eliminated Castaways:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {finalizeResult.eliminated.map((id) => {
+                          const castaway = castaways?.find(c => c.id === id);
+                          return (
+                            <span key={id} className="px-2 py-1 bg-red-100 text-red-700 rounded text-sm">
+                              {castaway?.name || id}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <AlertTriangle className="h-8 w-8 text-red-600" />
+                  </div>
+                  <h3 className="text-xl font-display font-bold text-neutral-800 mb-2">
+                    Finalization Failed
+                  </h3>
+                  <p className="text-neutral-500">
+                    There was an error finalizing the scores. Please try again.
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={() => setFinalizeResult(null)}
+                className="w-full btn btn-primary"
+              >
+                {finalizeResult.success ? 'Done' : 'Close'}
+              </button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

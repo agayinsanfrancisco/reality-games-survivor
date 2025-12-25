@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Bell, Phone, Mail, Smartphone, Loader2, Check, LogOut, AlertCircle, RefreshCw } from 'lucide-react';
+import { User, Bell, Phone, Mail, Smartphone, Loader2, Check, LogOut, AlertCircle, RefreshCw, Pencil, Globe } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { apiWithAuth } from '../lib/api';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,24 @@ export default function Profile() {
   const [showVerification, setShowVerification] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [phoneSuccess, setPhoneSuccess] = useState<string | null>(null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
+
+  // Common timezone options
+  const TIMEZONE_OPTIONS = [
+    { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+    { value: 'America/Denver', label: 'Mountain Time (MT)' },
+    { value: 'America/Chicago', label: 'Central Time (CT)' },
+    { value: 'America/New_York', label: 'Eastern Time (ET)' },
+    { value: 'America/Anchorage', label: 'Alaska Time (AKT)' },
+    { value: 'Pacific/Honolulu', label: 'Hawaii Time (HT)' },
+    { value: 'Europe/London', label: 'London (GMT)' },
+    { value: 'Europe/Paris', label: 'Central European (CET)' },
+    { value: 'Asia/Tokyo', label: 'Japan (JST)' },
+    { value: 'Australia/Sydney', label: 'Sydney (AEST)' },
+  ];
 
   // Fetch user profile
   const { data: user, isLoading } = useQuery({
@@ -29,6 +47,32 @@ export default function Profile() {
 
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Update profile mutation (display name, timezone)
+  const updateProfile = useMutation({
+    mutationFn: async (updates: { display_name?: string; timezone?: string }) => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', authUser.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      setIsEditingName(false);
+      setNameError(null);
+      setProfileSuccess('Profile updated successfully!');
+      setTimeout(() => setProfileSuccess(null), 3000);
+    },
+    onError: (error: Error) => {
+      setNameError(error.message);
+      setProfileSuccess(null);
     },
   });
 
@@ -159,11 +203,72 @@ export default function Profile() {
             <div className="w-16 h-16 bg-burgundy-500 rounded-full flex items-center justify-center">
               <User className="h-8 w-8 text-white" />
             </div>
-            <div>
-              <h2 className="text-xl font-display font-bold text-neutral-800">{user?.display_name}</h2>
+            <div className="flex-1">
+              {isEditingName ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Enter display name"
+                    className="input flex-1"
+                    autoFocus
+                  />
+                  <button
+                    onClick={() => {
+                      if (displayName.trim()) {
+                        updateProfile.mutate({ display_name: displayName.trim() });
+                      }
+                    }}
+                    disabled={!displayName.trim() || updateProfile.isPending}
+                    className="btn btn-primary"
+                  >
+                    {updateProfile.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Save'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditingName(false);
+                      setDisplayName('');
+                      setNameError(null);
+                    }}
+                    className="btn btn-secondary"
+                    disabled={updateProfile.isPending}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-display font-bold text-neutral-800">{user?.display_name}</h2>
+                  <button
+                    onClick={() => {
+                      setDisplayName(user?.display_name || '');
+                      setIsEditingName(true);
+                    }}
+                    className="p-1 text-neutral-400 hover:text-burgundy-500 transition-colors"
+                    title="Edit display name"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
               <p className="text-neutral-500">{user?.email}</p>
             </div>
           </div>
+
+          {/* Error/Success Messages for profile */}
+          {nameError && (
+            <div className="mb-4 flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              {nameError}
+            </div>
+          )}
+          {profileSuccess && (
+            <div className="mb-4 flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-green-600 text-sm">
+              <Check className="h-4 w-4 flex-shrink-0" />
+              {profileSuccess}
+            </div>
+          )}
 
           {/* Email display */}
           <div className="flex items-center gap-3 p-3 bg-cream-50 rounded-xl border border-cream-200">
@@ -174,6 +279,28 @@ export default function Profile() {
             </div>
             <Check className="h-5 w-5 text-green-500" />
           </div>
+        </div>
+
+        {/* Timezone */}
+        <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200 mb-6">
+          <h3 className="text-lg font-display font-bold text-neutral-800 mb-4 flex items-center gap-2">
+            <Globe className="h-5 w-5 text-burgundy-500" />
+            Timezone
+          </h3>
+          <p className="text-neutral-500 text-sm mb-4">
+            Set your timezone to see correct episode air times and pick deadlines.
+          </p>
+          <select
+            value={user?.timezone || 'America/Los_Angeles'}
+            onChange={(e) => updateProfile.mutate({ timezone: e.target.value })}
+            className="w-full p-3 border border-cream-200 rounded-xl focus:ring-2 focus:ring-burgundy-500 focus:border-burgundy-500 bg-cream-50"
+          >
+            {TIMEZONE_OPTIONS.map((tz) => (
+              <option key={tz.value} value={tz.value}>
+                {tz.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Phone Number */}
