@@ -7,6 +7,12 @@ import {
   sendVerificationSMS,
 } from '../config/twilio.js';
 import { phoneLimiter, authLimiter } from '../config/rateLimit.js';
+import {
+  validate,
+  updatePhoneSchema,
+  verifyPhoneSchema,
+  notificationPrefsSchema,
+} from '../lib/validation.js';
 
 const router = Router();
 
@@ -63,14 +69,10 @@ router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response)
 
 // PATCH /api/me/phone - Update phone number and send verification
 // Rate limited to prevent SMS spam (5 attempts per hour)
-router.patch('/me/phone', authenticate, phoneLimiter, async (req: AuthenticatedRequest, res: Response) => {
+router.patch('/me/phone', authenticate, phoneLimiter, validate(updatePhoneSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { phone } = req.body;
     const userId = req.user!.id;
-
-    if (!phone) {
-      return res.status(400).json({ error: 'Phone number is required' });
-    }
 
     const normalizedPhone = normalizePhone(phone);
 
@@ -130,14 +132,10 @@ router.patch('/me/phone', authenticate, phoneLimiter, async (req: AuthenticatedR
 
 // POST /api/me/verify-phone - Verify SMS code
 // Rate limited to prevent brute-force code guessing (10 attempts per 15 min)
-router.post('/me/verify-phone', authenticate, authLimiter, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/me/verify-phone', authenticate, authLimiter, validate(verifyPhoneSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { code } = req.body;
     const userId = req.user!.id;
-
-    if (!code) {
-      return res.status(400).json({ error: 'Verification code is required' });
-    }
 
     // Get stored verification from database
     const { data: stored, error: fetchError } = await supabaseAdmin
@@ -238,15 +236,15 @@ router.post('/me/resend-code', authenticate, async (req: AuthenticatedRequest, r
 });
 
 // PATCH /api/me/notifications - Update notification preferences
-router.patch('/me/notifications', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.patch('/me/notifications', authenticate, validate(notificationPrefsSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { email, sms, push } = req.body;
     const userId = req.user!.id;
 
     const updates: Record<string, boolean> = {};
-    if (typeof email === 'boolean') updates.notification_email = email;
-    if (typeof sms === 'boolean') updates.notification_sms = sms;
-    if (typeof push === 'boolean') updates.notification_push = push;
+    if (email !== undefined) updates.notification_email = email;
+    if (sms !== undefined) updates.notification_sms = sms;
+    if (push !== undefined) updates.notification_push = push;
 
     // If enabling SMS, check phone is verified
     if (sms === true) {

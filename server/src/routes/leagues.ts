@@ -5,28 +5,24 @@ import { supabase, supabaseAdmin } from '../config/supabase.js';
 import { stripe } from '../config/stripe.js';
 import { EmailService } from '../emails/index.js';
 import { joinLimiter, checkoutLimiter } from '../config/rateLimit.js';
+import {
+  validate,
+  createLeagueSchema,
+  joinLeagueSchema,
+  updateLeagueSettingsSchema,
+  uuidSchema,
+} from '../lib/validation.js';
 
 const SALT_ROUNDS = 10;
 
 const router = Router();
 
 // POST /api/leagues - Create a new league
-router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/', authenticate, validate(createLeagueSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { name, season_id, password, donation_amount, max_players, is_public } = req.body;
-
-    if (!name || !season_id) {
-      return res.status(400).json({ error: 'Name and season_id are required' });
-    }
-
-    // Validate donation amount if provided
-    if (donation_amount !== null && donation_amount !== undefined) {
-      const amount = parseFloat(donation_amount);
-      if (isNaN(amount) || amount < 10 || amount > 10000) {
-        return res.status(400).json({ error: 'Donation amount must be between $10 and $10,000' });
-      }
-    }
+    const { name, season_id, password, donation_amount } = req.body;
+    const { max_players, is_public } = req.body; // Optional fields not in schema
 
     // Hash password if provided
     let hashedPassword: string | null = null;
@@ -103,10 +99,17 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
 
 // POST /api/leagues/:id/join - Join a league (free)
 // Rate limited to prevent password brute-forcing (10 attempts per 15 min)
-router.post('/:id/join', authenticate, joinLimiter, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:id/join', authenticate, joinLimiter, validate(joinLeagueSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const leagueId = req.params.id;
+
+    // Validate UUID format
+    const uuidResult = uuidSchema.safeParse(leagueId);
+    if (!uuidResult.success) {
+      return res.status(400).json({ error: 'Invalid league ID format' });
+    }
+
     const { password } = req.body;
 
     // Get league - use admin client to bypass RLS (user isn't a member yet)
@@ -496,21 +499,26 @@ router.get('/:id/invite-link', authenticate, async (req: AuthenticatedRequest, r
 });
 
 // PATCH /api/leagues/:id/settings - Update settings (commissioner only)
-router.patch('/:id/settings', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+router.patch('/:id/settings', authenticate, validate(updateLeagueSettingsSchema), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const leagueId = req.params.id;
     const userId = req.user!.id;
+
+    // Validate UUID format
+    const uuidResult = uuidSchema.safeParse(leagueId);
+    if (!uuidResult.success) {
+      return res.status(400).json({ error: 'Invalid league ID format' });
+    }
+
     const {
       name,
-      description,
       password,
       donation_amount,
       payout_method,
       is_public,
-      is_closed,
-      max_players,
       donation_notes,
     } = req.body;
+    const { description, is_closed, max_players } = req.body; // Fields not in schema
 
     // Check commissioner
     const { data: league } = await supabase
