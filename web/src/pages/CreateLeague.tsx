@@ -92,9 +92,33 @@ export default function CreateLeague() {
       }
 
       const { league } = await response.json();
+
+      // If donation required, redirect creator to Stripe checkout
+      if (requireDonation && parseFloat(donationAmount) > 0) {
+        const checkoutResponse = await fetch(`/api/leagues/${league.id}/join/checkout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (checkoutResponse.ok) {
+          const { checkout_url } = await checkoutResponse.json();
+          // Redirect to Stripe - creator is already a member, payment tracked separately
+          window.location.href = checkout_url;
+          return { ...league, redirectingToPayment: true };
+        }
+        // If checkout fails, still return league - creator can pay later
+        console.error('Failed to create checkout session');
+      }
+
       return league;
     },
     onSuccess: (data: any) => {
+      // Don't navigate if redirecting to Stripe
+      if (data?.redirectingToPayment) return;
+
       setCreatedLeague(data);
       // Navigate to league page and show share modal
       navigate(`/leagues/${data.id}`, { state: { showShare: true } });
@@ -343,12 +367,12 @@ export default function CreateLeague() {
             {createLeague.isPending ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Creating...
+                {requireDonation ? 'Redirecting to payment...' : 'Creating...'}
               </>
             ) : requireDonation && donationAmount ? (
               <>
                 <Heart className="h-5 w-5" />
-                Create League (${donationAmount} entry)
+                Create & Pay ${donationAmount}
               </>
             ) : (
               <>
