@@ -13,10 +13,18 @@ const router = Router();
 router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { name, season_id, password, donation_amount } = req.body;
+    const { name, season_id, password, donation_amount, max_players, is_public } = req.body;
 
     if (!name || !season_id) {
       return res.status(400).json({ error: 'Name and season_id are required' });
+    }
+
+    // Validate donation amount if provided
+    if (donation_amount !== null && donation_amount !== undefined) {
+      const amount = parseFloat(donation_amount);
+      if (isNaN(amount) || amount < 10 || amount > 10000) {
+        return res.status(400).json({ error: 'Donation amount must be between $10 and $10,000' });
+      }
     }
 
     // Hash password if provided
@@ -35,6 +43,8 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
         password_hash: hashedPassword,
         require_donation: !!donation_amount,
         donation_amount: donation_amount || null,
+        max_players: max_players || 12,
+        is_public: is_public !== false,
       })
       .select()
       .single();
