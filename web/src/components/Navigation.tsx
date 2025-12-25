@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useState, useEffect } from 'react';
-import { Flame, Shield, Users, Trophy, Mail, Home, BookOpen, LayoutDashboard, UserCircle } from 'lucide-react';
+import { Flame, Shield, Users, Trophy, Mail, Home, BookOpen, LayoutDashboard, UserCircle, Target } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -183,6 +183,17 @@ export function Navigation() {
                 Castaways
               </Link>
               <Link
+                to="/scoring"
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  isActive('/scoring')
+                    ? 'bg-burgundy-500 text-white shadow-md'
+                    : 'text-neutral-600 hover:bg-cream-100'
+                }`}
+              >
+                <Target className="h-4 w-4" />
+                Scoring
+              </Link>
+              <Link
                 to="/how-to-play"
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                   isActive('/how-to-play')
@@ -290,6 +301,17 @@ export function Navigation() {
             >
               <BookOpen className="h-4 w-4" />
               How to Play
+            </Link>
+            <Link
+              to="/scoring"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                isActive('/scoring')
+                  ? 'text-burgundy-600'
+                  : 'text-neutral-600 hover:text-burgundy-500'
+              }`}
+            >
+              <Target className="h-4 w-4" />
+              Scoring
             </Link>
             <Link
               to="/contact"
