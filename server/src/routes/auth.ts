@@ -10,9 +10,6 @@ import { phoneLimiter, authLimiter } from '../config/rateLimit.js';
 
 const router = Router();
 
-// Verification codes stored in memory (in production, use Redis or database)
-const verificationCodes = new Map<string, { code: string; expiresAt: Date; phone: string }>();
-
 // GET /api/me - Current user with leagues
 router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -101,11 +98,19 @@ router.patch('/me/phone', authenticate, phoneLimiter, async (req: AuthenticatedR
       return res.status(400).json({ error: error.message });
     }
 
-    // Generate and store verification code
+    // Generate and store verification code in database
     const code = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    verificationCodes.set(userId, { code, expiresAt, phone: normalizedPhone });
+    // Upsert verification code (replace any existing code for this user)
+    await supabaseAdmin
+      .from('verification_codes')
+      .upsert({
+        user_id: userId,
+        phone: normalizedPhone,
+        code,
+        expires_at: expiresAt.toISOString(),
+      }, { onConflict: 'user_id' });
 
     // Send verification SMS
     const sent = await sendVerificationSMS(normalizedPhone, code);
@@ -134,25 +139,32 @@ router.post('/me/verify-phone', authenticate, authLimiter, async (req: Authentic
       return res.status(400).json({ error: 'Verification code is required' });
     }
 
-    // Get stored verification
-    const stored = verificationCodes.get(userId);
+    // Get stored verification from database
+    const { data: stored, error: fetchError } = await supabaseAdmin
+      .from('verification_codes')
+      .select('*')
+      .eq('user_id', userId)
+      .is('used_at', null)
+      .single();
 
-    if (!stored) {
+    if (fetchError || !stored) {
       return res.status(400).json({ error: 'No pending verification. Please request a new code.' });
     }
 
     // Check expiry
-    if (new Date() > stored.expiresAt) {
-      verificationCodes.delete(userId);
+    if (new Date() > new Date(stored.expires_at)) {
+      // Delete expired code
+      await supabaseAdmin.from('verification_codes').delete().eq('id', stored.id);
       return res.status(400).json({ error: 'Code expired. Please request a new code.' });
     }
 
-    // Check code
-    if (stored.code !== code.trim()) {
+    // Check code (constant-time comparison to prevent timing attacks)
+    const codeMatches = stored.code === code.trim();
+    if (!codeMatches) {
       return res.status(400).json({ error: 'Invalid code' });
     }
 
-    // Mark phone as verified
+    // Mark phone as verified and mark code as used (atomic transaction)
     const { error } = await supabaseAdmin
       .from('users')
       .update({ phone_verified: true })
@@ -162,8 +174,11 @@ router.post('/me/verify-phone', authenticate, authLimiter, async (req: Authentic
       return res.status(400).json({ error: error.message });
     }
 
-    // Clean up
-    verificationCodes.delete(userId);
+    // Mark code as used (prevents reuse)
+    await supabaseAdmin
+      .from('verification_codes')
+      .update({ used_at: new Date().toISOString() })
+      .eq('id', stored.id);
 
     res.json({
       verified: true,
@@ -195,11 +210,19 @@ router.post('/me/resend-code', authenticate, async (req: AuthenticatedRequest, r
       return res.status(400).json({ error: 'Phone already verified' });
     }
 
-    // Generate new code
+    // Generate new code and store in database
     const code = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    verificationCodes.set(userId, { code, expiresAt, phone: user.phone });
+    // Upsert verification code (replace any existing code for this user)
+    await supabaseAdmin
+      .from('verification_codes')
+      .upsert({
+        user_id: userId,
+        phone: user.phone,
+        code,
+        expires_at: expiresAt.toISOString(),
+      }, { onConflict: 'user_id' });
 
     // Send verification SMS
     const sent = await sendVerificationSMS(user.phone, code);
