@@ -16,8 +16,8 @@ interface PlayerStats {
 }
 
 // Confidence factor for Bayesian weighted average
-// Players need ~3 leagues to have their score weighted at full value
-const CONFIDENCE_FACTOR = 3;
+// With C=1, players at 1 league get 50% weight, 2 leagues get 67%, 3 leagues get 75%
+const CONFIDENCE_FACTOR = 1;
 
 export default function GlobalLeaderboard() {
   const { user } = useAuth();
