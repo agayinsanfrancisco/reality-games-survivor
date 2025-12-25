@@ -31,150 +31,147 @@ VALUES (
 );
 
 -- ============================================
--- CASTAWAYS (24 legendary players with trivia)
+-- CASTAWAYS (24 legendary players)
 -- ============================================
-INSERT INTO castaways (season_id, name, age, hometown, occupation, tribe_original, status, previous_seasons, best_placement, fun_fact, photo_url) VALUES
--- Tuku Tribe (Blue)
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Rob Mariano', 48, 'Boston, MA', 'TV Personality', 'Tuku', 'active',
+INSERT INTO castaways (season_id, name, age, hometown, occupation, status, previous_seasons, best_placement, fun_fact, photo_url) VALUES
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Rob Mariano', 48, 'Boston, MA', 'TV Personality', 'active',
   ARRAY['Marquesas (S4)', 'All-Stars (S8)', 'Heroes vs Villains (S20)', 'Redemption Island (S22)', 'Winners at War (S40)'],
   1, 'Proposed to Amber on the All-Stars finale, they married and have 4 daughters',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Rob%20Mariano&backgroundColor=1e3a5f&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/rob-mariano.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Sandra Diaz-Twine', 50, 'Stamford, CT', 'Military Veteran', 'Tuku', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Sandra Diaz-Twine', 50, 'Stamford, CT', 'Military Veteran', 'active',
   ARRAY['Pearl Islands (S7)', 'Heroes vs Villains (S20)', 'Game Changers (S34)', 'Island of the Idols (S39)', 'Winners at War (S40)'],
   1, 'Only player to win Survivor twice, famous for "As long as it ain''t me" strategy',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Sandra%20Diaz-Twine&backgroundColor=1e3a5f&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/sandra-diaz-twine.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Tony Vlachos', 50, 'Jersey City, NJ', 'Police Officer', 'Tuku', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Tony Vlachos', 50, 'Jersey City, NJ', 'Police Officer', 'active',
   ARRAY['Cagayan (S28)', 'Game Changers (S34)', 'Winners at War (S40)'],
   1, 'Known for building spy shacks/bunkers to eavesdrop on tribemates',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Tony%20Vlachos&backgroundColor=1e3a5f&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/tony-vlachos.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Cirie Fields', 53, 'Jersey City, NJ', 'Nurse', 'Tuku', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Cirie Fields', 53, 'Jersey City, NJ', 'Nurse', 'active',
   ARRAY['Panama (S12)', 'Micronesia (S16)', 'Heroes vs Villains (S20)', 'Game Changers (S34)'],
   3, 'Started as someone "afraid to get off the couch," became one of the best to never win',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Cirie%20Fields&backgroundColor=1e3a5f&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/cirie-fields.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Tyson Apostol', 45, 'Lindon, UT', 'Podcaster', 'Tuku', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Tyson Apostol', 45, 'Lindon, UT', 'Podcaster', 'active',
   ARRAY['Tocantins (S18)', 'Heroes vs Villains (S20)', 'Blood vs Water (S27)', 'Winners at War (S40)'],
   1, 'Professional cyclist who once voted himself out by mistake in Heroes vs Villains',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Tyson%20Apostol&backgroundColor=1e3a5f&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/tyson-apostol.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Sarah Lacina', 40, 'Marion, IA', 'Police Officer', 'Tuku', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Sarah Lacina', 40, 'Marion, IA', 'Police Officer', 'active',
   ARRAY['Cagayan (S28)', 'Game Changers (S34)', 'Winners at War (S40)'],
   1, 'First player to win the Game Changers season playing like a criminal instead of cop',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Sarah%20Lacina&backgroundColor=1e3a5f&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/sarah-lacina.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Ben Driebergen', 43, 'Boise, ID', 'Marine Veteran', 'Tuku', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Ben Driebergen', 43, 'Boise, ID', 'Marine Veteran', 'active',
   ARRAY['Heroes vs Healers vs Hustlers (S35)', 'Winners at War (S40)'],
   1, 'Found 3 idols in his winning season, won fire-making challenge to reach Final 3',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Ben%20Driebergen&backgroundColor=1e3a5f&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/ben-driebergen.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Natalie Anderson', 38, 'Edgewater, NJ', 'Crossfit Trainer', 'Tuku', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Natalie Anderson', 38, 'Edgewater, NJ', 'Crossfit Trainer', 'active',
   ARRAY['San Juan del Sur (S29)', 'Winners at War (S40)'],
   1, 'Won San Juan del Sur after her twin sister Nadiya was voted out first',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Natalie%20Anderson&backgroundColor=1e3a5f&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/natalie-anderson.jpg'),
 
--- Gata Tribe (Yellow)
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Parvati Shallow', 42, 'Los Angeles, CA', 'TV Host', 'Gata', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Parvati Shallow', 42, 'Los Angeles, CA', 'TV Host', 'active',
   ARRAY['Cook Islands (S13)', 'Micronesia (S16)', 'Heroes vs Villains (S20)', 'Winners at War (S40)'],
   1, 'Pioneered the "Black Widow Brigade" alliance and flirting strategy',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Parvati%20Shallow&backgroundColor=d4a017&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/parvati-shallow.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Kim Spradlin-Wolfe', 42, 'San Antonio, TX', 'Interior Designer', 'Gata', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Kim Spradlin-Wolfe', 42, 'San Antonio, TX', 'Interior Designer', 'active',
   ARRAY['One World (S24)', 'Winners at War (S40)'],
   1, 'Considered to have played the most dominant winning game ever in One World',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Kim%20Spradlin-Wolfe&backgroundColor=d4a017&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/kim-spradlin-wolfe.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Jeremy Collins', 46, 'Foxboro, MA', 'Firefighter', 'Gata', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Jeremy Collins', 46, 'Foxboro, MA', 'Firefighter', 'active',
   ARRAY['San Juan del Sur (S29)', 'Cambodia (S31)', 'Winners at War (S40)'],
   1, 'Won Cambodia by successfully playing his meat shield strategy',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Jeremy%20Collins&backgroundColor=d4a017&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/jeremy-collins.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Michele Fitzgerald', 34, 'Freehold, NJ', 'Social Media Manager', 'Gata', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Michele Fitzgerald', 34, 'Freehold, NJ', 'Social Media Manager', 'active',
   ARRAY['Kaoh Rong (S32)', 'Winners at War (S40)'],
   1, 'Won despite not receiving votes at final tribal until the winner reveal',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Michele%20Fitzgerald&backgroundColor=d4a017&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/michele-fitzgerald.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Wendell Holland', 39, 'Philadelphia, PA', 'Furniture Designer', 'Gata', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Wendell Holland', 39, 'Philadelphia, PA', 'Furniture Designer', 'active',
   ARRAY['Ghost Island (S36)', 'Winners at War (S40)'],
   1, 'Won Ghost Island in the first ever tie-breaker vote at Final Tribal Council',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Wendell%20Holland&backgroundColor=d4a017&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/wendell-holland.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Sophie Clarke', 34, 'Willsboro, NY', 'Healthcare Consultant', 'Gata', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Sophie Clarke', 34, 'Willsboro, NY', 'Healthcare Consultant', 'active',
   ARRAY['South Pacific (S23)', 'Winners at War (S40)'],
   1, 'Beat Coach in South Pacific by calling out his religious hypocrisy',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Sophie%20Clarke&backgroundColor=d4a017&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/sophie-clarke.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Yul Kwon', 49, 'San Mateo, CA', 'Tech Executive', 'Gata', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Yul Kwon', 49, 'San Mateo, CA', 'Tech Executive', 'active',
   ARRAY['Cook Islands (S13)', 'Winners at War (S40)'],
   1, 'Led the famous "Aitu Four" comeback from 4 vs 8 to win Cook Islands',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Yul%20Kwon&backgroundColor=d4a017&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/yul-kwon.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Denise Stapley', 54, 'Cedar Rapids, IA', 'Therapist', 'Gata', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Denise Stapley', 54, 'Cedar Rapids, IA', 'Therapist', 'active',
   ARRAY['Philippines (S25)', 'Winners at War (S40)'],
   1, 'Attended every single tribal council in Philippines and still won',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Denise%20Stapley&backgroundColor=d4a017&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/denise-stapley.jpg'),
 
--- Lavo Tribe (Red)
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Ethan Zohn', 51, 'Lexington, MA', 'Soccer Coach', 'Lavo', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Ethan Zohn', 51, 'Lexington, MA', 'Soccer Coach', 'active',
   ARRAY['Africa (S3)', 'All-Stars (S8)', 'Winners at War (S40)'],
   1, 'Cancer survivor who used his winnings to start Grassroot Soccer charity',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Ethan%20Zohn&backgroundColor=b22222&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/ethan-zohn.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Tina Wesson', 62, 'Knoxville, TN', 'Personal Trainer', 'Lavo', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Tina Wesson', 62, 'Knoxville, TN', 'Personal Trainer', 'active',
   ARRAY['The Australian Outback (S2)', 'All-Stars (S8)', 'Blood vs Water (S27)'],
   1, 'First female winner of Survivor, returned with daughter Katie',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Tina%20Wesson&backgroundColor=b22222&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/tina-wesson.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Earl Cole', 55, 'Los Angeles, CA', 'Executive Recruiter', 'Lavo', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Earl Cole', 55, 'Los Angeles, CA', 'Executive Recruiter', 'active',
   ARRAY['Fiji (S14)'],
   1, 'First unanimous winner in Survivor history, never watched the show before playing',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Earl%20Cole&backgroundColor=b22222&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/earl-cole.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'JT Thomas', 39, 'Samson, AL', 'Cattle Rancher', 'Lavo', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'JT Thomas', 39, 'Samson, AL', 'Cattle Rancher', 'active',
   ARRAY['Tocantins (S18)', 'Heroes vs Villains (S20)', 'Game Changers (S34)'],
   1, 'Won Tocantins with zero votes against him, infamous for giving idol to Russell',
-  'https://api.dicebear.com/7.x/initials/svg?seed=JT%20Thomas&backgroundColor=b22222&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/jt-thomas.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Vecepia Towery', 58, 'Portland, OR', 'Office Manager', 'Lavo', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Vecepia Towery', 58, 'Portland, OR', 'Office Manager', 'active',
   ARRAY['Marquesas (S4)'],
   1, 'First African American winner of Survivor, known for her under-the-radar game',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Vecepia%20Towery&backgroundColor=b22222&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/vecepia-towery.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Danni Boatwright', 50, 'Tonganoxie, KS', 'Sports Radio Host', 'Lavo', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Danni Boatwright', 50, 'Tonganoxie, KS', 'Sports Radio Host', 'active',
   ARRAY['Guatemala (S11)', 'Winners at War (S40)'],
   1, 'Won Guatemala while hiding her strategy from producers by speaking in code',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Danni%20Boatwright&backgroundColor=b22222&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/danni-boatwright.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Adam Klein', 32, 'San Francisco, CA', 'Podcaster', 'Lavo', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Adam Klein', 32, 'San Francisco, CA', 'Podcaster', 'active',
   ARRAY['Millennials vs Gen X (S33)', 'Winners at War (S40)'],
   1, 'Dedicated his win to his mother who passed away from lung cancer days after filming',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Adam%20Klein&backgroundColor=b22222&textColor=ffffff&fontSize=40'),
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/adam-klein.jpg'),
 
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Nick Wilson', 35, 'Williamsburg, KY', 'Public Defender', 'Lavo', 'active',
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'Nick Wilson', 35, 'Williamsburg, KY', 'Public Defender', 'active',
   ARRAY['David vs Goliath (S37)', 'Winners at War (S40)'],
   1, 'Named all his alliances after famous duos (Mason-Dixon, Rockstars, etc.)',
-  'https://api.dicebear.com/7.x/initials/svg?seed=Nick%20Wilson&backgroundColor=b22222&textColor=ffffff&fontSize=40');
+  'https://qxrgejdfxcvsfktgysop.supabase.co/storage/v1/object/public/castaways/nick-wilson.jpg');
 
 -- ============================================
 -- EPISODES (14 episodes for Season 50)
 -- ============================================
-INSERT INTO episodes (season_id, number, title, air_date, picks_lock_at, results_posted_at, waiver_opens_at, waiver_closes_at, is_finale) VALUES
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 1, 'The Greatest Showdown Begins', '2026-02-25 20:00:00-08', '2026-02-25 15:00:00-08', '2026-02-27 12:00:00-08', '2026-02-28 12:00:00-08', '2026-03-04 15:00:00-08', false),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 2, 'Legends Collide', '2026-03-04 20:00:00-08', '2026-03-04 15:00:00-08', '2026-03-06 12:00:00-08', '2026-03-07 12:00:00-08', '2026-03-11 15:00:00-08', false),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 3, 'Trust No One', '2026-03-11 20:00:00-08', '2026-03-11 15:00:00-08', '2026-03-13 12:00:00-08', '2026-03-14 12:00:00-07', '2026-03-18 15:00:00-07', false),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 4, 'Shifting Alliances', '2026-03-18 20:00:00-07', '2026-03-18 15:00:00-07', '2026-03-20 12:00:00-07', '2026-03-21 12:00:00-07', '2026-03-25 15:00:00-07', false),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 5, 'Tribe Swap Chaos', '2026-03-25 20:00:00-07', '2026-03-25 15:00:00-07', '2026-03-27 12:00:00-07', '2026-03-28 12:00:00-07', '2026-04-01 15:00:00-07', false),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 6, 'Merge Madness', '2026-04-01 20:00:00-07', '2026-04-01 15:00:00-07', '2026-04-03 12:00:00-07', '2026-04-04 12:00:00-07', '2026-04-08 15:00:00-07', false),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 7, 'Individual Immunity', '2026-04-08 20:00:00-07', '2026-04-08 15:00:00-07', '2026-04-10 12:00:00-07', '2026-04-11 12:00:00-07', '2026-04-15 15:00:00-07', false),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 8, 'Idol Frenzy', '2026-04-15 20:00:00-07', '2026-04-15 15:00:00-07', '2026-04-17 12:00:00-07', '2026-04-18 12:00:00-07', '2026-04-22 15:00:00-07', false),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 9, 'Blindside Boulevard', '2026-04-22 20:00:00-07', '2026-04-22 15:00:00-07', '2026-04-24 12:00:00-07', '2026-04-25 12:00:00-07', '2026-04-29 15:00:00-07', false),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 10, 'The Auction Returns', '2026-04-29 20:00:00-07', '2026-04-29 15:00:00-07', '2026-05-01 12:00:00-07', '2026-05-02 12:00:00-07', '2026-05-06 15:00:00-07', false),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 11, 'Endgame Begins', '2026-05-06 20:00:00-07', '2026-05-06 15:00:00-07', '2026-05-08 12:00:00-07', '2026-05-09 12:00:00-07', '2026-05-13 15:00:00-07', false),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 12, 'Family Visit', '2026-05-13 20:00:00-07', '2026-05-13 15:00:00-07', '2026-05-15 12:00:00-07', '2026-05-16 12:00:00-07', '2026-05-20 15:00:00-07', false),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 13, 'Final Four Frenzy', '2026-05-20 20:00:00-07', '2026-05-20 15:00:00-07', '2026-05-22 12:00:00-07', '2026-05-23 12:00:00-07', '2026-05-27 15:00:00-07', false),
-('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 14, 'Reunion & Finale', '2026-05-27 20:00:00-07', '2026-05-27 15:00:00-07', '2026-05-29 12:00:00-07', NULL, NULL, true);
+INSERT INTO episodes (season_id, number, title, air_date, picks_lock_at, results_posted_at, is_finale) VALUES
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 1, 'The Greatest Showdown Begins', '2026-02-25 20:00:00-08', '2026-02-25 15:00:00-08', '2026-02-27 12:00:00-08', false),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 2, 'Legends Collide', '2026-03-04 20:00:00-08', '2026-03-04 15:00:00-08', '2026-03-06 12:00:00-08', false),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 3, 'Trust No One', '2026-03-11 20:00:00-08', '2026-03-11 15:00:00-08', '2026-03-13 12:00:00-08', false),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 4, 'Shifting Alliances', '2026-03-18 20:00:00-07', '2026-03-18 15:00:00-07', '2026-03-20 12:00:00-07', false),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 5, 'Swap Chaos', '2026-03-25 20:00:00-07', '2026-03-25 15:00:00-07', '2026-03-27 12:00:00-07', false),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 6, 'Merge Madness', '2026-04-01 20:00:00-07', '2026-04-01 15:00:00-07', '2026-04-03 12:00:00-07', false),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 7, 'Individual Immunity', '2026-04-08 20:00:00-07', '2026-04-08 15:00:00-07', '2026-04-10 12:00:00-07', false),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 8, 'Idol Frenzy', '2026-04-15 20:00:00-07', '2026-04-15 15:00:00-07', '2026-04-17 12:00:00-07', false),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 9, 'Blindside Boulevard', '2026-04-22 20:00:00-07', '2026-04-22 15:00:00-07', '2026-04-24 12:00:00-07', false),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 10, 'The Auction Returns', '2026-04-29 20:00:00-07', '2026-04-29 15:00:00-07', '2026-05-01 12:00:00-07', false),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 11, 'Endgame Begins', '2026-05-06 20:00:00-07', '2026-05-06 15:00:00-07', '2026-05-08 12:00:00-07', false),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 12, 'Family Visit', '2026-05-13 20:00:00-07', '2026-05-13 15:00:00-07', '2026-05-15 12:00:00-07', false),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 13, 'Final Four Frenzy', '2026-05-20 20:00:00-07', '2026-05-20 15:00:00-07', '2026-05-22 12:00:00-07', false),
+('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 14, 'Reunion & Finale', '2026-05-27 20:00:00-07', '2026-05-27 15:00:00-07', '2026-05-29 12:00:00-07', true);
 
 -- ============================================
 -- SCORING RULES (Official RGFL Rules)
@@ -315,22 +312,6 @@ INSERT INTO scoring_rules (season_id, code, name, description, points, category,
 ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'FINAL_CHOSEN_FOR_FTC', 'Chosen for Final Three', 'You are chosen by another castaway to be in the final three', 2, 'Final Three', false, 121, true),
 ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'FINAL_JURY_VOTE', 'Receive Jury Vote', 'Each vote your player receives in the final vote', 2, 'Final Three', false, 122, true),
 ('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'FINAL_WIN', 'Win the Season', 'Your player wins the season', 10, 'Final Three', false, 123, true);
-
--- ============================================
--- GLOBAL LEAGUE FOR SEASON 50
--- ============================================
--- Note: Commissioner should be set to an admin user - update after admin account created
--- INSERT INTO leagues (id, season_id, name, code, commissioner_id, is_global, max_players, status)
--- VALUES (
---   'l001-0001-0001-0001-000000000001',
---   'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
---   'Global Rankings - Season 50',
---   'GLOBAL',
---   'ADMIN_USER_ID_HERE',
---   true,
---   100000,
---   'forming'
--- );
 
 SELECT
   'Season 50 seeded successfully!' AS status,

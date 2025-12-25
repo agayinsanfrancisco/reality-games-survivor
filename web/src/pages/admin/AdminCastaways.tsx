@@ -12,7 +12,6 @@ interface Castaway {
   hometown: string | null;
   occupation: string | null;
   photo_url: string | null;
-  tribe_original: string | null;
   status: 'active' | 'eliminated' | 'winner';
   placement: number | null;
 }
@@ -191,7 +190,7 @@ export function AdminCastaways() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-neutral-800 truncate">{castaway.name}</p>
-                    <p className="text-sm text-neutral-500">{castaway.tribe_original}</p>
+                    <p className="text-sm text-neutral-500">{castaway.occupation}</p>
                   </div>
                   <button
                     onClick={() => setShowEliminateModal(castaway.id)}

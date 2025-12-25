@@ -9,7 +9,6 @@ interface Castaway {
   id: string;
   name: string;
   photo_url?: string;
-  tribe_original?: string;
   status: string;
 }
 
@@ -393,7 +392,7 @@ export function WeeklyPick() {
                           <span className={`badge text-xs ${
                             entry.castaways?.status === 'active' ? 'badge-success' : 'bg-neutral-100 text-neutral-500'
                           }`}>
-                            {entry.castaways?.tribe_original}
+                            {entry.castaways?.status?.toUpperCase()}
                           </span>
                         </div>
                       </div>

@@ -19,7 +19,6 @@ interface Castaway {
   id: string;
   name: string;
   photo_url: string | null;
-  tribe_original: string | null;
   status: string;
 }
 
@@ -460,7 +459,6 @@ export function AdminScoring() {
                         </div>
                         <div className="flex-1">
                           <p className="font-medium text-neutral-800">{castaway.name}</p>
-                          <p className="text-xs text-neutral-500">{castaway.tribe_original}</p>
                         </div>
                         {total !== 0 && (
                           <span className={`text-sm font-bold ${total >= 0 ? 'text-green-600' : 'text-red-600'}`}>

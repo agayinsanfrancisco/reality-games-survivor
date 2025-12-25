@@ -4,7 +4,6 @@ interface CastawayCardProps {
   photoUrl?: string;
   hometown?: string;
   age?: number;
-  tribe?: string;
   strength?: string;
   strategy?: string;
   selected?: boolean;
@@ -19,7 +18,6 @@ export function CastawayCard({
   name,
   photoUrl,
   hometown,
-  tribe,
   strength,
   strategy,
   selected,
