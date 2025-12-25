@@ -20,14 +20,13 @@ import {
   ChevronRight,
   Copy,
   Check,
-  MessageCircle,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Navigation } from '@/components/Navigation';
 import { LeagueChat } from '@/components/LeagueChat';
 import { useAuth } from '@/lib/auth';
 
-type Tab = 'overview' | 'players' | 'standings' | 'chat';
+type Tab = 'overview' | 'players' | 'standings';
 
 export default function LeagueHome() {
   const { id } = useParams<{ id: string }>();
@@ -305,17 +304,6 @@ export default function LeagueHome() {
             <Trophy className="h-4 w-4" />
             Standings
           </button>
-          <button
-            onClick={() => setActiveTab('chat')}
-            className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all flex items-center gap-2 ${
-              activeTab === 'chat'
-                ? 'bg-burgundy-500 text-white shadow-md'
-                : 'bg-white text-neutral-600 border border-cream-200 hover:border-burgundy-200'
-            }`}
-          >
-            <MessageCircle className="h-4 w-4" />
-            Chat
-          </button>
         </div>
 
         {/* Tab Content */}
@@ -503,6 +491,9 @@ export default function LeagueHome() {
                 })}
               </div>
             </div>
+
+            {/* League Chat */}
+            {id && <LeagueChat leagueId={id} />}
           </div>
         )}
 
@@ -653,10 +644,6 @@ export default function LeagueHome() {
               </div>
             </div>
           </div>
-        )}
-
-        {activeTab === 'chat' && id && (
-          <LeagueChat leagueId={id} />
         )}
 
         {/* Invite Card - Commissioners see full code, others just get share link */}

@@ -223,7 +223,7 @@ export function Dashboard() {
       {/* Welcome Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-display font-bold text-neutral-800">
-          Welcome back, {profile?.display_name?.split(' ')[0] || 'superfan'}.
+          Welcome back{profile?.display_name ? `, ${profile.display_name.split(' ')[0]}` : ''}.
         </h1>
         <p className="text-neutral-500 mt-2 text-lg">
           Check standings, track scores, and see how your strategy is playing out.
@@ -306,7 +306,7 @@ export function Dashboard() {
             <BookOpen className="h-6 w-6 text-burgundy-500 group-hover:text-white transition-colors" />
           </div>
           <h3 className="font-bold text-neutral-800">Scoring Rules</h3>
-          <p className="text-neutral-500 text-sm mt-1">100+ ways to earn points</p>
+          <p className="text-neutral-500 text-sm mt-1">See how you score</p>
         </Link>
 
         {/* View Castaways */}
