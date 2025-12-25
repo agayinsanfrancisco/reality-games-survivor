@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Users, Lock, DollarSign, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { api, apiWithAuth } from '../lib/api';
 import { Navigation } from '@/components/Navigation';
 
 interface League {
@@ -35,18 +36,21 @@ export default function JoinLeague() {
     },
   });
 
-  // Fetch league by code via API (bypasses RLS)
+  // Fetch league by code via API (bypasses RLS) - with automatic retry
   const { data: leagueData, isLoading: leagueLoading, error: leagueError } = useQuery({
     queryKey: ['league-by-code', code],
     queryFn: async () => {
       if (!code) throw new Error('No code provided');
 
-      const response = await fetch(`/api/leagues/code/${code.toUpperCase()}`);
-      if (!response.ok) {
-        throw new Error('League not found');
+      const result = await api<{ league: League & { has_password: boolean; member_count: number } }>(
+        `/leagues/code/${code.toUpperCase()}`
+      );
+
+      if (result.error) {
+        throw new Error(result.error);
       }
-      const data = await response.json();
-      return data.league as League & { has_password: boolean; member_count: number };
+
+      return result.data?.league;
     },
     enabled: !!code,
   });
@@ -54,66 +58,58 @@ export default function JoinLeague() {
   const league = leagueData;
   const memberCount = leagueData?.member_count;
 
-  // Check if already a member via API
+  // Check if already a member via API - with automatic retry
   const { data: isMember } = useQuery({
     queryKey: ['is-member', league?.id, session?.user?.id],
     queryFn: async () => {
       if (!session?.access_token || !league?.id) return false;
 
-      const response = await fetch(`/api/leagues/${league.id}/join/status`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
+      const result = await apiWithAuth<{ paid: boolean }>(
+        `/leagues/${league.id}/join/status`,
+        session.access_token
+      );
 
-      if (!response.ok) return false;
-      const data = await response.json();
-      return data.paid;
+      return result.data?.paid ?? false;
     },
     enabled: !!session?.access_token && !!league?.id,
   });
 
-  // Join league mutation
+  // Join league mutation - with automatic retry
   const joinMutation = useMutation({
     mutationFn: async () => {
       if (!session?.access_token || !league) {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`/api/leagues/${league.id}/join`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ password }),
-      });
+      const result = await apiWithAuth<{ membership: unknown }>(
+        `/leagues/${league.id}/join`,
+        session.access_token,
+        { method: 'POST', body: JSON.stringify({ password }) }
+      );
 
-      if (!response.ok) {
-        const data = await response.json();
-        if (response.status === 402) {
-          // Payment required - create checkout session and redirect to Stripe
-          const checkoutResponse = await fetch(`/api/leagues/${league.id}/join/checkout`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`,
-            },
-          });
+      if (result.status === 402) {
+        // Payment required - create checkout session and redirect to Stripe
+        const checkoutResult = await apiWithAuth<{ checkout_url: string }>(
+          `/leagues/${league.id}/join/checkout`,
+          session.access_token,
+          { method: 'POST' }
+        );
 
-          if (!checkoutResponse.ok) {
-            const checkoutData = await checkoutResponse.json();
-            throw new Error(checkoutData.error || 'Failed to create checkout session');
-          }
-
-          const { checkout_url } = await checkoutResponse.json();
-          window.location.href = checkout_url;
-          return null;
+        if (checkoutResult.error) {
+          throw new Error(checkoutResult.error || 'Failed to create checkout session');
         }
-        throw new Error(data.error || 'Failed to join league');
+
+        if (checkoutResult.data?.checkout_url) {
+          window.location.href = checkoutResult.data.checkout_url;
+        }
+        return null;
       }
 
-      return response.json();
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      return result.data;
     },
     onSuccess: (data) => {
       if (data) {
