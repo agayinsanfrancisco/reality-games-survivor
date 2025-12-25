@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Bell, Phone, Mail, Smartphone, Loader2, Check, LogOut } from 'lucide-react';
+import { User, Bell, Phone, Mail, Smartphone, Loader2, Check, LogOut, AlertCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { apiWithAuth } from '../lib/api';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
@@ -10,6 +11,8 @@ export default function Profile() {
   const [phone, setPhone] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [showVerification, setShowVerification] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [phoneSuccess, setPhoneSuccess] = useState<string | null>(null);
 
   // Fetch user profile
   const { data: user, isLoading } = useQuery({
@@ -47,23 +50,84 @@ export default function Profile() {
     },
   });
 
-  // Update phone mutation
+  // Update phone mutation - uses API to send verification SMS
   const updatePhone = useMutation({
     mutationFn: async (newPhone: string) => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) throw new Error('Not authenticated');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
 
-      const { error } = await supabase
-        .from('users')
-        .update({ phone: newPhone, phone_verified: false })
-        .eq('id', authUser.id);
+      const result = await apiWithAuth<{ user: unknown; verification_sent: boolean; message: string }>(
+        '/me/phone',
+        session.access_token,
+        { method: 'PATCH', body: JSON.stringify({ phone: newPhone }) }
+      );
 
-      if (error) throw error;
-      return true;
+      if (result.error) throw new Error(result.error);
+      return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setShowVerification(true);
+      setPhoneError(null);
+      setPhoneSuccess(data?.message || 'Verification code sent!');
+      setPhone('');
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+    },
+    onError: (error: Error) => {
+      setPhoneError(error.message);
+      setPhoneSuccess(null);
+    },
+  });
+
+  // Verify phone code mutation
+  const verifyPhone = useMutation({
+    mutationFn: async (code: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const result = await apiWithAuth<{ verified: boolean; message: string }>(
+        '/me/verify-phone',
+        session.access_token,
+        { method: 'POST', body: JSON.stringify({ code }) }
+      );
+
+      if (result.error) throw new Error(result.error);
+      return result.data;
+    },
+    onSuccess: (data) => {
+      setShowVerification(false);
+      setVerificationCode('');
+      setPhoneError(null);
+      setPhoneSuccess(data?.message || 'Phone verified!');
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+    },
+    onError: (error: Error) => {
+      setPhoneError(error.message);
+      setPhoneSuccess(null);
+    },
+  });
+
+  // Resend verification code mutation
+  const resendCode = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const result = await apiWithAuth<{ sent: boolean; message: string }>(
+        '/me/resend-code',
+        session.access_token,
+        { method: 'POST' }
+      );
+
+      if (result.error) throw new Error(result.error);
+      return result.data;
+    },
+    onSuccess: (data) => {
+      setPhoneError(null);
+      setPhoneSuccess(data?.message || 'New code sent!');
+    },
+    onError: (error: Error) => {
+      setPhoneError(error.message);
+      setPhoneSuccess(null);
     },
   });
 
@@ -127,11 +191,20 @@ export default function Profile() {
               <Smartphone className="h-5 w-5 text-burgundy-500" />
               <div className="flex-1">
                 <p className="text-neutral-800">{user.phone}</p>
-                <p className="text-neutral-400 text-sm">
-                  {user.phone_verified ? 'Verified' : 'Not verified'}
+                <p className={`text-sm ${user.phone_verified ? 'text-green-600' : 'text-orange-500'}`}>
+                  {user.phone_verified ? 'Verified' : 'Not verified - enter code below'}
                 </p>
               </div>
-              {user.phone_verified && <Check className="h-5 w-5 text-green-500" />}
+              {user.phone_verified ? (
+                <Check className="h-5 w-5 text-green-500" />
+              ) : (
+                <button
+                  onClick={() => setShowVerification(true)}
+                  className="text-sm text-burgundy-600 hover:text-burgundy-700 font-medium"
+                >
+                  Verify
+                </button>
+              )}
             </div>
           ) : null}
 
@@ -152,6 +225,20 @@ export default function Profile() {
             </button>
           </div>
 
+          {/* Error/Success Messages */}
+          {phoneError && (
+            <div className="mt-4 flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              {phoneError}
+            </div>
+          )}
+          {phoneSuccess && (
+            <div className="mt-4 flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-green-600 text-sm">
+              <Check className="h-4 w-4 flex-shrink-0" />
+              {phoneSuccess}
+            </div>
+          )}
+
           {showVerification && (
             <div className="mt-4 p-4 bg-cream-50 rounded-xl border border-cream-200">
               <p className="text-neutral-500 text-sm mb-2">Enter the verification code sent to your phone:</p>
@@ -159,15 +246,31 @@ export default function Profile() {
                 <input
                   type="text"
                   value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                   placeholder="123456"
                   maxLength={6}
-                  className="input flex-1 text-center tracking-widest"
+                  className="input flex-1 text-center tracking-widest font-mono text-lg"
                 />
-                <button className="btn btn-primary">
-                  Verify
+                <button
+                  onClick={() => verifyPhone.mutate(verificationCode)}
+                  disabled={verificationCode.length !== 6 || verifyPhone.isPending}
+                  className="btn btn-primary"
+                >
+                  {verifyPhone.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify'}
                 </button>
               </div>
+              <button
+                onClick={() => resendCode.mutate()}
+                disabled={resendCode.isPending}
+                className="mt-3 flex items-center gap-2 text-sm text-burgundy-600 hover:text-burgundy-700 disabled:opacity-50"
+              >
+                {resendCode.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                Resend code
+              </button>
             </div>
           )}
         </div>
