@@ -5,7 +5,6 @@ interface EliminationAlertEmailParams {
   leagueName: string;
   castawayName: string;
   episodeNumber: number;
-  waiverOpensAt: string;
   leagueId: string;
 }
 
@@ -14,7 +13,6 @@ export function eliminationAlertEmail({
   leagueName,
   castawayName,
   episodeNumber,
-  waiverOpensAt,
   leagueId,
 }: EliminationAlertEmailParams): string {
   return emailWrapper(`
@@ -30,12 +28,11 @@ export function eliminationAlertEmail({
 
     <div class="card">
       <h2>What Now?</h2>
-      <p>The waiver wire opens <strong>${waiverOpensAt}</strong>. Submit your ranked preferences for available castaways to replace ${castawayName} on your roster.</p>
-      <p style="color: #b8a; font-size: 14px;">Remember: Lower-ranked players in your league get priority on waiver claims!</p>
+      <p>You still have your other castaway to play for. If both of your castaways have been eliminated, your season is over but you can still follow along with the standings!</p>
     </div>
 
-    ${button('View Available Castaways', `https://rgfl.app/leagues/${leagueId}/waivers`)}
+    ${button('View League', `https://rgfl.app/leagues/${leagueId}`)}
 
-    <p>Don't give up - there's still plenty of game left to play!</p>
-  `, `😢 ${castawayName} eliminated - waiver wire opens ${waiverOpensAt}`);
+    <p>Keep playing - there's still plenty of game left!</p>
+  `, `😢 ${castawayName} eliminated in Episode ${episodeNumber}`);
 }

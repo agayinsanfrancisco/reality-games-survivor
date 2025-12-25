@@ -191,17 +191,7 @@ router.post('/castaways/:id/eliminate', async (req: AuthenticatedRequest, res: R
       return res.status(400).json({ error: error.message });
     }
 
-    // Check if waiver window should open
-    const { data: episode } = await supabase
-      .from('episodes')
-      .select('waiver_opens_at')
-      .eq('id', episode_id)
-      .single();
-
-    res.json({
-      castaway,
-      waiver_opened: episode?.waiver_opens_at ? true : false,
-    });
+    res.json({ castaway });
   } catch (err) {
     console.error('POST /api/admin/castaways/:id/eliminate error:', err);
     res.status(500).json({ error: 'Failed to eliminate castaway' });
@@ -226,14 +216,6 @@ router.post('/episodes', async (req: AuthenticatedRequest, res: Response) => {
     resultsPostedAt.setDate(resultsPostedAt.getDate() + 2); // Friday
     resultsPostedAt.setHours(12, 0, 0, 0);
 
-    const waiverOpensAt = new Date(airDate);
-    waiverOpensAt.setDate(waiverOpensAt.getDate() + 3); // Saturday
-    waiverOpensAt.setHours(12, 0, 0, 0);
-
-    const waiverClosesAt = new Date(airDate);
-    waiverClosesAt.setDate(waiverClosesAt.getDate() + 7); // Next Wednesday
-    waiverClosesAt.setHours(15, 0, 0, 0);
-
     const { data: episode, error } = await supabaseAdmin
       .from('episodes')
       .insert({
@@ -243,8 +225,6 @@ router.post('/episodes', async (req: AuthenticatedRequest, res: Response) => {
         air_date,
         picks_lock_at: picksLockAt.toISOString(),
         results_posted_at: resultsPostedAt.toISOString(),
-        waiver_opens_at: waiverOpensAt.toISOString(),
-        waiver_closes_at: waiverClosesAt.toISOString(),
       })
       .select()
       .single();

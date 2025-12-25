@@ -422,14 +422,9 @@ export function WeeklyPick() {
                     <h3 className="text-lg font-semibold text-neutral-800 mb-2">No Active Castaways</h3>
                     <p className="text-neutral-500 mb-4">
                       {roster && roster.length > 0
-                        ? "All your castaways have been eliminated. Check the waiver wire to pick up a new player!"
+                        ? "All your castaways have been eliminated. Your season has ended."
                         : "Your roster is empty. This shouldn't happen - please contact support."}
                     </p>
-                    {roster && roster.length > 0 && (
-                      <Link to={`/leagues/${leagueId}/waivers`} className="btn btn-secondary">
-                        Go to Waiver Wire
-                      </Link>
-                    )}
                   </div>
                 ) : (
                   activeCastaways.map((entry) => (

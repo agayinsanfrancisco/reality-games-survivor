@@ -76,7 +76,7 @@ interface Episode {
 type GamePhase = 'pre_registration' | 'registration' | 'pre_draft' | 'draft' | 'pre_season' | 'active' | 'post_season';
 
 // Weekly phase detection (for active game)
-type WeeklyPhase = 'make_pick' | 'picks_locked' | 'awaiting_results' | 'results_posted' | 'waiver_open';
+type WeeklyPhase = 'make_pick' | 'picks_locked' | 'awaiting_results' | 'results_posted';
 
 interface WeeklyPhaseInfo {
   phase: WeeklyPhase;
@@ -113,12 +113,12 @@ function getWeeklyPhase(episode: Episode | null, previousEpisode: Episode | null
   resultsPosted.setDate(resultsPosted.getDate() + 2); // Friday (2 days after Wednesday air)
   resultsPosted.setHours(12, 0, 0, 0);
 
-  const waiverOpens = new Date(resultsPosted);
-  waiverOpens.setDate(waiverOpens.getDate() + 1); // Saturday
-  waiverOpens.setHours(12, 0, 0, 0);
+  const nextPickOpens = new Date(resultsPosted);
+  nextPickOpens.setDate(nextPickOpens.getDate() + 1); // Saturday
+  nextPickOpens.setHours(12, 0, 0, 0);
 
   // Check if previous episode was just scored (results posted phase)
-  if (previousEpisode?.is_scored && now < waiverOpens) {
+  if (previousEpisode?.is_scored && now < nextPickOpens) {
     return {
       phase: 'results_posted',
       label: 'Results Posted',

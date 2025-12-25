@@ -196,16 +196,7 @@ serve(async (req) => {
         return error(updateError.message)
       }
 
-      // Check if waiver should open
-      const { data: episode } = await supabaseAdmin
-        .from('episodes')
-        .select('waiver_opens_at')
-        .eq('id', episode_id)
-        .single()
-
-      const waiverOpened = episode?.waiver_opens_at ? new Date() >= new Date(episode.waiver_opens_at) : false
-
-      return json({ castaway, waiver_opened: waiverOpened })
+      return json({ castaway })
     }
 
     // ========== EPISODES ==========
@@ -220,8 +211,6 @@ serve(async (req) => {
         air_date,
         picks_lock_at,
         results_posted_at,
-        waiver_opens_at,
-        waiver_closes_at,
         is_finale,
       } = body
 
@@ -242,8 +231,6 @@ serve(async (req) => {
           air_date,
           picks_lock_at: picks_lock_at || defaultPicksLock.toISOString(),
           results_posted_at,
-          waiver_opens_at,
-          waiver_closes_at,
           is_finale: is_finale || false,
         })
         .select()
@@ -285,9 +272,7 @@ serve(async (req) => {
       const jobs = [
         { name: 'lock-picks', schedule: 'Wed 3pm PST', description: 'Lock all pending picks', last_run: null, next_run: null, status: 'scheduled' },
         { name: 'auto-fill-picks', schedule: 'Wed 3:05pm PST', description: 'Auto-pick for missing users', last_run: null, next_run: null, status: 'scheduled' },
-        { name: 'process-waivers', schedule: 'Wed 2:55pm PST', description: 'Process waiver rankings', last_run: null, next_run: null, status: 'scheduled' },
         { name: 'send-pick-reminders', schedule: 'Wed 12pm PST', description: 'Send pick reminder emails', last_run: null, next_run: null, status: 'scheduled' },
-        { name: 'send-waiver-reminders', schedule: 'Tue 12pm PST', description: 'Send waiver reminder emails', last_run: null, next_run: null, status: 'scheduled' },
         { name: 'send-results', schedule: 'Fri 12pm PST', description: 'Send episode results', last_run: null, next_run: null, status: 'scheduled' },
         { name: 'finalize-drafts', schedule: 'Mar 2 8pm PST', description: 'Auto-complete incomplete drafts', last_run: null, next_run: null, status: 'scheduled' },
         { name: 'weekly-summary', schedule: 'Sun 10am PST', description: 'Send weekly standings summary', last_run: null, next_run: null, status: 'scheduled' },
@@ -305,9 +290,7 @@ serve(async (req) => {
       const jobFunctions: Record<string, { function: string; path: string; body?: any }> = {
         'lock-picks': { function: 'picks', path: '/lock' },
         'auto-fill-picks': { function: 'picks', path: '/auto-fill' },
-        'process-waivers': { function: 'waivers', path: '/process' },
         'send-pick-reminders': { function: 'notifications', path: '/send-reminders', body: { type: 'pick' } },
-        'send-waiver-reminders': { function: 'notifications', path: '/send-reminders', body: { type: 'waiver' } },
         'send-draft-reminders': { function: 'notifications', path: '/send-reminders', body: { type: 'draft' } },
         'finalize-drafts': { function: 'draft', path: '/finalize-all' },
       }

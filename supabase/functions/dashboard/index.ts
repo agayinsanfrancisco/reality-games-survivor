@@ -3,7 +3,7 @@ import { handleCors } from "../_shared/cors.ts"
 import { supabaseAdmin, getUser } from "../_shared/supabase.ts"
 import { json, error, unauthorized } from "../_shared/response.ts"
 
-type Phase = 'waiver_open' | 'picks_locked' | 'awaiting_results' | 'results_posted' | 'make_pick' | 'pre_season' | 'draft'
+type Phase = 'picks_locked' | 'awaiting_results' | 'results_posted' | 'make_pick' | 'pre_season' | 'draft'
 
 function getCurrentPhase(now: Date, episode: any, league: any): Phase {
   if (!episode) return 'pre_season'
@@ -15,13 +15,10 @@ function getCurrentPhase(now: Date, episode: any, league: any): Phase {
   const picksLockAt = new Date(episode.picks_lock_at)
   const airDate = new Date(episode.air_date)
   const resultsPostedAt = episode.results_posted_at ? new Date(episode.results_posted_at) : null
-  const waiverOpensAt = episode.waiver_opens_at ? new Date(episode.waiver_opens_at) : null
-  const waiverClosesAt = episode.waiver_closes_at ? new Date(episode.waiver_closes_at) : null
 
   if (now < picksLockAt) return 'make_pick'
   if (now < airDate) return 'picks_locked'
   if (resultsPostedAt && now < resultsPostedAt) return 'awaiting_results'
-  if (waiverOpensAt && waiverClosesAt && now >= waiverOpensAt && now < waiverClosesAt) return 'waiver_open'
   if (resultsPostedAt && now >= resultsPostedAt) return 'results_posted'
 
   return 'make_pick'
@@ -41,8 +38,6 @@ function getPrimaryCta(phase: Phase, leagueId: string): { label: string; action:
       return { label: 'Episode Aired - Results Coming Soon', action: `/leagues/${leagueId}`, urgent: false }
     case 'results_posted':
       return { label: 'View Your Scores', action: `/leagues/${leagueId}/results`, urgent: false }
-    case 'waiver_open':
-      return { label: 'Submit Waiver Rankings', action: `/leagues/${leagueId}/waivers`, urgent: true }
     default:
       return { label: 'View League', action: `/leagues/${leagueId}`, urgent: false }
   }
@@ -59,10 +54,6 @@ function getCountdown(phase: Phase, episode: any): { label: string; targetTime: 
     case 'awaiting_results':
       return episode.results_posted_at
         ? { label: 'Results posted in', targetTime: episode.results_posted_at }
-        : null
-    case 'waiver_open':
-      return episode.waiver_closes_at
-        ? { label: 'Waiver closes in', targetTime: episode.waiver_closes_at }
         : null
     default:
       return null
@@ -109,8 +100,6 @@ serve(async (req) => {
         currentEpisode: null,
         userStatus: {
           pickSubmitted: false,
-          waiverRankingsSubmitted: false,
-          needsWaiverAction: false,
         },
         standings: null,
         alerts: [],
@@ -155,31 +144,6 @@ serve(async (req) => {
       pickSubmitted = !!pick
     }
 
-    // Get waiver status
-    let waiverRankingsSubmitted = false
-    let needsWaiverAction = false
-    if (currentEpisode && phase === 'waiver_open') {
-      const { data: rankings } = await supabaseAdmin
-        .from('waiver_rankings')
-        .select('id')
-        .eq('league_id', league.id)
-        .eq('user_id', user.id)
-        .eq('episode_id', currentEpisode.id)
-        .single()
-
-      waiverRankingsSubmitted = !!rankings
-
-      // Check if user has eliminated castaway
-      const { data: roster } = await supabaseAdmin
-        .from('rosters')
-        .select('castaways(status)')
-        .eq('league_id', league.id)
-        .eq('user_id', user.id)
-        .is('dropped_at', null)
-
-      needsWaiverAction = roster?.some((r: any) => r.castaways?.status === 'eliminated') || false
-    }
-
     // Get standings
     const { data: allMembers } = await supabaseAdmin
       .from('league_members')
@@ -201,10 +165,6 @@ serve(async (req) => {
       alerts.push({ type: 'info', message: 'Draft is in progress' })
     }
 
-    if (needsWaiverAction && !waiverRankingsSubmitted) {
-      alerts.push({ type: 'warning', message: 'You have an eliminated castaway - submit waiver rankings!' })
-    }
-
     return json({
       phase,
       primaryCta: getPrimaryCta(phase, league.id),
@@ -217,8 +177,6 @@ serve(async (req) => {
       } : null,
       userStatus: {
         pickSubmitted,
-        waiverRankingsSubmitted,
-        needsWaiverAction,
       },
       standings: {
         rank: userRank,
