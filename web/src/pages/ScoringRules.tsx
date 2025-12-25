@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
+import { Footer } from '@/components/Footer';
 
 // Category display order and metadata with examples
 const CATEGORIES = [
@@ -168,7 +169,7 @@ export default function ScoringRules() {
   };
 
   return (
-    <div className="min-h-screen bg-cream-50">
+    <div className="min-h-screen bg-cream-50 flex flex-col">
       <Navigation />
 
       {/* Header */}
@@ -180,26 +181,8 @@ export default function ScoringRules() {
           </h1>
         </div>
         <p className="text-neutral-500 text-lg max-w-2xl mx-auto">
-          100+ ways to earn (and lose) points. Here are sample actions that affect your score.
+          Earn and lose points based on what your castaways do each episode. Here are examples from each category.
         </p>
-      </div>
-
-      {/* Stats Overview */}
-      <div className="max-w-4xl mx-auto px-6 mb-8">
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
-            <p className="text-3xl font-bold text-burgundy-500">100+</p>
-            <p className="text-neutral-500 text-sm">Scoring Rules</p>
-          </div>
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-4 text-center">
-            <p className="text-3xl font-bold text-green-600">80+</p>
-            <p className="text-neutral-500 text-sm">Ways to Earn</p>
-          </div>
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
-            <p className="text-3xl font-bold text-red-600">20+</p>
-            <p className="text-neutral-500 text-sm">Penalties</p>
-          </div>
-        </div>
       </div>
 
       {/* How Scoring Works */}
@@ -371,6 +354,8 @@ export default function ScoringRules() {
           )}
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }
