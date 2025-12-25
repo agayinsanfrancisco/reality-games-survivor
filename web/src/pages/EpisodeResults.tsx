@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Trophy, TrendingUp, TrendingDown, Minus, Users, Loader2, ChevronDown, ChevronUp, Zap, Shield, Star, Target, Flame } from 'lucide-react';
+import { ArrowLeft, Trophy, TrendingUp, TrendingDown, Minus, Users, Loader2, ChevronDown, ChevronUp, Zap, Shield, Star, Target, Flame, XCircle, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Navigation } from '@/components/Navigation';
 
@@ -93,6 +93,21 @@ export default function EpisodeResults() {
     },
   });
 
+  // Fetch castaways eliminated in this episode
+  const { data: eliminatedCastaways } = useQuery({
+    queryKey: ['eliminated-castaways', episodeId],
+    queryFn: async () => {
+      if (!episodeId) return [];
+      const { data, error } = await supabase
+        .from('castaways')
+        .select('id, name, photo_url')
+        .eq('eliminated_episode_id', episodeId);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!episodeId,
+  });
+
   // Group scores by castaway
   const scoresByCastaway = scores?.reduce((acc: Record<string, any>, score) => {
     const castawayId = score.castaway_id;
@@ -109,6 +124,9 @@ export default function EpisodeResults() {
   }, {}) || {};
 
   const myPick = picks?.find(p => p.user_id === currentUser?.id);
+
+  // Check if user's picked castaway was eliminated
+  const myPickWasEliminated = myPick && eliminatedCastaways?.some(c => c.id === myPick.castaway_id);
 
   if (episodeLoading) {
     return (
@@ -140,6 +158,66 @@ export default function EpisodeResults() {
           <p className="text-neutral-500">{episode?.title || league?.name}</p>
         </div>
       </div>
+
+      {/* Elimination Alert */}
+      {eliminatedCastaways && eliminatedCastaways.length > 0 && (
+        <div className={`rounded-xl p-4 mb-6 ${
+          myPickWasEliminated
+            ? 'bg-red-50 border-2 border-red-300'
+            : 'bg-orange-50 border border-orange-200'
+        }`}>
+          <div className="flex items-start gap-3">
+            <div className={`p-2 rounded-full ${myPickWasEliminated ? 'bg-red-100' : 'bg-orange-100'}`}>
+              <XCircle className={`h-5 w-5 ${myPickWasEliminated ? 'text-red-600' : 'text-orange-600'}`} />
+            </div>
+            <div>
+              <p className={`font-bold ${myPickWasEliminated ? 'text-red-800' : 'text-orange-800'}`}>
+                {eliminatedCastaways.length === 1
+                  ? 'Castaway Eliminated'
+                  : `${eliminatedCastaways.length} Castaways Eliminated`}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {eliminatedCastaways.map((castaway) => (
+                  <div
+                    key={castaway.id}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
+                      myPick?.castaway_id === castaway.id
+                        ? 'bg-red-100 border border-red-300'
+                        : 'bg-white border border-orange-200'
+                    }`}
+                  >
+                    {castaway.photo_url ? (
+                      <img
+                        src={castaway.photo_url}
+                        alt={castaway.name}
+                        className="w-6 h-6 rounded-full object-cover grayscale"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 bg-neutral-200 rounded-full flex items-center justify-center">
+                        <Users className="h-3 w-3 text-neutral-400" />
+                      </div>
+                    )}
+                    <span className={`text-sm font-medium ${
+                      myPick?.castaway_id === castaway.id ? 'text-red-700' : 'text-neutral-700'
+                    }`}>
+                      {castaway.name}
+                      {myPick?.castaway_id === castaway.id && (
+                        <span className="ml-1 text-xs text-red-500">(Your Pick)</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {myPickWasEliminated && (
+                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                  <AlertTriangle className="h-4 w-4" />
+                  This castaway is no longer available for future picks
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* My Pick Summary */}
       {myPick && (

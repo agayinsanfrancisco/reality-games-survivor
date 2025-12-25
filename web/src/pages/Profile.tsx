@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Bell, Phone, Mail, Smartphone, Loader2, Check, LogOut, AlertCircle, RefreshCw, Pencil, Globe } from 'lucide-react';
+import { User, Bell, Phone, Mail, Smartphone, Loader2, Check, LogOut, AlertCircle, RefreshCw, Pencil, Globe, Lock, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { apiWithAuth } from '../lib/api';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +17,13 @@ export default function Profile() {
   const [displayName, setDisplayName] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
 
   // Common timezone options
   const TIMEZONE_OPTIONS = [
@@ -174,6 +181,39 @@ export default function Profile() {
       setPhoneSuccess(null);
     },
   });
+
+  // Change password mutation
+  const changePassword = useMutation({
+    mutationFn: async (password: string) => {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setShowPasswordChange(false);
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordError(null);
+      setPasswordSuccess('Password changed successfully!');
+      setTimeout(() => setPasswordSuccess(null), 3000);
+    },
+    onError: (error: Error) => {
+      setPasswordError(error.message);
+      setPasswordSuccess(null);
+    },
+  });
+
+  const handlePasswordChange = () => {
+    if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+    setPasswordError(null);
+    changePassword.mutate(newPassword);
+  };
 
   // Logout
   const handleLogout = async () => {
@@ -459,6 +499,111 @@ export default function Profile() {
               />
             </label>
           </div>
+        </div>
+
+        {/* Security / Password */}
+        <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200 mb-6">
+          <h3 className="text-lg font-display font-bold text-neutral-800 mb-4 flex items-center gap-2">
+            <Lock className="h-5 w-5 text-burgundy-500" />
+            Security
+          </h3>
+
+          {/* Success Message */}
+          {passwordSuccess && (
+            <div className="mb-4 flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-green-600 text-sm">
+              <Check className="h-4 w-4 flex-shrink-0" />
+              {passwordSuccess}
+            </div>
+          )}
+
+          {!showPasswordChange ? (
+            <button
+              onClick={() => setShowPasswordChange(true)}
+              className="w-full flex items-center justify-between p-3 bg-cream-50 rounded-xl border border-cream-200 hover:bg-cream-100 transition-colors text-left"
+            >
+              <div>
+                <p className="text-neutral-800 font-medium">Change Password</p>
+                <p className="text-neutral-400 text-sm">Update your account password</p>
+              </div>
+              <Lock className="h-5 w-5 text-neutral-400" />
+            </button>
+          ) : (
+            <div className="space-y-4">
+              {/* Error Message */}
+              {passwordError && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  {passwordError}
+                </div>
+              )}
+
+              {/* New Password */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">New Password</label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    className="input w-full pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                  >
+                    {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+                <p className="text-neutral-400 text-xs mt-1">Must be at least 8 characters</p>
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Confirm Password</label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                    className="input w-full pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handlePasswordChange}
+                  disabled={!newPassword || !confirmPassword || changePassword.isPending}
+                  className="btn btn-primary flex-1"
+                >
+                  {changePassword.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Update Password'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowPasswordChange(false);
+                    setNewPassword('');
+                    setConfirmPassword('');
+                    setPasswordError(null);
+                  }}
+                  disabled={changePassword.isPending}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Logout Button */}

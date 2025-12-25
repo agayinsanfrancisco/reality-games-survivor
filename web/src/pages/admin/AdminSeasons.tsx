@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Plus, Check, Loader2, Star, Edit2, Trash2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Plus, Check, Loader2, Star, Edit2, Trash2, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Navigation } from '@/components/Navigation';
 
@@ -20,6 +20,52 @@ export function AdminSeasons() {
     draft_deadline: '',
     finale_at: '',
   });
+
+  const [dateErrors, setDateErrors] = useState<string[]>([]);
+
+  // Validate date order
+  const validateDates = (): boolean => {
+    const errors: string[] = [];
+
+    const regOpens = formData.registration_opens_at ? new Date(formData.registration_opens_at) : null;
+    const draftOrder = formData.draft_order_deadline ? new Date(formData.draft_order_deadline) : null;
+    const regCloses = formData.registration_closes_at ? new Date(formData.registration_closes_at) : null;
+    const premiere = formData.premiere_at ? new Date(formData.premiere_at) : null;
+    const draftDeadline = formData.draft_deadline ? new Date(formData.draft_deadline) : null;
+    const finale = formData.finale_at ? new Date(formData.finale_at) : null;
+
+    // Required field checks
+    if (!formData.number) errors.push('Season number is required');
+    if (!formData.name) errors.push('Season name is required');
+    if (!regOpens) errors.push('Registration opens date is required');
+    if (!draftOrder) errors.push('Draft order deadline is required');
+    if (!regCloses) errors.push('Registration closes date is required');
+    if (!premiere) errors.push('Premiere date is required');
+    if (!draftDeadline) errors.push('Draft deadline is required');
+
+    // Date order validation
+    if (regOpens && draftOrder && regOpens >= draftOrder) {
+      errors.push('Registration must open before draft order deadline');
+    }
+    if (draftOrder && regCloses && draftOrder >= regCloses) {
+      errors.push('Draft order deadline must be before registration closes');
+    }
+    if (regCloses && premiere && regCloses > premiere) {
+      errors.push('Registration must close before or on premiere date');
+    }
+    if (premiere && draftDeadline && premiere > draftDeadline) {
+      errors.push('Premiere must be before or on draft deadline');
+    }
+    if (draftDeadline && finale && draftDeadline >= finale) {
+      errors.push('Draft deadline must be before finale');
+    }
+    if (premiere && finale && premiere >= finale) {
+      errors.push('Premiere must be before finale');
+    }
+
+    setDateErrors(errors);
+    return errors.length === 0;
+  };
 
   // Fetch all seasons
   const { data: seasons, isLoading } = useQuery({
@@ -106,6 +152,7 @@ export function AdminSeasons() {
   const resetForm = () => {
     setShowForm(false);
     setEditingId(null);
+    setDateErrors([]);
     setFormData({
       number: '',
       name: '',
@@ -118,7 +165,15 @@ export function AdminSeasons() {
     });
   };
 
+  const handleSave = () => {
+    if (!validateDates()) {
+      return;
+    }
+    saveSeason.mutate();
+  };
+
   const startEdit = (season: any) => {
+    setDateErrors([]);
     setEditingId(season.id);
     setFormData({
       number: season.number.toString(),
@@ -276,9 +331,26 @@ export function AdminSeasons() {
             </label>
           </div>
 
+          {/* Validation Errors */}
+          {dateErrors.length > 0 && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-red-800">Please fix the following errors:</p>
+                  <ul className="mt-2 space-y-1 text-sm text-red-600">
+                    {dateErrors.map((error, i) => (
+                      <li key={i}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <button
-              onClick={() => saveSeason.mutate()}
+              onClick={handleSave}
               disabled={saveSeason.isPending}
               className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
             >

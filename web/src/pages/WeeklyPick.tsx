@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
-import { Loader2, CheckCircle, AlertCircle, Lock, Clock, ArrowLeft } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, Lock, Clock, ArrowLeft, Trophy, Target, Shield, TrendingUp } from 'lucide-react';
 
 interface Castaway {
   id: string;
@@ -44,6 +44,13 @@ interface League {
   id: string;
   name: string;
   season_id: string;
+}
+
+interface CastawayStats {
+  castaway_id: string;
+  total_points: number;
+  times_picked: number;
+  avg_points: number;
 }
 
 export function WeeklyPick() {
@@ -161,6 +168,49 @@ export function WeeklyPick() {
     enabled: !!leagueId && !!user?.id,
   });
 
+  // Fetch castaway stats (total points earned when picked)
+  const { data: castawayStats } = useQuery({
+    queryKey: ['castawayStats', leagueId, user?.id],
+    queryFn: async () => {
+      if (!leagueId || !user?.id || !roster) throw new Error('Missing data');
+      const castawayIds = roster.map(r => r.castaway_id);
+
+      // Get all picks for these castaways in this league
+      const { data, error } = await supabase
+        .from('weekly_picks')
+        .select('castaway_id, points_earned')
+        .eq('league_id', leagueId)
+        .eq('user_id', user.id)
+        .in('castaway_id', castawayIds)
+        .in('status', ['locked', 'auto_picked']);
+
+      if (error) throw error;
+
+      // Aggregate stats per castaway
+      const statsMap = new Map<string, CastawayStats>();
+      castawayIds.forEach(id => {
+        statsMap.set(id, { castaway_id: id, total_points: 0, times_picked: 0, avg_points: 0 });
+      });
+
+      data?.forEach(pick => {
+        if (pick.castaway_id) {
+          const stat = statsMap.get(pick.castaway_id);
+          if (stat) {
+            stat.total_points += pick.points_earned || 0;
+            stat.times_picked += 1;
+            stat.avg_points = stat.times_picked > 0 ? Math.round(stat.total_points / stat.times_picked) : 0;
+          }
+        }
+      });
+
+      return Array.from(statsMap.values());
+    },
+    enabled: !!leagueId && !!user?.id && !!roster && roster.length > 0,
+  });
+
+  // Check if user was auto-picked last episode
+  const wasAutoPicked = previousPicks?.[0]?.status === 'auto_picked';
+
   // Submit pick mutation
   const submitPickMutation = useMutation({
     mutationFn: async (castawayId: string) => {
@@ -253,6 +303,16 @@ export function WeeklyPick() {
   // Draft and league status checks
   const draftCompleted = draftStatus?.draft_status === 'completed';
   const leagueActive = draftStatus?.status === 'active';
+
+  // Helper to get stats for a castaway
+  const getStatsForCastaway = (castawayId: string): CastawayStats | undefined => {
+    return castawayStats?.find(s => s.castaway_id === castawayId);
+  };
+
+  // Urgency calculations
+  const totalMinutesLeft = timeLeft.days * 24 * 60 + timeLeft.hours * 60 + timeLeft.minutes;
+  const isVeryUrgent = totalMinutesLeft <= 30 && totalMinutesLeft > 0;
+  const isUrgent = timeLeft.days === 0 && timeLeft.hours < 2;
 
   // Loading state
   if (isLoading) {
@@ -404,6 +464,45 @@ export function WeeklyPick() {
               );
             })()}
 
+            {/* Auto-Pick Warning */}
+            {wasAutoPicked && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 animate-slide-up" style={{ animationDelay: '0.05s' }}>
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-amber-800">You were auto-picked last episode</p>
+                  <p className="text-sm text-amber-700">
+                    You didn't submit a pick in time, so the system picked for you. Make sure to submit your pick before the deadline!
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* No Pick Warning */}
+            {!pickSubmitted && !isVeryUrgent && isUrgent && (
+              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex items-start gap-3 animate-slide-up" style={{ animationDelay: '0.05s' }}>
+                <Clock className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-orange-800">Don't forget to pick!</p>
+                  <p className="text-sm text-orange-700">
+                    If you don't submit a pick, the system will auto-select your highest-ranked active castaway.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Very Urgent Warning */}
+            {!pickSubmitted && isVeryUrgent && (
+              <div className="bg-red-50 border border-red-300 rounded-2xl p-4 flex items-start gap-3 animate-pulse">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-red-800">Less than 30 minutes left!</p>
+                  <p className="text-sm text-red-700">
+                    Submit your pick now or you'll be auto-picked!
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Pick Selection */}
             <div className="bg-white rounded-2xl shadow-elevated overflow-hidden animate-slide-up" style={{ animationDelay: '0.1s' }}>
               <div className="p-6 border-b border-cream-100">
@@ -427,65 +526,89 @@ export function WeeklyPick() {
                     </p>
                   </div>
                 ) : (
-                  activeCastaways.map((entry) => (
-                    <button
-                      key={entry.id}
-                      onClick={() => setSelectedCastaway(entry.castaway_id)}
-                      className={`w-full p-5 rounded-xl border-2 transition-all text-left flex items-center gap-5 ${
-                        selectedCastaway === entry.castaway_id
-                          ? 'border-burgundy-500 bg-burgundy-50 shadow-card'
-                          : 'border-cream-200 bg-cream-50 hover:border-cream-300 hover:shadow-sm'
-                      }`}
-                    >
-                      {/* Photo */}
-                      {entry.castaways?.photo_url ? (
-                        <img
-                          src={entry.castaways.photo_url}
-                          alt={entry.castaways.name}
-                          className="w-16 h-16 rounded-xl object-cover"
-                        />
-                      ) : (
-                        <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${
-                          selectedCastaway === entry.castaway_id ? 'bg-burgundy-100' : 'bg-cream-200'
-                        }`}>
-                          <svg className={`w-8 h-8 ${
-                            selectedCastaway === entry.castaway_id ? 'text-burgundy-400' : 'text-neutral-300'
-                          }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        </div>
-                      )}
-
-                      {/* Info */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                          <h3 className={`font-semibold text-lg ${
-                            selectedCastaway === entry.castaway_id ? 'text-burgundy-700' : 'text-neutral-800'
+                  activeCastaways.map((entry) => {
+                    const stats = getStatsForCastaway(entry.castaway_id);
+                    return (
+                      <button
+                        key={entry.id}
+                        onClick={() => setSelectedCastaway(entry.castaway_id)}
+                        className={`w-full p-5 rounded-xl border-2 transition-all text-left flex items-center gap-5 ${
+                          selectedCastaway === entry.castaway_id
+                            ? 'border-burgundy-500 bg-burgundy-50 shadow-card'
+                            : 'border-cream-200 bg-cream-50 hover:border-cream-300 hover:shadow-sm'
+                        }`}
+                      >
+                        {/* Photo */}
+                        {entry.castaways?.photo_url ? (
+                          <img
+                            src={entry.castaways.photo_url}
+                            alt={entry.castaways.name}
+                            className="w-16 h-16 rounded-xl object-cover"
+                          />
+                        ) : (
+                          <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${
+                            selectedCastaway === entry.castaway_id ? 'bg-burgundy-100' : 'bg-cream-200'
                           }`}>
-                            {entry.castaways?.name}
-                          </h3>
-                          <span className={`badge text-xs ${
-                            entry.castaways?.status === 'active' ? 'badge-success' : 'bg-neutral-100 text-neutral-500'
-                          }`}>
-                            {entry.castaways?.status?.toUpperCase()}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Selection indicator */}
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                        selectedCastaway === entry.castaway_id
-                          ? 'border-burgundy-500 bg-burgundy-500'
-                          : 'border-cream-300'
-                      }`}>
-                        {selectedCastaway === entry.castaway_id && (
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
+                            <svg className={`w-8 h-8 ${
+                              selectedCastaway === entry.castaway_id ? 'text-burgundy-400' : 'text-neutral-300'
+                            }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                          </div>
                         )}
-                      </div>
-                    </button>
-                  ))
+
+                        {/* Info */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className={`font-semibold text-lg ${
+                              selectedCastaway === entry.castaway_id ? 'text-burgundy-700' : 'text-neutral-800'
+                            }`}>
+                              {entry.castaways?.name}
+                            </h3>
+                            <span className={`badge text-xs ${
+                              entry.castaways?.status === 'active' ? 'badge-success' : 'bg-neutral-100 text-neutral-500'
+                            }`}>
+                              {entry.castaways?.status?.toUpperCase()}
+                            </span>
+                          </div>
+
+                          {/* Castaway Stats */}
+                          {stats && stats.times_picked > 0 && (
+                            <div className="flex items-center gap-4 text-sm">
+                              <div className="flex items-center gap-1 text-neutral-500">
+                                <Trophy className="w-3.5 h-3.5" />
+                                <span>{stats.total_points} pts total</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-neutral-500">
+                                <Target className="w-3.5 h-3.5" />
+                                <span>{stats.times_picked}x picked</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-neutral-500">
+                                <TrendingUp className="w-3.5 h-3.5" />
+                                <span>{stats.avg_points} avg</span>
+                              </div>
+                            </div>
+                          )}
+                          {(!stats || stats.times_picked === 0) && (
+                            <p className="text-sm text-neutral-400">Not yet picked this season</p>
+                          )}
+                        </div>
+
+                        {/* Selection indicator */}
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          selectedCastaway === entry.castaway_id
+                            ? 'border-burgundy-500 bg-burgundy-500'
+                            : 'border-cream-300'
+                        }`}>
+                          {selectedCastaway === entry.castaway_id && (
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })
                 )}
               </div>
 

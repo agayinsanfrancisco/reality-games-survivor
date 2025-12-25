@@ -14,7 +14,9 @@ import {
   BookOpen,
   Zap,
   TrendingUp,
-  Play
+  Play,
+  AlertCircle,
+  XCircle
 } from 'lucide-react';
 import { Footer } from '@/components/Footer';
 
@@ -324,6 +326,50 @@ export function Dashboard() {
     enabled: !!activeSeason?.id,
   });
 
+  // Check for eliminated castaways (recently eliminated from user's roster)
+  const { data: recentlyEliminated } = useQuery({
+    queryKey: ['recently-eliminated', user?.id, previousEpisode?.id],
+    queryFn: async () => {
+      if (!myRosters || !previousEpisode) return [];
+
+      // Get castaways that were eliminated in the previous episode
+      const { data, error } = await supabase
+        .from('castaways')
+        .select('id, name')
+        .eq('eliminated_episode_id', previousEpisode.id);
+
+      if (error) throw error;
+
+      // Filter to only castaways the user had on their roster
+      const userCastawayIds = myRosters.map(r => r.castaway_id);
+      return data?.filter(c => userCastawayIds.includes(c.id)) || [];
+    },
+    enabled: !!user?.id && !!previousEpisode?.id && !!myRosters,
+  });
+
+  // Check if user was auto-picked in any league recently
+  const { data: autoPickedLeagues } = useQuery({
+    queryKey: ['auto-picked', user?.id, previousEpisode?.id],
+    queryFn: async () => {
+      if (!previousEpisode || !myLeagues) return [];
+
+      const leagueIds = myLeagues.filter(l => !l.league.is_global).map(l => l.league_id);
+      if (leagueIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from('weekly_picks')
+        .select('league_id, leagues(name)')
+        .eq('user_id', user!.id)
+        .eq('episode_id', previousEpisode.id)
+        .eq('status', 'auto_picked')
+        .in('league_id', leagueIds);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id && !!previousEpisode?.id && !!myLeagues,
+  });
+
   // Group rosters by league
   const rostersByLeague = myRosters?.reduce((acc, roster) => {
     if (!acc[roster.league_id]) acc[roster.league_id] = [];
@@ -397,6 +443,45 @@ export function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Alert Banners */}
+      <div className="space-y-3 mb-6">
+        {/* Eliminated Castaway Alert */}
+        {recentlyEliminated && recentlyEliminated.length > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
+            <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-medium text-red-800">
+                {recentlyEliminated.length === 1
+                  ? `${recentlyEliminated[0].name} was eliminated!`
+                  : `${recentlyEliminated.map(c => c.name).join(' and ')} were eliminated!`}
+              </p>
+              <p className="text-sm text-red-700 mt-1">
+                {recentlyEliminated.length === 1
+                  ? 'The tribe has spoken. You still have your other castaway to play for!'
+                  : 'The tribe has spoken. Your season may be impacted by these eliminations.'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Auto-Pick Alert */}
+        {autoPickedLeagues && autoPickedLeagues.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-medium text-amber-800">
+                You were auto-picked in {autoPickedLeagues.length === 1
+                  ? (autoPickedLeagues[0] as any).leagues?.name || 'a league'
+                  : `${autoPickedLeagues.length} leagues`}
+              </p>
+              <p className="text-sm text-amber-700 mt-1">
+                You didn't submit a pick in time last episode. Make sure to pick before the deadline this week!
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Quick Actions Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
