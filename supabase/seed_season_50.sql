@@ -20,7 +20,7 @@ INSERT INTO seasons (id, number, name, is_active, registration_opens_at, draft_o
 VALUES (
   'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
   50,
-  'Survivor 50: The Greatest',
+  'Survivor 50: In the Hands of the Fans',
   true,
   '2025-12-19 12:00:00-08',  -- Dec 19, 2025 12:00 PM PST
   '2026-01-05 12:00:00-08',  -- Jan 5, 2026 12:00 PM PST
