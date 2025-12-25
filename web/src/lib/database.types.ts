@@ -351,6 +351,7 @@ export type Database = {
           draft_position: number | null;
           total_points: number;
           rank: number | null;
+          previous_rank: number | null;
           joined_at: string;
         };
         Insert: {
@@ -360,6 +361,7 @@ export type Database = {
           draft_position?: number | null;
           total_points?: number;
           rank?: number | null;
+          previous_rank?: number | null;
           joined_at?: string;
         };
         Update: {
@@ -369,6 +371,7 @@ export type Database = {
           draft_position?: number | null;
           total_points?: number;
           rank?: number | null;
+          previous_rank?: number | null;
           joined_at?: string;
         };
         Relationships: [
