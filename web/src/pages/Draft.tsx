@@ -25,7 +25,6 @@ interface Castaway {
   photo_url?: string;
   hometown?: string;
   age?: number;
-  tribe_original?: string;
   occupation?: string;
   status: string;
 }

@@ -29,7 +29,6 @@ interface Castaway {
   hometown: string | null;
   occupation: string | null;
   photo_url: string | null;
-  tribe_original: string | null;
   status: 'active' | 'eliminated' | 'winner';
   placement: number | null;
   episodes: { number: number } | null;

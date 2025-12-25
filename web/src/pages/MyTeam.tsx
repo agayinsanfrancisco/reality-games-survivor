@@ -151,9 +151,7 @@ export default function MyTeam() {
                 )}
                 <div className="flex-1">
                   <p className="text-neutral-800 font-medium">{entry.castaways?.name}</p>
-                  <p className="text-neutral-500 text-sm">
-                    {entry.castaways?.tribe_original ? `${entry.castaways.tribe_original} • ` : ''}Round {entry.draft_round}
-                  </p>
+                  <p className="text-neutral-500 text-sm">Round {entry.draft_round}</p>
                 </div>
                 <div className="text-right">
                   <span className={`px-2 py-1 rounded text-xs font-medium ${

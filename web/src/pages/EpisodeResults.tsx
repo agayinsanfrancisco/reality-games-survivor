@@ -242,9 +242,6 @@ export default function EpisodeResults() {
                       )}
                       <div>
                         <p className="text-neutral-800 font-medium">{data.castaway.name}</p>
-                        {data.castaway.tribe_original && (
-                          <p className="text-neutral-500 text-sm">{data.castaway.tribe_original}</p>
-                        )}
                       </div>
                     </div>
                     <span className={`text-xl font-bold ${

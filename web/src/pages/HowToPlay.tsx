@@ -2,6 +2,7 @@ import { Trophy, Users, Calendar, Star, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
+import { Footer } from '@/components/Footer';
 
 export default function HowToPlay() {
   const { user } = useAuth();
@@ -25,7 +26,7 @@ export default function HowToPlay() {
     {
       icon: Star,
       title: 'Earn Points',
-      description: 'Your picked castaway earns points based on 100+ scoring rules. Every idol play, challenge win, and strategic move counts. See the full list on our Scoring Rules page.',
+      description: 'Your picked castaway earns points based on what happens in the episode. Every idol play, challenge win, and strategic move counts. See the full list on our Scoring Rules page.',
     },
     {
       icon: Award,
@@ -43,7 +44,7 @@ export default function HowToPlay() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex flex-col">
       <Navigation />
 
       {/* Header */}
@@ -114,7 +115,7 @@ export default function HowToPlay() {
         >
           <Star className="h-8 w-8 text-burgundy-500 mx-auto mb-3" />
           <h3 className="text-lg font-display font-bold text-neutral-800 mb-2">
-            View All 100+ Scoring Rules
+            View All Scoring Rules
           </h3>
           <p className="text-neutral-500">
             See exactly how points are earned and lost for every game action.
@@ -148,6 +149,8 @@ export default function HowToPlay() {
           </>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }

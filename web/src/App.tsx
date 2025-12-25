@@ -69,6 +69,8 @@ export default function App() {
         <Route path="/update-password" element={<UpdatePassword />} />
         <Route path="/sms" element={<SMSCommands />} />
         <Route path="/l/:code" element={<PublicLeaderboard />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/castaways" element={<Castaways />} />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
@@ -78,8 +80,6 @@ export default function App() {
             <Route path="/leagues/:leagueId/leaderboard" element={<Leaderboard />} />
             <Route path="/leaderboard" element={<GlobalLeaderboard />} />
             <Route path="/leagues" element={<Leagues />} />
-            <Route path="/castaways" element={<Castaways />} />
-            <Route path="/contact" element={<Contact />} />
           </Route>
           {/* Full-page protected routes (no Layout wrapper) */}
           <Route path="/join" element={<Navigate to="/signup" replace />} />

@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useState, useEffect } from 'react';
-import { Flame, Shield, Users, Trophy, Mail, Home, BookOpen, LayoutDashboard, UserCircle, Target } from 'lucide-react';
+import { Shield, UserCircle } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -127,93 +127,70 @@ export function Navigation() {
     );
   }
 
-  // Authenticated player navigation - warm, inviting styling
+  // Authenticated player navigation - clean, Survivor-themed
   if (user) {
     return (
-      <nav className="bg-gradient-to-r from-cream-50 to-white border-b border-cream-200 shadow-sm sticky top-0 z-50">
+      <nav className="bg-white border-b-2 border-burgundy-500 shadow-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/dashboard" className="flex items-center gap-2">
               <img src="/logo.png" alt="RGFL" className="h-10 w-auto" />
             </Link>
 
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex items-center">
               <Link
                 to="/dashboard"
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
                   isActive('/dashboard')
-                    ? 'bg-burgundy-500 text-white shadow-md'
-                    : 'text-neutral-600 hover:bg-cream-100'
+                    ? 'text-burgundy-600'
+                    : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
                 }`}
               >
-                <Home className="h-4 w-4" />
                 Dashboard
               </Link>
+              <span className="text-burgundy-300 mx-1">|</span>
               <Link
                 to="/leagues"
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
                   isActive('/leagues') && !location.pathname.includes('/create')
-                    ? 'bg-burgundy-500 text-white shadow-md'
-                    : 'text-neutral-600 hover:bg-cream-100'
+                    ? 'text-burgundy-600'
+                    : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
                 }`}
               >
-                <Users className="h-4 w-4" />
                 Leagues
               </Link>
+              <span className="text-burgundy-300 mx-1">|</span>
               <Link
                 to="/leaderboard"
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
                   isActive('/leaderboard')
-                    ? 'bg-burgundy-500 text-white shadow-md'
-                    : 'text-neutral-600 hover:bg-cream-100'
+                    ? 'text-burgundy-600'
+                    : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
                 }`}
               >
-                <Trophy className="h-4 w-4" />
                 Leaderboard
               </Link>
+              <span className="text-burgundy-300 mx-1">|</span>
               <Link
                 to="/castaways"
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
                   isActive('/castaways')
-                    ? 'bg-burgundy-500 text-white shadow-md'
-                    : 'text-neutral-600 hover:bg-cream-100'
+                    ? 'text-burgundy-600'
+                    : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
                 }`}
               >
-                <Flame className="h-4 w-4" />
                 Castaways
               </Link>
-              <Link
-                to="/scoring"
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  isActive('/scoring')
-                    ? 'bg-burgundy-500 text-white shadow-md'
-                    : 'text-neutral-600 hover:bg-cream-100'
-                }`}
-              >
-                <Target className="h-4 w-4" />
-                Scoring
-              </Link>
+              <span className="text-burgundy-300 mx-1">|</span>
               <Link
                 to="/how-to-play"
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  isActive('/how-to-play')
-                    ? 'bg-burgundy-500 text-white shadow-md'
-                    : 'text-neutral-600 hover:bg-cream-100'
+                className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
+                  isActive('/how-to-play') || isActive('/scoring')
+                    ? 'text-burgundy-600'
+                    : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
                 }`}
               >
-                <BookOpen className="h-4 w-4" />
                 How to Play
-              </Link>
-              <Link
-                to="/contact"
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  isActive('/contact')
-                    ? 'bg-burgundy-500 text-white shadow-md'
-                    : 'text-neutral-600 hover:bg-cream-100'
-                }`}
-              >
-                <Mail className="h-4 w-4" />
-                Contact
               </Link>
             </div>
 
@@ -231,7 +208,7 @@ export function Navigation() {
 
               {/* User Menu */}
               <div className="relative group">
-                <button className="flex items-center gap-2 p-2 text-neutral-600 hover:text-neutral-800 hover:bg-cream-100 rounded-xl transition-all">
+                <button className="flex items-center gap-2 p-2 text-neutral-600 hover:text-neutral-800 hover:bg-burgundy-50 rounded-xl transition-all">
                   <div className="w-8 h-8 bg-burgundy-100 rounded-full flex items-center justify-center">
                     <span className="text-burgundy-600 font-semibold text-sm">
                       {profile?.display_name?.charAt(0).toUpperCase() || 'U'}
@@ -244,13 +221,13 @@ export function Navigation() {
                     <p className="text-sm text-neutral-400">Fantasy Player</p>
                   </div>
                   <div className="p-2">
-                    <Link to="/profile" className="block px-3 py-2 text-sm text-neutral-600 hover:bg-cream-50 rounded-lg">
+                    <Link to="/profile" className="block px-3 py-2 text-sm text-neutral-600 hover:bg-burgundy-50 rounded-lg">
                       Profile Settings
                     </Link>
-                    <Link to="/profile/notifications" className="block px-3 py-2 text-sm text-neutral-600 hover:bg-cream-50 rounded-lg">
+                    <Link to="/profile/notifications" className="block px-3 py-2 text-sm text-neutral-600 hover:bg-burgundy-50 rounded-lg">
                       Notifications
                     </Link>
-                    <Link to="/profile/payments" className="block px-3 py-2 text-sm text-neutral-600 hover:bg-cream-50 rounded-lg">
+                    <Link to="/profile/payments" className="block px-3 py-2 text-sm text-neutral-600 hover:bg-burgundy-50 rounded-lg">
                       Payment History
                     </Link>
                     <hr className="my-2 border-cream-100" />
@@ -272,62 +249,50 @@ export function Navigation() {
 
   // Public/unauthenticated navigation
   return (
-    <nav className="bg-white/80 backdrop-blur-md border-b border-cream-200/50 shadow-sm sticky top-0 z-50">
+    <nav className="bg-white border-b-2 border-burgundy-500 shadow-sm sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
             <img src="/logo.png" alt="RGFL" className="h-10 w-auto" />
           </Link>
 
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center">
             <Link
               to="/"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
                 location.pathname === '/'
                   ? 'text-burgundy-600'
-                  : 'text-neutral-600 hover:text-burgundy-500'
+                  : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
               }`}
             >
-              <Home className="h-4 w-4" />
               Home
             </Link>
+            <span className="text-burgundy-300 mx-1">|</span>
             <Link
               to="/how-to-play"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                isActive('/how-to-play')
+              className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
+                isActive('/how-to-play') || isActive('/scoring')
                   ? 'text-burgundy-600'
-                  : 'text-neutral-600 hover:text-burgundy-500'
+                  : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
               }`}
             >
-              <BookOpen className="h-4 w-4" />
               How to Play
             </Link>
+            <span className="text-burgundy-300 mx-1">|</span>
             <Link
-              to="/scoring"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                isActive('/scoring')
+              to="/castaways"
+              className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
+                isActive('/castaways')
                   ? 'text-burgundy-600'
-                  : 'text-neutral-600 hover:text-burgundy-500'
+                  : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
               }`}
             >
-              <Target className="h-4 w-4" />
-              Scoring
-            </Link>
-            <Link
-              to="/contact"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                isActive('/contact')
-                  ? 'text-burgundy-600'
-                  : 'text-neutral-600 hover:text-burgundy-500'
-              }`}
-            >
-              <Mail className="h-4 w-4" />
-              Contact
+              Castaways
             </Link>
           </div>
 
           <div className="flex items-center gap-3">
-            <Link to="/login" className="text-neutral-600 hover:text-burgundy-600 font-medium text-sm">
+            <Link to="/login" className="text-neutral-600 hover:text-burgundy-600 font-semibold text-sm uppercase tracking-wide">
               Login
             </Link>
             <Link to="/signup" className="btn btn-primary shadow-elevated">

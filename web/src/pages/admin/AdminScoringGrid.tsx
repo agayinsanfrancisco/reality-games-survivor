@@ -19,7 +19,6 @@ interface Castaway {
   id: string;
   name: string;
   photo_url: string | null;
-  tribe_original: string | null;
   status: string;
 }
 
