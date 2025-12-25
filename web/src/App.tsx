@@ -54,6 +54,14 @@ import { AdminJobs } from './pages/admin/AdminJobs';
 import { AdminGlobal } from './pages/admin/AdminGlobal';
 import { AdminScoringRules } from './pages/admin/AdminScoringRules';
 import { AdminScoringGrid } from './pages/admin/AdminScoringGrid';
+import { AdminErrorBoundary } from './components/AdminErrorBoundary';
+
+// Wrapper to add error boundary to admin pages
+const withAdminErrorBoundary = (Component: React.ComponentType) => (
+  <AdminErrorBoundary>
+    <Component />
+  </AdminErrorBoundary>
+);
 
 export default function App() {
   return (
@@ -107,21 +115,21 @@ export default function App() {
 
         {/* Admin routes - require admin role */}
         <Route element={<AdminRoute />}>
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/scoring" element={<AdminScoring />} />
-          <Route path="/admin/castaways" element={<AdminCastaways />} />
-          <Route path="/admin/seasons" element={<AdminSeasons />} />
-          <Route path="/admin/seasons/:seasonId" element={<AdminSeasons />} />
-          <Route path="/admin/seasons/:seasonId/episodes" element={<AdminEpisodes />} />
-          <Route path="/admin/seasons/:seasonId/castaways" element={<AdminCastaways />} />
-          <Route path="/admin/episodes/:episodeId/scoring" element={<AdminScoring />} />
-          <Route path="/admin/leagues" element={<AdminLeagues />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/payments" element={<AdminPayments />} />
-          <Route path="/admin/jobs" element={<AdminJobs />} />
-          <Route path="/admin/global" element={<AdminGlobal />} />
-          <Route path="/admin/scoring-rules" element={<AdminScoringRules />} />
-          <Route path="/admin/scoring/grid" element={<AdminScoringGrid />} />
+          <Route path="/admin" element={withAdminErrorBoundary(AdminDashboard)} />
+          <Route path="/admin/scoring" element={withAdminErrorBoundary(AdminScoring)} />
+          <Route path="/admin/castaways" element={withAdminErrorBoundary(AdminCastaways)} />
+          <Route path="/admin/seasons" element={withAdminErrorBoundary(AdminSeasons)} />
+          <Route path="/admin/seasons/:seasonId" element={withAdminErrorBoundary(AdminSeasons)} />
+          <Route path="/admin/seasons/:seasonId/episodes" element={withAdminErrorBoundary(AdminEpisodes)} />
+          <Route path="/admin/seasons/:seasonId/castaways" element={withAdminErrorBoundary(AdminCastaways)} />
+          <Route path="/admin/episodes/:episodeId/scoring" element={withAdminErrorBoundary(AdminScoring)} />
+          <Route path="/admin/leagues" element={withAdminErrorBoundary(AdminLeagues)} />
+          <Route path="/admin/users" element={withAdminErrorBoundary(AdminUsers)} />
+          <Route path="/admin/payments" element={withAdminErrorBoundary(AdminPayments)} />
+          <Route path="/admin/jobs" element={withAdminErrorBoundary(AdminJobs)} />
+          <Route path="/admin/global" element={withAdminErrorBoundary(AdminGlobal)} />
+          <Route path="/admin/scoring-rules" element={withAdminErrorBoundary(AdminScoringRules)} />
+          <Route path="/admin/scoring/grid" element={withAdminErrorBoundary(AdminScoringGrid)} />
         </Route>
 
         {/* 404 */}

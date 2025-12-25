@@ -237,6 +237,30 @@ export default function Profile() {
           <p className="text-neutral-500">Manage your account settings</p>
         </div>
 
+        {/* Phone Verification Prompt */}
+        {!user?.phone_verified && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-amber-100 rounded-full">
+                <Smartphone className="h-5 w-5 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-amber-800">Add Your Phone Number</h3>
+                <p className="text-sm text-amber-700 mt-1">
+                  Verify your phone to receive SMS pick reminders and use text commands like "PICK Boston Rob" to submit picks on the go!
+                </p>
+                <a
+                  href="#phone-section"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-amber-800 hover:text-amber-900 mt-2"
+                >
+                  <Phone className="h-4 w-4" />
+                  Set up phone below
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Profile Info */}
         <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200 mb-6">
           <div className="flex items-center gap-4 mb-6">
@@ -344,7 +368,7 @@ export default function Profile() {
         </div>
 
         {/* Phone Number */}
-        <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200 mb-6">
+        <div id="phone-section" className="bg-white rounded-2xl shadow-card p-6 border border-cream-200 mb-6 scroll-mt-4">
           <h3 className="text-lg font-display font-bold text-neutral-800 mb-4 flex items-center gap-2">
             <Phone className="h-5 w-5 text-burgundy-500" />
             Phone Number

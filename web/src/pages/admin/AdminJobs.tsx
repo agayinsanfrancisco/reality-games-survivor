@@ -15,105 +15,128 @@ interface Job {
   enabled: boolean;
 }
 
-// Mock job data - in production this would come from pg_cron or a jobs table
-const defaultJobs: Job[] = [
-  {
-    name: 'draft-finalize',
-    description: 'Auto-complete incomplete drafts',
-    schedule: 'Mar 2, 8pm PST (one-time)',
-    lastRun: null,
-    nextRun: '2026-03-02T20:00:00-08:00',
-    status: 'pending',
-    enabled: true,
-  },
-  {
-    name: 'lock-picks',
-    description: 'Lock all pending weekly picks',
-    schedule: 'Wed 3pm PST (weekly)',
-    lastRun: null,
-    nextRun: null,
-    status: 'pending',
-    enabled: true,
-  },
-  {
-    name: 'auto-pick',
-    description: 'Fill missing picks with auto-select',
-    schedule: 'Wed 3:05pm PST (weekly)',
-    lastRun: null,
-    nextRun: null,
-    status: 'pending',
-    enabled: true,
-  },
-  {
-    name: 'pick-reminders',
-    description: 'Send pick reminder notifications',
-    schedule: 'Wed 12pm PST (weekly)',
-    lastRun: null,
-    nextRun: null,
-    status: 'pending',
-    enabled: true,
-  },
-  {
-    name: 'results-notification',
-    description: 'Send scoring results to players',
-    schedule: 'Fri 12pm PST (weekly)',
-    lastRun: null,
-    nextRun: null,
-    status: 'pending',
-    enabled: true,
-  },
-  {
-    name: 'weekly-summary',
-    description: 'Send weekly standings summary',
-    schedule: 'Sun 10am PST (weekly)',
-    lastRun: null,
-    nextRun: null,
-    status: 'pending',
-    enabled: true,
-  },
-];
+// Job metadata (descriptions and schedules for display)
+const jobMetadata: Record<string, { description: string; schedule: string }> = {
+  'draft-finalize': { description: 'Auto-complete incomplete drafts', schedule: 'Mar 2, 8pm PST (one-time)' },
+  'lock-picks': { description: 'Lock all pending weekly picks', schedule: 'Wed 3pm PST (weekly)' },
+  'auto-pick': { description: 'Fill missing picks with auto-select', schedule: 'Wed 3:05pm PST (weekly)' },
+  'pick-reminders': { description: 'Send pick reminder notifications', schedule: 'Wed 12pm PST (weekly)' },
+  'results-notification': { description: 'Send scoring results to players', schedule: 'Fri 12pm PST (weekly)' },
+  'weekly-summary': { description: 'Send weekly standings summary', schedule: 'Sun 10am PST (weekly)' },
+  'draft-reminders': { description: 'Send draft reminder notifications', schedule: 'Daily 9am PST' },
+};
+
+const defaultJobs: Job[] = Object.entries(jobMetadata).map(([name, meta]) => ({
+  name,
+  description: meta.description,
+  schedule: meta.schedule,
+  lastRun: null,
+  nextRun: null,
+  status: 'pending' as const,
+  enabled: true,
+}));
 
 export function AdminJobs() {
   const queryClient = useQueryClient();
-  const [jobs, setJobs] = useState<Job[]>(defaultJobs);
   const [runningJob, setRunningJob] = useState<string | null>(null);
+  const [jobResults, setJobResults] = useState<Record<string, { status: 'success' | 'failed'; lastRun: string; message?: string }>>({});
+  const [disabledJobs, setDisabledJobs] = useState<Set<string>>(new Set());
 
-  // Mock run job
-  const runJob = useMutation({
+  // Fetch jobs status from API
+  const { data: apiJobs, isLoading, refetch } = useQuery({
+    queryKey: ['admin-jobs'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await fetch('/api/admin/jobs', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch jobs');
+      }
+
+      const data = await response.json();
+      return data.jobs || [];
+    },
+  });
+
+  // Merge API data with local state
+  const jobs: Job[] = defaultJobs.map(job => {
+    const apiJob = apiJobs?.find((j: any) => j.name === job.name);
+    const result = jobResults[job.name];
+    const isDisabled = disabledJobs.has(job.name);
+    return {
+      ...job,
+      lastRun: result?.lastRun || apiJob?.lastRun || job.lastRun,
+      nextRun: apiJob?.nextRun || job.nextRun,
+      status: runningJob === job.name ? 'running' : (result?.status || apiJob?.status || job.status),
+      enabled: !isDisabled && (apiJob?.enabled ?? job.enabled),
+    };
+  });
+
+  // Run job mutation - calls real API
+  const runJobMutation = useMutation({
     mutationFn: async (jobName: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await fetch(`/api/admin/jobs/${jobName}/run`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to run job');
+      }
+
+      return response.json();
+    },
+    onMutate: (jobName) => {
       setRunningJob(jobName);
-      // Simulate job execution
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // In production, this would call the actual job endpoint
-      // const response = await fetch(`/api/admin/jobs/${jobName}/run`, { method: 'POST' });
-
-      return { success: true };
     },
-    onSuccess: (_, jobName) => {
-      setJobs(prev => prev.map(job =>
-        job.name === jobName
-          ? { ...job, lastRun: new Date().toISOString(), status: 'success' as const }
-          : job
-      ));
+    onSuccess: (data, jobName) => {
+      setJobResults(prev => ({
+        ...prev,
+        [jobName]: {
+          status: 'success',
+          lastRun: new Date().toISOString(),
+          message: data.result ? JSON.stringify(data.result) : undefined,
+        },
+      }));
       setRunningJob(null);
+      refetch();
     },
-    onError: (_, jobName) => {
-      setJobs(prev => prev.map(job =>
-        job.name === jobName
-          ? { ...job, status: 'failed' as const }
-          : job
-      ));
+    onError: (error: Error, jobName) => {
+      setJobResults(prev => ({
+        ...prev,
+        [jobName]: {
+          status: 'failed',
+          lastRun: new Date().toISOString(),
+          message: error.message,
+        },
+      }));
       setRunningJob(null);
     },
   });
 
   const toggleJob = (jobName: string) => {
-    setJobs(prev => prev.map(job =>
-      job.name === jobName
-        ? { ...job, enabled: !job.enabled }
-        : job
-    ));
+    setDisabledJobs(prev => {
+      const next = new Set(prev);
+      if (next.has(jobName)) {
+        next.delete(jobName);
+      } else {
+        next.add(jobName);
+      }
+      return next;
+    });
   };
 
   const getStatusIcon = (status: string) => {
@@ -161,13 +184,20 @@ export function AdminJobs() {
         >
           <ArrowLeft className="h-5 w-5 text-neutral-600" />
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-display font-bold text-neutral-800 flex items-center gap-2">
             <Zap className="h-6 w-6 text-burgundy-500" />
             System Jobs
           </h1>
           <p className="text-neutral-500">{jobs.length} scheduled jobs</p>
         </div>
+        <button
+          onClick={() => refetch()}
+          disabled={isLoading}
+          className="p-2 bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all border border-cream-200"
+        >
+          <RefreshCw className={`h-5 w-5 text-neutral-600 ${isLoading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
       {/* Stats */}
@@ -232,9 +262,21 @@ export function AdminJobs() {
               </div>
             </div>
 
+            {/* Result message */}
+            {jobResults[job.name]?.message && (
+              <div className={`text-xs p-2 rounded-lg mb-3 ${
+                jobResults[job.name].status === 'success'
+                  ? 'bg-green-50 text-green-700'
+                  : 'bg-red-50 text-red-700'
+              }`}>
+                {jobResults[job.name].status === 'success' ? '✓ ' : '✗ '}
+                {jobResults[job.name].message}
+              </div>
+            )}
+
             <div className="flex gap-2">
               <button
-                onClick={() => runJob.mutate(job.name)}
+                onClick={() => runJobMutation.mutate(job.name)}
                 disabled={runningJob === job.name || !job.enabled}
                 className="btn btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
