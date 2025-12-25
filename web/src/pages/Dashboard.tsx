@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { Flame, Users, Trophy, Calendar, ChevronRight, Megaphone, Clock, UserPlus } from 'lucide-react';
+import { Flame, Users, Trophy, Calendar, ChevronRight, Megaphone, Clock, Target, ListChecks, ArrowRight, Share2, Sparkles } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -45,6 +45,46 @@ interface Castaway {
 interface RosterEntry {
   castaway_id: string;
   castaway: Castaway;
+}
+
+interface Episode {
+  id: string;
+  number: number;
+  title: string | null;
+  air_date: string;
+  picks_lock_at: string;
+  is_scored: boolean;
+}
+
+// Game phase detection
+type GamePhase = 'pre_registration' | 'registration' | 'pre_draft' | 'draft' | 'pre_season' | 'active' | 'post_season';
+
+function getGamePhase(season: Season | null, nextEpisode: Episode | null): GamePhase {
+  if (!season) return 'pre_registration';
+
+  const now = new Date();
+  const registrationOpens = new Date(season.registration_opens_at);
+  const premiere = new Date(season.premiere_at);
+
+  if (now < registrationOpens) return 'pre_registration';
+  if (now < premiere) return 'pre_draft';
+  if (nextEpisode) return 'active';
+  return 'post_season';
+}
+
+function getCountdownText(targetDate: Date): string {
+  const now = new Date();
+  const diff = targetDate.getTime() - now.getTime();
+
+  if (diff <= 0) return 'Now';
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
 }
 
 export function Dashboard() {
@@ -131,6 +171,24 @@ export function Dashboard() {
     enabled: !!user?.id,
   });
 
+  // Fetch next upcoming episode
+  const { data: nextEpisode } = useQuery({
+    queryKey: ['next-episode', activeSeason?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('episodes')
+        .select('*')
+        .eq('season_id', activeSeason!.id)
+        .gt('air_date', new Date().toISOString())
+        .order('air_date', { ascending: true })
+        .limit(1)
+        .single();
+      if (error && error.code !== 'PGRST116') throw error;
+      return data as Episode | null;
+    },
+    enabled: !!activeSeason?.id,
+  });
+
   // Group rosters by league
   const rostersByLeague = myRosters?.reduce((acc, roster) => {
     if (!acc[roster.league_id]) acc[roster.league_id] = [];
@@ -139,6 +197,8 @@ export function Dashboard() {
   }, {} as Record<string, RosterEntry[]>) || {};
 
   const nonGlobalLeagues = myLeagues?.filter(l => !l.league.is_global) || [];
+  const globalLeague = myLeagues?.find(l => l.league.is_global);
+  const gamePhase = getGamePhase(activeSeason || null, nextEpisode || null);
 
   // Mock announcements - in production, fetch from database
   const announcements = [
@@ -183,51 +243,143 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Link
-            to="/leagues/create"
-            className="bg-white rounded-2xl p-5 shadow-card hover:shadow-elevated transition-all group border border-cream-200"
-          >
-            <div className="w-12 h-12 bg-burgundy-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-burgundy-500 transition-colors">
-              <Users className="h-6 w-6 text-burgundy-500 group-hover:text-white transition-colors" />
-            </div>
-            <p className="font-semibold text-neutral-800">Create League</p>
-            <p className="text-sm text-neutral-400 mt-1">Start your own</p>
-          </Link>
+        {/* Phase-Based Action Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          {/* Primary Action Card - Changes based on game phase */}
+          {gamePhase === 'pre_draft' || gamePhase === 'pre_registration' ? (
+            <Link
+              to="/draft/rankings"
+              className="bg-gradient-to-br from-burgundy-500 to-burgundy-700 rounded-2xl p-6 shadow-elevated hover:scale-[1.02] transition-all group"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                    <ListChecks className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-bold text-xl text-white mb-1">Set Your Draft Rankings</h3>
+                  <p className="text-burgundy-100 text-sm">Rank all 24 castaways before the draft</p>
+                </div>
+                <ArrowRight className="h-6 w-6 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
+              </div>
+              {activeSeason && (
+                <div className="mt-4 pt-4 border-t border-white/20 flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-burgundy-200" />
+                  <span className="text-sm text-burgundy-100">
+                    Premiere in {getCountdownText(new Date(activeSeason.premiere_at))}
+                  </span>
+                </div>
+              )}
+            </Link>
+          ) : gamePhase === 'active' && nextEpisode ? (
+            <Link
+              to={nonGlobalLeagues.length > 0 ? `/leagues/${nonGlobalLeagues[0].league_id}` : '/leagues'}
+              className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-6 shadow-elevated hover:scale-[1.02] transition-all group"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                    <Target className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-bold text-xl text-white mb-1">Make Your Pick</h3>
+                  <p className="text-orange-100 text-sm">Episode {nextEpisode.number} — {nextEpisode.title || 'Coming Up'}</p>
+                </div>
+                <ArrowRight className="h-6 w-6 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
+              </div>
+              <div className="mt-4 pt-4 border-t border-white/20 flex items-center gap-2">
+                <Clock className="h-4 w-4 text-orange-200" />
+                <span className="text-sm text-orange-100">
+                  Picks lock in {getCountdownText(new Date(nextEpisode.picks_lock_at))}
+                </span>
+              </div>
+            </Link>
+          ) : (
+            <Link
+              to="/leaderboard"
+              className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 shadow-elevated hover:scale-[1.02] transition-all group"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                    <Trophy className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-bold text-xl text-white mb-1">View Final Standings</h3>
+                  <p className="text-amber-100 text-sm">Season 50 results are in!</p>
+                </div>
+                <ArrowRight className="h-6 w-6 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
+              </div>
+            </Link>
+          )}
 
-          <Link
-            to="/leagues"
-            className="bg-white rounded-2xl p-5 shadow-card hover:shadow-elevated transition-all group border border-cream-200"
-          >
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-green-500 transition-colors">
-              <UserPlus className="h-6 w-6 text-green-600 group-hover:text-white transition-colors" />
+          {/* Secondary Action Card - Global Rank or Invite */}
+          {globalLeague?.rank ? (
+            <Link
+              to="/leaderboard"
+              className="bg-white rounded-2xl p-6 shadow-card hover:shadow-elevated transition-all border border-cream-200 group"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-amber-500 transition-colors">
+                    <Trophy className="h-6 w-6 text-amber-600 group-hover:text-white transition-colors" />
+                  </div>
+                  <h3 className="font-bold text-lg text-neutral-800 mb-1">Your Global Rank</h3>
+                  <p className="text-neutral-500 text-sm">{globalLeague.total_points} total points</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-4xl font-display font-bold text-burgundy-500">#{globalLeague.rank}</p>
+                  <p className="text-xs text-neutral-400 mt-1">out of all players</p>
+                </div>
+              </div>
+            </Link>
+          ) : (
+            <div className="bg-white rounded-2xl p-6 shadow-card border border-cream-200">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Share2 className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg text-neutral-800 mb-1">Invite Friends</h3>
+                  <p className="text-neutral-500 text-sm mb-3">Share the excitement — create or join a league with friends</p>
+                  <div className="flex gap-2">
+                    <Link to="/leagues/create" className="btn btn-sm btn-primary">
+                      Create League
+                    </Link>
+                    <Link to="/leagues" className="btn btn-sm btn-secondary">
+                      Browse
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="font-semibold text-neutral-800">Join League</p>
-            <p className="text-sm text-neutral-400 mt-1">Find a league</p>
-          </Link>
+          )}
 
-          <Link
-            to="/leaderboard"
-            className="bg-white rounded-2xl p-5 shadow-card hover:shadow-elevated transition-all group border border-cream-200"
-          >
-            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-amber-500 transition-colors">
-              <Trophy className="h-6 w-6 text-amber-600 group-hover:text-white transition-colors" />
+          {/* Quick Stats Row */}
+          <div className="md:col-span-2 grid grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl p-4 shadow-card border border-cream-200 text-center">
+              <div className="w-10 h-10 bg-burgundy-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <Users className="h-5 w-5 text-burgundy-500" />
+              </div>
+              <p className="text-2xl font-display font-bold text-neutral-800">{nonGlobalLeagues.length}</p>
+              <p className="text-xs text-neutral-500">My Leagues</p>
             </div>
-            <p className="font-semibold text-neutral-800">Leaderboard</p>
-            <p className="text-sm text-neutral-400 mt-1">Global rankings</p>
-          </Link>
-
-          <Link
-            to="/castaways"
-            className="bg-white rounded-2xl p-5 shadow-card hover:shadow-elevated transition-all group border border-cream-200"
-          >
-            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-500 transition-colors">
-              <Flame className="h-6 w-6 text-orange-500 group-hover:text-white transition-colors" />
+            <div className="bg-white rounded-xl p-4 shadow-card border border-cream-200 text-center">
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <Flame className="h-5 w-5 text-orange-500" />
+              </div>
+              <p className="text-2xl font-display font-bold text-neutral-800">
+                {Object.values(rostersByLeague).flat().filter((r: any) => r.castaway?.status === 'active').length}
+              </p>
+              <p className="text-xs text-neutral-500">Active Castaways</p>
             </div>
-            <p className="font-semibold text-neutral-800">Castaways</p>
-            <p className="text-sm text-neutral-400 mt-1">View all players</p>
-          </Link>
+            <div className="bg-white rounded-xl p-4 shadow-card border border-cream-200 text-center">
+              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <Sparkles className="h-5 w-5 text-amber-600" />
+              </div>
+              <p className="text-2xl font-display font-bold text-neutral-800">
+                {globalLeague?.total_points || 0}
+              </p>
+              <p className="text-xs text-neutral-500">Total Points</p>
+            </div>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
