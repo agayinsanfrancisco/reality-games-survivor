@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useState, useEffect } from 'react';
-import { Flame, Shield, Users, Trophy, Mail, Home, BookOpen, LayoutDashboard, UserCircle, Target } from 'lucide-react';
+import { Flame, Shield, Users, Trophy, Mail, Home, BookOpen, UserCircle, Target, MoreHorizontal } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -182,39 +182,51 @@ export function Navigation() {
                 <Flame className="h-4 w-4" />
                 Castaways
               </Link>
-              <Link
-                to="/scoring"
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  isActive('/scoring')
-                    ? 'bg-burgundy-500 text-white shadow-md'
-                    : 'text-neutral-600 hover:bg-cream-100'
-                }`}
-              >
-                <Target className="h-4 w-4" />
-                Scoring
-              </Link>
-              <Link
-                to="/how-to-play"
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  isActive('/how-to-play')
-                    ? 'bg-burgundy-500 text-white shadow-md'
-                    : 'text-neutral-600 hover:bg-cream-100'
-                }`}
-              >
-                <BookOpen className="h-4 w-4" />
-                How to Play
-              </Link>
-              <Link
-                to="/contact"
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  isActive('/contact')
-                    ? 'bg-burgundy-500 text-white shadow-md'
-                    : 'text-neutral-600 hover:bg-cream-100'
-                }`}
-              >
-                <Mail className="h-4 w-4" />
-                Contact
-              </Link>
+
+              {/* More dropdown */}
+              <div className="relative group">
+                <button
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    isActive('/scoring') || isActive('/how-to-play') || isActive('/contact')
+                      ? 'bg-burgundy-500 text-white shadow-md'
+                      : 'text-neutral-600 hover:bg-cream-100'
+                  }`}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                  More
+                </button>
+                <div className="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-float border border-cream-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                  <div className="p-2">
+                    <Link
+                      to="/scoring"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        isActive('/scoring') ? 'bg-burgundy-50 text-burgundy-600' : 'text-neutral-600 hover:bg-cream-50'
+                      }`}
+                    >
+                      <Target className="h-4 w-4" />
+                      Scoring Rules
+                    </Link>
+                    <Link
+                      to="/how-to-play"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        isActive('/how-to-play') ? 'bg-burgundy-50 text-burgundy-600' : 'text-neutral-600 hover:bg-cream-50'
+                      }`}
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      How to Play
+                    </Link>
+                    <Link
+                      to="/contact"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        isActive('/contact') ? 'bg-burgundy-50 text-burgundy-600' : 'text-neutral-600 hover:bg-cream-50'
+                      }`}
+                    >
+                      <Mail className="h-4 w-4" />
+                      Contact
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
