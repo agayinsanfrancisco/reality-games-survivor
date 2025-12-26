@@ -149,6 +149,14 @@ interface EliminationAlertEmailData {
   leagueId: string;
 }
 
+interface PaymentRecoveryEmailData {
+  displayName: string;
+  email: string;
+  leagueName: string;
+  leagueCode: string;
+  amount: number;
+}
+
 // ============================================
 // EMAIL TEMPLATES
 // ============================================
@@ -477,6 +485,32 @@ function eliminationAlertEmailTemplate(data: EliminationAlertEmailData): string 
   `, `${data.castawayName} has been eliminated`, 'tribal_council');
 }
 
+function paymentRecoveryEmailTemplate(data: PaymentRecoveryEmailData): string {
+  return emailWrapper(`
+    ${heading('Complete Your Payment')}
+    ${paragraph(`Hey ${data.displayName},`)}
+    ${paragraph(`Your payment for ${highlight(data.leagueName)} wasn't completed. No worries — you can try again anytime!`)}
+    ${card(`
+      <div style="text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 12px;">💳</div>
+        <p style="color: #8A7654; margin: 0 0 8px 0; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">League Entry Fee</p>
+        <div style="font-family: -apple-system, sans-serif; font-size: 36px; font-weight: 700; color: #A52A2A;">$${data.amount.toFixed(2)}</div>
+        <p style="color: #5C1717; font-size: 14px; margin: 8px 0 0 0;">${data.leagueName}</p>
+      </div>
+    `)}
+    ${button('Complete Payment', `${BASE_URL}/join/${data.leagueCode}`)}
+    ${card(`
+      ${heading('What Happened?', 2)}
+      ${paragraph('Your checkout session expired or the payment was not completed. This can happen if:')}
+      ${paragraph('• You closed the payment page before completing')}
+      ${paragraph('• Your card was declined')}
+      ${paragraph('• The session timed out')}
+      ${paragraph(`<strong>Don't worry</strong> — just click the button above to try again!`)}
+    `)}
+    ${paragraph(`<p style="color: #8A7654; font-size: 14px; text-align: center;">Need help? Reply to this email or contact us at support@rgfl.app</p>`)}
+  `, `Complete your payment for ${data.leagueName}`);
+}
+
 // ============================================
 // EMAIL SERVICE CLASS
 // ============================================
@@ -618,6 +652,16 @@ export class EmailService {
     return sendEmail({
       to: data.email,
       subject: `😢 ${data.castawayName} has been eliminated`,
+      html,
+    });
+  }
+
+  // Send payment recovery email when checkout expires
+  static async sendPaymentRecovery(data: PaymentRecoveryEmailData): Promise<boolean> {
+    const html = paymentRecoveryEmailTemplate(data);
+    return sendEmail({
+      to: data.email,
+      subject: `💳 Complete your payment for ${data.leagueName}`,
       html,
     });
   }
