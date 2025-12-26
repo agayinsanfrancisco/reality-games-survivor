@@ -347,3 +347,66 @@
 .ember {
   animation: ember-float 3s ease-out infinite;
 }
+
+/* Scroll Snap for Block-Based Layout */
+.snap-container {
+  scroll-snap-type: y mandatory;
+  overflow-y: scroll;
+  height: 100vh;
+  scroll-behavior: smooth;
+}
+
+.snap-section {
+  scroll-snap-align: start;
+  min-height: 100vh;
+}
+
+/* Hide scrollbar but keep functionality */
+.snap-container::-webkit-scrollbar {
+  width: 0;
+  background: transparent;
+}
+
+.snap-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Interactive Block Hover Effects */
+.interactive-block {
+  @apply transition-all duration-500 cursor-pointer;
+}
+
+.interactive-block:hover {
+  @apply shadow-2xl;
+}
+
+/* Glow border animation */
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(165, 42, 42, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(165, 42, 42, 0.5);
+  }
+}
+
+.glow-on-hover:hover {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Scroll indicator bounce */
+@keyframes scroll-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+.scroll-indicator {
+  animation: scroll-bounce 2s ease-in-out infinite;
+}

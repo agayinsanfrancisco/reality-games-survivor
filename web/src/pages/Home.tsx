@@ -6,12 +6,16 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   Trophy,
   Users,
   Target,
   Zap,
   BarChart3,
   Shield,
+  Flame,
+  BookOpen,
+  Mail,
 } from 'lucide-react';
 
 // Check if we're on the main domain (splash page) or survivor subdomain (full app)
@@ -383,7 +387,7 @@ function HeroSlider() {
     },
     {
       badge: 'Premiere Feb 25, 2026',
-      headline: '18 Legends',
+      headline: '24 Legends',
       subheadline: 'One Winner',
       description: 'The greatest players return. Who will you draft?',
       cta: 'Create a League',
@@ -654,7 +658,7 @@ function FeatureBlock({
 function StatsSection() {
   const { ref: ref1, isInView: inView1 } = useInView(0.5);
   const counter1 = useAnimatedCounter(100, 2000, true);
-  const counter2 = useAnimatedCounter(18, 1500, true);
+  const counter2 = useAnimatedCounter(24, 1500, true);
   const counter3 = useAnimatedCounter(50, 1800, true);
   const statsParallax1 = useParallax(0.06);
   const statsParallax2 = useParallax(-0.04);
@@ -895,83 +899,435 @@ function CTASection() {
   );
 }
 
+// Interactive Block Component for Splash Page
+function InteractiveBlock({
+  children,
+  href,
+  className = '',
+  onClick,
+}: {
+  children: React.ReactNode;
+  href?: string;
+  className?: string;
+  onClick?: () => void;
+}) {
+  const { elementRef, tiltStyle, handleMouseMove, handleMouseLeave } = useTilt(8);
+
+  const content = (
+    <div
+      ref={elementRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className={`interactive-block glow-on-hover rounded-3xl ${className}`}
+      style={{
+        ...tiltStyle,
+        transformStyle: 'preserve-3d',
+      }}
+    >
+      <div style={{ transform: 'translateZ(30px)' }}>{children}</div>
+    </div>
+  );
+
+  if (href) {
+    return (
+      <a href={href} className="block">
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <div onClick={onClick} role={onClick ? 'button' : undefined}>
+      {content}
+    </div>
+  );
+}
+
+// Side Dot Navigation for Splash Page
+function SideNav({
+  sections,
+  activeSection,
+  onNavigate,
+}: {
+  sections: string[];
+  activeSection: number;
+  onNavigate: (index: number) => void;
+}) {
+  return (
+    <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3">
+      {sections.map((label, i) => (
+        <button
+          key={i}
+          onClick={() => onNavigate(i)}
+          className="group flex items-center gap-3"
+          aria-label={`Go to ${label}`}
+        >
+          <span
+            className={`text-xs font-medium transition-all duration-300 opacity-0 group-hover:opacity-100 ${
+              activeSection === i ? 'text-burgundy-600' : 'text-neutral-500'
+            }`}
+          >
+            {label}
+          </span>
+          <span
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              activeSection === i
+                ? 'bg-burgundy-500 scale-125'
+                : 'bg-neutral-300 hover:bg-neutral-400'
+            }`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // Splash page for main domain (realitygamesfantasyleague.com)
 function SplashPage() {
+  const [activeSection, setActiveSection] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<(HTMLElement | null)[]>([]);
+  const heroParallax = useParallax(0.1);
+
+  const sections = ['Home', 'Survivor', 'How It Works', 'Scoring', 'Contact'];
+
+  // Track active section on scroll
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const windowHeight = window.innerHeight;
+
+      sectionRefs.current.forEach((ref, index) => {
+        if (ref) {
+          const rect = ref.getBoundingClientRect();
+          if (rect.top <= windowHeight / 2 && rect.bottom >= windowHeight / 2) {
+            setActiveSection(index);
+          }
+        }
+      });
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const navigateToSection = (index: number) => {
+    sectionRefs.current[index]?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const counter24 = useAnimatedCounter(24, 1500, true);
+  const counter100 = useAnimatedCounter(100, 2000, true);
+  const counter50 = useAnimatedCounter(50, 1800, true);
+
   return (
-    <div className="min-h-screen bg-cream-50">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden min-h-screen flex items-center justify-center">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-cream-100 via-cream-50 to-cream-100" />
+    <div ref={containerRef} className="snap-container bg-cream-50">
+      {/* Side Navigation */}
+      <SideNav sections={sections} activeSection={activeSection} onNavigate={navigateToSection} />
 
-        <div className="relative max-w-5xl mx-auto px-4 py-16 lg:py-24">
-          <div className="text-center">
-            {/* Torch */}
-            <div className="flex justify-center mb-8">
-              <div className="relative">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-orange-400/20 rounded-full blur-3xl animate-pulse" />
-                <TikiTorch className="h-48 sm:h-56 relative z-10" />
-              </div>
+      {/* BLOCK 1: Hero with Logo */}
+      <section
+        ref={(el) => {
+          sectionRefs.current[0] = el;
+        }}
+        className="snap-section relative overflow-hidden flex items-center justify-center bg-gradient-to-br from-cream-100 via-cream-50 to-cream-100"
+      >
+        {/* Parallax Background */}
+        <div
+          ref={heroParallax.elementRef}
+          className="absolute -top-32 -right-32 w-96 h-96 bg-burgundy-500/10 rounded-full blur-3xl pointer-events-none"
+          style={{ transform: `translateY(${heroParallax.offset}px)` }}
+        />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-orange-400/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative text-center px-4">
+          {/* Logo */}
+          <div className="flex justify-center mb-8">
+            <div className="relative">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-orange-400/20 rounded-full blur-3xl animate-pulse" />
+              <img
+                src="/logo.png"
+                alt="Reality Games Fantasy League"
+                className="h-40 sm:h-48 lg:h-56 relative z-10 drop-shadow-2xl"
+              />
             </div>
+          </div>
 
-            {/* Brand Name */}
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-neutral-800 leading-tight tracking-tight mb-2">
-              REALITY GAMES
-              <br />
-              <span className="text-burgundy-600">FANTASY LEAGUE</span>
-            </h1>
+          {/* Brand Name */}
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-7xl text-neutral-800 leading-tight tracking-tight mb-4">
+            REALITY GAMES
+            <br />
+            <span className="text-burgundy-600">FANTASY LEAGUE</span>
+          </h1>
 
-            {/* Tagline */}
-            <p className="text-xl text-neutral-600 max-w-2xl mx-auto leading-relaxed mb-10">
-              Fantasy leagues built by superfans, for superfans.
-            </p>
+          {/* Tagline */}
+          <p className="text-xl sm:text-2xl text-neutral-600 max-w-2xl mx-auto leading-relaxed mb-12">
+            Fantasy leagues built by superfans, for superfans.
+          </p>
 
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <a
-                href={SURVIVOR_APP_URL}
-                className="btn btn-primary text-lg px-10 py-4 shadow-float hover:shadow-elevated transition-all duration-300 hover:-translate-y-1 inline-flex items-center gap-2 group"
-              >
-                Join Survivor Season 50
-                <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </a>
-              <a
-                href={`${SURVIVOR_APP_URL}/how-to-play`}
-                className="btn btn-secondary text-lg px-10 py-4 transition-all duration-300 hover:-translate-y-1"
-              >
-                How It Works
-              </a>
-            </div>
-
-            <p className="text-sm text-neutral-500">Premiere: February 25, 2026</p>
+          {/* Scroll Indicator */}
+          <div className="scroll-indicator flex flex-col items-center text-neutral-400">
+            <span className="text-sm mb-2">Scroll to explore</span>
+            <ChevronDown className="h-6 w-6" />
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 bg-cream-100 border-t border-cream-200">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-neutral-400 text-sm">
-              &copy; 2025 Reality Games Fantasy League. Not affiliated with CBS or Survivor.
+      {/* BLOCK 2: Survivor */}
+      <section
+        ref={(el) => {
+          sectionRefs.current[1] = el;
+        }}
+        className="snap-section relative flex items-center justify-center bg-white py-20"
+      >
+        <div className="max-w-5xl mx-auto px-4 w-full">
+          <InteractiveBlock
+            href={SURVIVOR_APP_URL}
+            className="bg-gradient-to-br from-cream-50 to-cream-100 p-8 lg:p-12"
+          >
+            <div className="grid lg:grid-cols-2 gap-8 items-center">
+              {/* Left: Torch */}
+              <div className="flex justify-center">
+                <div className="relative">
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-orange-400/30 rounded-full blur-3xl animate-pulse" />
+                  <TikiTorch className="h-64 lg:h-80 relative z-10" />
+                </div>
+              </div>
+
+              {/* Right: Content */}
+              <div className="text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 bg-burgundy-500/10 text-burgundy-600 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                  <Flame className="h-4 w-4" />
+                  Season 50 Now Open
+                </div>
+
+                <h2 className="font-display text-4xl lg:text-5xl text-neutral-800 mb-4">
+                  SURVIVOR
+                </h2>
+
+                <p className="text-lg text-neutral-600 mb-4">In the Hands of the Fans</p>
+
+                <p className="text-neutral-500 mb-8">
+                  <span ref={counter24.ref} className="font-display text-3xl text-burgundy-600">
+                    {counter24.count}
+                  </span>{' '}
+                  legendary castaways return. Draft your dream team.
+                </p>
+
+                <div className="inline-flex items-center gap-2 bg-burgundy-500 text-white px-8 py-4 rounded-xl font-semibold text-lg group">
+                  Play Now
+                  <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </div>
+
+                <p className="text-sm text-neutral-400 mt-4">Premiere: February 25, 2026</p>
+              </div>
+            </div>
+          </InteractiveBlock>
+        </div>
+      </section>
+
+      {/* BLOCK 3: How It Works */}
+      <section
+        ref={(el) => {
+          sectionRefs.current[2] = el;
+        }}
+        className="snap-section relative flex items-center justify-center bg-cream-100 py-20"
+      >
+        <div className="max-w-5xl mx-auto px-4 w-full">
+          <InteractiveBlock
+            href={`${SURVIVOR_APP_URL}/how-to-play`}
+            className="bg-white p-8 lg:p-12"
+          >
+            <div className="grid lg:grid-cols-2 gap-8 items-center">
+              {/* Left: Content */}
+              <div className="text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 text-burgundy-600 text-sm font-semibold mb-6">
+                  <BookOpen className="h-4 w-4" />
+                  THREE SIMPLE STEPS
+                </div>
+
+                <h2 className="font-display text-4xl lg:text-5xl text-neutral-800 mb-6">
+                  How It Works
+                </h2>
+
+                <ul className="space-y-4 text-lg text-neutral-600 mb-8">
+                  <li className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-full bg-burgundy-100 flex items-center justify-center text-burgundy-600 font-bold text-sm">
+                      1
+                    </span>
+                    Draft 2 castaways in snake draft
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-full bg-burgundy-100 flex items-center justify-center text-burgundy-600 font-bold text-sm">
+                      2
+                    </span>
+                    Make weekly picks before each episode
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-full bg-burgundy-100 flex items-center justify-center text-burgundy-600 font-bold text-sm">
+                      3
+                    </span>
+                    Score points and climb the leaderboard
+                  </li>
+                </ul>
+
+                <div className="inline-flex items-center gap-2 bg-burgundy-500 text-white px-8 py-4 rounded-xl font-semibold text-lg group">
+                  Learn More
+                  <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+
+              {/* Right: Visual */}
+              <div className="flex justify-center">
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { icon: Users, label: 'Draft', color: 'from-blue-400 to-blue-600' },
+                    { icon: Target, label: 'Pick', color: 'from-green-400 to-green-600' },
+                    { icon: Trophy, label: 'Win', color: 'from-amber-400 to-amber-600' },
+                  ].map((step, i) => (
+                    <div key={i} className="text-center">
+                      <div
+                        className={`w-20 h-20 lg:w-24 lg:h-24 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center mx-auto mb-3 shadow-lg`}
+                      >
+                        <step.icon className="h-10 w-10 lg:h-12 lg:w-12 text-white" />
+                      </div>
+                      <span className="font-semibold text-neutral-700">{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </InteractiveBlock>
+        </div>
+      </section>
+
+      {/* BLOCK 4: Scoring (Dark) */}
+      <section
+        ref={(el) => {
+          sectionRefs.current[3] = el;
+        }}
+        className="snap-section relative flex items-center justify-center bg-neutral-900 py-20"
+      >
+        <div className="max-w-5xl mx-auto px-4 w-full">
+          <InteractiveBlock
+            href={`${SURVIVOR_APP_URL}/scoring-rules`}
+            className="bg-gradient-to-br from-burgundy-900 to-neutral-900 p-8 lg:p-12 border border-burgundy-800/50"
+          >
+            <div className="grid lg:grid-cols-2 gap-8 items-center">
+              {/* Left: Big Number */}
+              <div className="text-center">
+                <div
+                  ref={counter100.ref}
+                  className="font-display text-8xl lg:text-9xl text-burgundy-400"
+                >
+                  {counter100.count}+
+                </div>
+                <p className="text-xl text-neutral-400">Scoring Rules</p>
+              </div>
+
+              {/* Right: Content */}
+              <div className="text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 text-burgundy-400 text-sm font-semibold mb-6">
+                  <BarChart3 className="h-4 w-4" />
+                  COMPREHENSIVE SCORING
+                </div>
+
+                <h2 className="font-display text-4xl lg:text-5xl text-white mb-6">
+                  Every Move Counts
+                </h2>
+
+                <p className="text-lg text-neutral-400 mb-6">
+                  We score everything that matters in Survivor:
+                </p>
+
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {['Idols', 'Votes', 'Challenges', 'Alliances', 'Blindsides', 'Social Plays'].map(
+                    (item) => (
+                      <span
+                        key={item}
+                        className="px-3 py-1 bg-burgundy-800/50 text-burgundy-300 rounded-full text-sm"
+                      >
+                        {item}
+                      </span>
+                    )
+                  )}
+                </div>
+
+                <div className="inline-flex items-center gap-2 bg-burgundy-500 text-white px-8 py-4 rounded-xl font-semibold text-lg group">
+                  View All Rules
+                  <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            </div>
+          </InteractiveBlock>
+        </div>
+      </section>
+
+      {/* BLOCK 5: Footer / Contact */}
+      <section
+        ref={(el) => {
+          sectionRefs.current[4] = el;
+        }}
+        className="snap-section relative flex items-center justify-center bg-cream-100 py-20"
+      >
+        <div className="max-w-5xl mx-auto px-4 w-full">
+          <div className="text-center mb-12">
+            <h2 className="font-display text-4xl text-neutral-800 mb-4">Ready to Play?</h2>
+            <p className="text-lg text-neutral-600">
+              Join{' '}
+              <span ref={counter50.ref} className="font-display text-2xl text-burgundy-600">
+                {counter50.count}
+              </span>{' '}
+              seasons of Survivor history
             </p>
-            <div className="flex items-center gap-6 text-sm">
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto mb-16">
+            <InteractiveBlock
+              href={`${SURVIVOR_APP_URL}/contact`}
+              className="bg-white p-6 text-center"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mx-auto mb-4">
+                <Mail className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="font-semibold text-lg text-neutral-800 mb-2">Contact Us</h3>
+              <p className="text-neutral-500 text-sm">Questions? We&apos;re here to help.</p>
+            </InteractiveBlock>
+
+            <InteractiveBlock
+              href={`${SURVIVOR_APP_URL}/login`}
+              className="bg-white p-6 text-center"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-burgundy-400 to-burgundy-600 flex items-center justify-center mx-auto mb-4">
+                <Users className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="font-semibold text-lg text-neutral-800 mb-2">Log In</h3>
+              <p className="text-neutral-500 text-sm">Already have an account? Welcome back.</p>
+            </InteractiveBlock>
+          </div>
+
+          {/* Footer Links */}
+          <div className="text-center text-sm text-neutral-500">
+            <div className="flex items-center justify-center gap-6 mb-4">
               <a
-                href={`${SURVIVOR_APP_URL}/login`}
-                className="text-neutral-500 hover:text-burgundy-600 transition-colors"
+                href={`${SURVIVOR_APP_URL}/privacy`}
+                className="hover:text-burgundy-600 transition-colors"
               >
-                Log In
+                Privacy Policy
               </a>
+              <span>•</span>
               <a
-                href={`${SURVIVOR_APP_URL}/contact`}
-                className="text-neutral-500 hover:text-burgundy-600 transition-colors"
+                href={`${SURVIVOR_APP_URL}/terms`}
+                className="hover:text-burgundy-600 transition-colors"
               >
-                Contact
+                Terms of Service
               </a>
             </div>
+            <p>&copy; 2025 Reality Games Fantasy League. Not affiliated with CBS or Survivor.</p>
           </div>
         </div>
-      </footer>
+      </section>
     </div>
   );
 }
