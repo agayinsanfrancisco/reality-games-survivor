@@ -272,3 +272,78 @@
     @apply absolute -top-0.5 -right-0.5 w-4 h-4 bg-burgundy-500 text-white text-xs rounded-full flex items-center justify-center;
   }
 }
+
+/* Flame Animations */
+@keyframes flame-flicker-outer {
+  0%,
+  100% {
+    transform: scaleY(1) scaleX(1);
+  }
+  25% {
+    transform: scaleY(1.02) scaleX(0.98);
+  }
+  50% {
+    transform: scaleY(0.98) scaleX(1.02);
+  }
+  75% {
+    transform: scaleY(1.01) scaleX(0.99);
+  }
+}
+
+@keyframes flame-flicker-middle {
+  0%,
+  100% {
+    transform: scaleY(1) scaleX(1) translateY(0);
+  }
+  33% {
+    transform: scaleY(1.03) scaleX(0.97) translateY(-1px);
+  }
+  66% {
+    transform: scaleY(0.97) scaleX(1.03) translateY(1px);
+  }
+}
+
+@keyframes flame-flicker-inner {
+  0%,
+  100% {
+    transform: scaleY(1) translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scaleY(1.05) translateY(-2px);
+    opacity: 0.9;
+  }
+}
+
+@keyframes ember-float {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-60px) translateX(20px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+.animate-flame-outer {
+  animation: flame-flicker-outer 0.5s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.animate-flame-middle {
+  animation: flame-flicker-middle 0.4s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.animate-flame-inner {
+  animation: flame-flicker-inner 0.3s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.ember {
+  animation: ember-float 3s ease-out infinite;
+}
