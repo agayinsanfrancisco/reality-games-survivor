@@ -258,6 +258,37 @@ router.post('/:id/join/checkout', authenticate, checkoutLimiter, async (req: Aut
 
     const baseUrl = process.env.BASE_URL || 'http://localhost:5173';
 
+    // Check if user already has a pending payment for this league
+    const { data: existingPending } = await supabaseAdmin
+      .from('payments')
+      .select('stripe_session_id')
+      .eq('league_id', leagueId)
+      .eq('user_id', userId)
+      .eq('status', 'pending')
+      .single();
+
+    // If there's a pending session, try to reuse it or expire it
+    if (existingPending?.stripe_session_id) {
+      try {
+        const existingSession = await stripe.checkout.sessions.retrieve(existingPending.stripe_session_id);
+        if (existingSession.status === 'open') {
+          // Existing session still valid, return it
+          return res.json({ checkout_url: existingSession.url, session_id: existingSession.id });
+        }
+        // Session expired, mark as failed
+        await supabaseAdmin
+          .from('payments')
+          .update({ status: 'failed' })
+          .eq('stripe_session_id', existingPending.stripe_session_id);
+      } catch (e) {
+        // Session doesn't exist anymore, mark as failed
+        await supabaseAdmin
+          .from('payments')
+          .update({ status: 'failed' })
+          .eq('stripe_session_id', existingPending.stripe_session_id);
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
@@ -279,6 +310,17 @@ router.post('/:id/join/checkout', authenticate, checkoutLimiter, async (req: Aut
       },
       success_url: `${baseUrl}/leagues/${leagueId}?joined=true`,
       cancel_url: `${baseUrl}/join/${league.code}?cancelled=true`,
+      expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // 30 min expiration
+    });
+
+    // Record pending payment for recovery tracking
+    await supabaseAdmin.from('payments').insert({
+      user_id: userId,
+      league_id: leagueId,
+      amount: league.donation_amount,
+      currency: 'usd',
+      stripe_session_id: session.id,
+      status: 'pending',
     });
 
     res.json({ checkout_url: session.url, session_id: session.id });

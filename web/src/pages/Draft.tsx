@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
+import { getAvatarUrl } from '@/lib/avatar';
 import {
   ArrowLeft,
   GripVertical,
@@ -141,7 +142,7 @@ export function Draft() {
     if (existingRankings?.rankings) {
       setRankings(existingRankings.rankings);
     } else if (castaways && castaways.length > 0 && rankings.length === 0) {
-      setRankings(castaways.map(c => c.id));
+      setRankings(castaways.map((c) => c.id));
     }
   }, [existingRankings, castaways]);
 
@@ -151,16 +152,17 @@ export function Draft() {
     mutationFn: async () => {
       if (!league?.season_id || !user?.id) throw new Error('Missing required data');
 
-      const { error } = await (supabase as any)
-        .from('draft_rankings')
-        .upsert({
+      const { error } = await (supabase as any).from('draft_rankings').upsert(
+        {
           season_id: league.season_id,
           user_id: user.id,
           rankings: rankings,
           submitted_at: new Date().toISOString(),
-        }, {
+        },
+        {
           onConflict: 'user_id,season_id',
-        });
+        }
+      );
 
       if (error) throw error;
     },
@@ -169,21 +171,19 @@ export function Draft() {
       setHasChanges(false);
       setShowConfirmation(false);
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      // Don't auto-dismiss - show full rankings summary
     },
   });
 
   // Castaway lookup map
   const castawayMap = useMemo(() => {
     const map = new Map<string, Castaway>();
-    castaways?.forEach(c => map.set(c.id, c));
+    castaways?.forEach((c) => map.set(c.id, c));
     return map;
   }, [castaways]);
 
   // Deadline calculation
-  const deadline = league?.seasons?.draft_deadline
-    ? new Date(league.seasons.draft_deadline)
-    : null;
+  const deadline = league?.seasons?.draft_deadline ? new Date(league.seasons.draft_deadline) : null;
   const now = new Date();
   const isPastDeadline = deadline ? now > deadline : false;
   const draftProcessed = league?.draft_status === 'completed';
@@ -239,6 +239,112 @@ export function Draft() {
     );
   }
 
+  // Show full rankings summary after successful save
+  if (saveSuccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
+        <Navigation />
+
+        <div className="max-w-2xl mx-auto p-4 pb-24">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-6">
+            <Link
+              to={`/leagues/${leagueId}`}
+              className="p-2 bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all border border-cream-200"
+            >
+              <ArrowLeft className="h-5 w-5 text-neutral-600" />
+            </Link>
+            <div className="flex-1">
+              <h1 className="text-2xl font-display font-bold text-neutral-800">Rankings Saved!</h1>
+              <p className="text-neutral-500">{league?.name}</p>
+            </div>
+          </div>
+
+          {/* Success Message */}
+          <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-6 text-white shadow-elevated mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center">
+                <Check className="h-7 w-7" />
+              </div>
+              <div>
+                <h2 className="text-xl font-display font-bold">Rankings Confirmed!</h2>
+                <p className="text-green-100">
+                  Your draft preferences have been saved for all leagues.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Full Rankings List */}
+          <div className="bg-white rounded-2xl shadow-elevated border border-cream-200 overflow-hidden mb-6">
+            <div className="p-5 border-b border-cream-100">
+              <h2 className="text-lg font-display font-bold text-neutral-800 flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-burgundy-500" />
+                Your Complete Rankings
+              </h2>
+              <p className="text-sm text-neutral-500 mt-1">{rankings.length} castaways ranked</p>
+            </div>
+
+            <div className="divide-y divide-cream-100 max-h-[60vh] overflow-y-auto">
+              {rankings.map((castawayId, index) => {
+                const castaway = castawayMap.get(castawayId);
+                if (!castaway) return null;
+
+                return (
+                  <div key={castawayId} className="p-3 flex items-center gap-3">
+                    {/* Rank Number */}
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        index < 2
+                          ? 'bg-burgundy-100 text-burgundy-600'
+                          : index < 5
+                            ? 'bg-amber-100 text-amber-600'
+                            : 'bg-cream-100 text-neutral-600'
+                      }`}
+                    >
+                      {index + 1}
+                    </div>
+
+                    {/* Photo */}
+                    <img
+                      src={getAvatarUrl(castaway.name, castaway.photo_url)}
+                      alt={castaway.name}
+                      className="w-10 h-10 rounded-full object-cover border border-cream-200"
+                    />
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-neutral-800 truncate">{castaway.name}</p>
+                      <div className="flex items-center gap-2 text-xs text-neutral-500">
+                        {castaway.age && <span>{castaway.age} yrs</span>}
+                        {castaway.hometown && (
+                          <>
+                            {castaway.age && <span>·</span>}
+                            <span>{castaway.hometown}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4">
+            <button onClick={() => setSaveSuccess(false)} className="flex-1 btn btn-secondary">
+              Edit Rankings
+            </button>
+            <Link to={`/leagues/${leagueId}`} className="flex-1 btn btn-primary text-center">
+              Back to League
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Show roster if draft is complete
   if (draftProcessed && myRoster && myRoster.length > 0) {
     return (
@@ -255,9 +361,7 @@ export function Draft() {
               <ArrowLeft className="h-5 w-5 text-neutral-600" />
             </Link>
             <div>
-              <h1 className="text-2xl font-display font-bold text-neutral-800">
-                Draft Results
-              </h1>
+              <h1 className="text-2xl font-display font-bold text-neutral-800">Draft Results</h1>
               <p className="text-neutral-500">{league?.name}</p>
             </div>
           </div>
@@ -290,17 +394,14 @@ export function Draft() {
                   <div className="w-10 h-10 bg-burgundy-100 rounded-full flex items-center justify-center">
                     <span className="font-bold text-burgundy-600">#{index + 1}</span>
                   </div>
-                  {roster.castaways?.photo_url ? (
-                    <img
-                      src={roster.castaways.photo_url}
-                      alt={roster.castaways.name}
-                      className="w-14 h-14 rounded-full object-cover border-2 border-cream-200"
-                    />
-                  ) : (
-                    <div className="w-14 h-14 bg-cream-100 rounded-full flex items-center justify-center">
-                      <Users className="h-6 w-6 text-neutral-400" />
-                    </div>
-                  )}
+                  <img
+                    src={getAvatarUrl(
+                      roster.castaways?.name || 'Unknown',
+                      roster.castaways?.photo_url
+                    )}
+                    alt={roster.castaways?.name || 'Castaway'}
+                    className="w-14 h-14 rounded-full object-cover border-2 border-cream-200"
+                  />
                   <div className="flex-1">
                     <p className="font-semibold text-neutral-800">{roster.castaways?.name}</p>
                     <div className="flex items-center gap-2 text-sm text-neutral-500">
@@ -328,10 +429,7 @@ export function Draft() {
           </div>
 
           <div className="mt-6 text-center">
-            <Link
-              to={`/leagues/${leagueId}`}
-              className="btn btn-primary"
-            >
+            <Link to={`/leagues/${leagueId}`} className="btn btn-primary">
               Back to League
             </Link>
           </div>
@@ -354,17 +452,9 @@ export function Draft() {
             <ArrowLeft className="h-5 w-5 text-neutral-600" />
           </Link>
           <div className="flex-1">
-            <h1 className="text-2xl font-display font-bold text-neutral-800">
-              Draft Rankings
-            </h1>
+            <h1 className="text-2xl font-display font-bold text-neutral-800">Draft Rankings</h1>
             <p className="text-neutral-500">{league?.name}</p>
           </div>
-          {saveSuccess && (
-            <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-xl">
-              <Check className="h-5 w-5" />
-              <span className="font-medium">Saved!</span>
-            </div>
-          )}
           {hasChanges && !isPastDeadline && (
             <button
               onClick={() => setShowConfirmation(true)}
@@ -390,10 +480,14 @@ export function Draft() {
             <div>
               <h2 className="font-display font-bold text-lg mb-1">How the Draft Works</h2>
               <p className="text-burgundy-100 text-sm">
-                Rank all {castaways?.length || 18} castaways from your most wanted (#1) to least wanted.
-                <strong className="text-white"> Your rankings apply to ALL your leagues this season.</strong>{' '}
-                At the deadline, the system runs a snake draft using everyone's rankings.
-                You'll get 2 castaways based on your draft position and preferences in each league.
+                Rank all {castaways?.length || 18} castaways from your most wanted (#1) to least
+                wanted.
+                <strong className="text-white">
+                  {' '}
+                  Your rankings apply to ALL your leagues this season.
+                </strong>{' '}
+                At the deadline, the system runs a snake draft using everyone's rankings. You'll get
+                2 castaways based on your draft position and preferences in each league.
               </p>
             </div>
           </div>
@@ -401,11 +495,13 @@ export function Draft() {
 
         {/* Deadline Warning */}
         {deadline && (
-          <div className={`rounded-2xl p-4 mb-6 flex items-center gap-4 ${
-            isPastDeadline
-              ? 'bg-red-50 border border-red-200'
-              : 'bg-amber-50 border border-amber-200'
-          }`}>
+          <div
+            className={`rounded-2xl p-4 mb-6 flex items-center gap-4 ${
+              isPastDeadline
+                ? 'bg-red-50 border border-red-200'
+                : 'bg-amber-50 border border-amber-200'
+            }`}
+          >
             <Clock className={`h-6 w-6 ${isPastDeadline ? 'text-red-500' : 'text-amber-500'}`} />
             <div className="flex-1">
               <p className={`font-medium ${isPastDeadline ? 'text-red-700' : 'text-amber-700'}`}>
@@ -446,16 +542,14 @@ export function Draft() {
         <div className="bg-white rounded-2xl shadow-elevated border border-cream-200 overflow-hidden">
           <div className="p-5 border-b border-cream-100 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-display font-bold text-neutral-800">
-                Your Rankings
-              </h2>
+              <h2 className="text-lg font-display font-bold text-neutral-800">Your Rankings</h2>
               <p className="text-sm text-neutral-500">
-                {existingRankings ? 'Last saved ' + new Date(existingRankings.submitted_at).toLocaleDateString() : 'Drag to reorder or use arrows'}
+                {existingRankings
+                  ? 'Last saved ' + new Date(existingRankings.submitted_at).toLocaleDateString()
+                  : 'Drag to reorder or use arrows'}
               </p>
             </div>
-            <div className="text-sm text-neutral-400">
-              {rankings.length} castaways
-            </div>
+            <div className="text-sm text-neutral-400">{rankings.length} castaways</div>
           </div>
 
           <div className="divide-y divide-cream-100">
@@ -475,13 +569,15 @@ export function Draft() {
                   } ${isPastDeadline ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}`}
                 >
                   {/* Rank Number */}
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                    index < 2
-                      ? 'bg-burgundy-100 text-burgundy-600'
-                      : index < 5
-                        ? 'bg-amber-100 text-amber-600'
-                        : 'bg-cream-100 text-neutral-600'
-                  }`}>
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                      index < 2
+                        ? 'bg-burgundy-100 text-burgundy-600'
+                        : index < 5
+                          ? 'bg-amber-100 text-amber-600'
+                          : 'bg-cream-100 text-neutral-600'
+                    }`}
+                  >
                     {index + 1}
                   </div>
 
@@ -491,17 +587,11 @@ export function Draft() {
                   )}
 
                   {/* Photo */}
-                  {castaway.photo_url ? (
-                    <img
-                      src={castaway.photo_url}
-                      alt={castaway.name}
-                      className="w-10 h-10 rounded-full object-cover border border-cream-200"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 bg-cream-100 rounded-full flex items-center justify-center">
-                      <Users className="h-5 w-5 text-neutral-400" />
-                    </div>
-                  )}
+                  <img
+                    src={getAvatarUrl(castaway.name, castaway.photo_url)}
+                    alt={castaway.name}
+                    className="w-10 h-10 rounded-full object-cover border border-cream-200"
+                  />
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
@@ -577,7 +667,8 @@ export function Draft() {
                 Confirm Your Rankings
               </h3>
               <p className="text-neutral-600 mb-4">
-                Are you sure you want to save your rankings? This will apply to <strong>all your leagues</strong> this season.
+                Are you sure you want to save your rankings? This will apply to{' '}
+                <strong>all your leagues</strong> this season.
               </p>
 
               {/* Top 5 Preview */}
@@ -589,9 +680,13 @@ export function Draft() {
                     if (!castaway) return null;
                     return (
                       <div key={castawayId} className="flex items-center gap-3">
-                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                          index < 2 ? 'bg-burgundy-100 text-burgundy-600' : 'bg-cream-200 text-neutral-600'
-                        }`}>
+                        <span
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                            index < 2
+                              ? 'bg-burgundy-100 text-burgundy-600'
+                              : 'bg-cream-200 text-neutral-600'
+                          }`}
+                        >
                           {index + 1}
                         </span>
                         <span className="text-neutral-800">{castaway.name}</span>
