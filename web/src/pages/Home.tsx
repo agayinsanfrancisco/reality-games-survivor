@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ChevronRight,
   ChevronLeft,
@@ -89,6 +89,93 @@ function useAnimatedCounter(end: number, duration: number = 2000, startOnView: b
   }, [end, duration, hasStarted]);
 
   return { count, ref };
+}
+
+// 3D Tilt Card Hook
+function useTilt(maxTilt = 15) {
+  const [tiltStyle, setTiltStyle] = useState({
+    transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)',
+  });
+  const elementRef = useRef<HTMLDivElement | null>(null);
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!elementRef.current) return;
+
+      const rect = elementRef.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const mouseX = e.clientX - centerX;
+      const mouseY = e.clientY - centerY;
+
+      const rotateY = (mouseX / (rect.width / 2)) * maxTilt;
+      const rotateX = -(mouseY / (rect.height / 2)) * maxTilt;
+
+      setTiltStyle({
+        transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`,
+      });
+    },
+    [maxTilt]
+  );
+
+  const handleMouseLeave = useCallback(() => {
+    setTiltStyle({
+      transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)',
+    });
+  }, []);
+
+  return { elementRef, tiltStyle, handleMouseMove, handleMouseLeave };
+}
+
+// Parallax Scroll Hook
+function useParallax(speed = 0.5) {
+  const [offset, setOffset] = useState(0);
+  const elementRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!elementRef.current) return;
+
+      const rect = elementRef.current.getBoundingClientRect();
+      const scrolled = window.scrollY;
+      const elementTop = rect.top + scrolled;
+      const windowHeight = window.innerHeight;
+
+      // Calculate how far we've scrolled past the element's starting position
+      const distanceFromTop = scrolled + windowHeight - elementTop;
+      const newOffset = distanceFromTop * speed;
+
+      setOffset(newOffset);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Initial call
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [speed]);
+
+  return { elementRef, offset };
+}
+
+// 3D Tilt Card Component
+function TiltCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const { elementRef, tiltStyle, handleMouseMove, handleMouseLeave } = useTilt(12);
+
+  return (
+    <div
+      ref={elementRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className={`transition-transform duration-200 ease-out ${className}`}
+      style={{
+        ...tiltStyle,
+        transformStyle: 'preserve-3d',
+      }}
+    >
+      <div style={{ transform: 'translateZ(20px)' }}>{children}</div>
+    </div>
+  );
 }
 
 // Realistic Tiki Torch SVG matching the logo
@@ -273,6 +360,9 @@ function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const heroParallax1 = useParallax(0.1);
+  const heroParallax2 = useParallax(-0.08);
+  const heroParallax3 = useParallax(0.15);
 
   const slides = [
     {
@@ -301,22 +391,32 @@ function HeroSlider() {
     },
   ];
 
-  const goToSlide = (index: number) => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setCurrentSlide(index);
-    setTimeout(() => setIsTransitioning(false), 500);
-  };
+  const goToSlide = useCallback(
+    (index: number) => {
+      if (isTransitioning) return;
+      setIsTransitioning(true);
+      setCurrentSlide(index);
+      setTimeout(() => setIsTransitioning(false), 500);
+    },
+    [isTransitioning]
+  );
 
-  const nextSlide = () => goToSlide((currentSlide + 1) % slides.length);
-  const prevSlide = () => goToSlide((currentSlide - 1 + slides.length) % slides.length);
+  const nextSlide = useCallback(
+    () => goToSlide((currentSlide + 1) % slides.length),
+    [currentSlide, goToSlide, slides.length]
+  );
+
+  const prevSlide = useCallback(
+    () => goToSlide((currentSlide - 1 + slides.length) % slides.length),
+    [currentSlide, goToSlide, slides.length]
+  );
 
   useEffect(() => {
     intervalRef.current = setInterval(nextSlide, 6000);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [currentSlide]);
+  }, [nextSlide]);
 
   const slide = slides[currentSlide];
 
@@ -332,6 +432,23 @@ function HeroSlider() {
           }}
         />
       </div>
+
+      {/* Parallax Decorative Elements */}
+      <div
+        ref={heroParallax1.elementRef}
+        className="absolute -top-20 -right-20 w-96 h-96 bg-burgundy-500/5 rounded-full blur-3xl pointer-events-none"
+        style={{ transform: `translateY(${heroParallax1.offset}px)` }}
+      />
+      <div
+        ref={heroParallax2.elementRef}
+        className="absolute top-1/2 -left-32 w-64 h-64 bg-orange-400/10 rounded-full blur-3xl pointer-events-none"
+        style={{ transform: `translateY(${heroParallax2.offset}px)` }}
+      />
+      <div
+        ref={heroParallax3.elementRef}
+        className="absolute -bottom-20 right-1/4 w-80 h-80 bg-amber-300/10 rounded-full blur-3xl pointer-events-none"
+        style={{ transform: `translateY(${heroParallax3.offset}px)` }}
+      />
 
       <div className="relative max-w-7xl mx-auto px-4 py-16 lg:py-24">
         <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[60vh]">
@@ -452,6 +569,7 @@ function FeatureBlock({
   delay?: number;
 }) {
   const { ref, isInView } = useInView(0.2);
+  const decorParallax = useParallax(imagePosition === 'left' ? 0.08 : -0.08);
 
   const content = (
     <div
@@ -505,8 +623,12 @@ function FeatureBlock({
         </div>
       </div>
 
-      {/* Decorative Elements */}
-      <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-burgundy-500/10 rounded-2xl -z-10" />
+      {/* Decorative Elements with Parallax */}
+      <div
+        ref={decorParallax.elementRef}
+        className="absolute -bottom-4 -right-4 w-24 h-24 bg-burgundy-500/10 rounded-2xl -z-10"
+        style={{ transform: `translateY(${decorParallax.offset}px)` }}
+      />
       <div className="absolute -top-4 -left-4 w-16 h-16 bg-orange-500/10 rounded-xl -z-10" />
     </div>
   );
@@ -534,6 +656,8 @@ function StatsSection() {
   const counter1 = useAnimatedCounter(100, 2000, true);
   const counter2 = useAnimatedCounter(18, 1500, true);
   const counter3 = useAnimatedCounter(50, 1800, true);
+  const statsParallax1 = useParallax(0.06);
+  const statsParallax2 = useParallax(-0.04);
 
   const stats = [
     { value: counter1.count, suffix: '+', label: 'Scoring Rules', ref: counter1.ref },
@@ -553,6 +677,18 @@ function StatsSection() {
           }}
         />
       </div>
+
+      {/* Parallax Glow Effects */}
+      <div
+        ref={statsParallax1.elementRef}
+        className="absolute -top-32 left-1/4 w-64 h-64 bg-burgundy-500/20 rounded-full blur-3xl pointer-events-none"
+        style={{ transform: `translateY(${statsParallax1.offset}px)` }}
+      />
+      <div
+        ref={statsParallax2.elementRef}
+        className="absolute -bottom-32 right-1/4 w-80 h-80 bg-orange-500/15 rounded-full blur-3xl pointer-events-none"
+        style={{ transform: `translateY(${statsParallax2.offset}px)` }}
+      />
 
       <div className="max-w-6xl mx-auto px-4 relative">
         <div className="grid md:grid-cols-3 gap-8 text-center">
@@ -578,19 +714,141 @@ function StatsSection() {
   );
 }
 
+// 3D Tilt Card Feature Section
+function TiltCardSection() {
+  const { ref, isInView } = useInView(0.1);
+  const parallax1 = useParallax(0.05);
+  const parallax2 = useParallax(-0.03);
+
+  const features = [
+    {
+      icon: Zap,
+      title: 'Real-Time Scoring',
+      desc: 'Watch your points update as the episode unfolds.',
+      gradient: 'from-yellow-400 to-orange-500',
+    },
+    {
+      icon: BarChart3,
+      title: '100+ Rules',
+      desc: 'Every strategic move counts. We score it all.',
+      gradient: 'from-burgundy-400 to-burgundy-600',
+    },
+    {
+      icon: Users,
+      title: 'Private Leagues',
+      desc: 'Create leagues with friends. Up to 12 players.',
+      gradient: 'from-blue-400 to-indigo-500',
+    },
+    {
+      icon: Target,
+      title: 'Weekly Picks',
+      desc: 'New strategic decisions every episode.',
+      gradient: 'from-green-400 to-emerald-500',
+    },
+    {
+      icon: Shield,
+      title: 'Fair Play',
+      desc: 'Snake draft and waiver wire ensure balance.',
+      gradient: 'from-purple-400 to-violet-500',
+    },
+    {
+      icon: Trophy,
+      title: 'Global Rankings',
+      desc: 'Compete against thousands of superfans.',
+      gradient: 'from-amber-400 to-orange-500',
+    },
+  ];
+
+  return (
+    <section ref={ref} className="py-20 bg-cream-100 relative overflow-hidden">
+      {/* Parallax Background Elements */}
+      <div
+        ref={parallax1.elementRef}
+        className="absolute top-20 -left-20 w-64 h-64 bg-burgundy-500/5 rounded-full blur-3xl pointer-events-none"
+        style={{ transform: `translateY(${parallax1.offset}px)` }}
+      />
+      <div
+        ref={parallax2.elementRef}
+        className="absolute bottom-20 -right-20 w-80 h-80 bg-orange-500/5 rounded-full blur-3xl pointer-events-none"
+        style={{ transform: `translateY(${parallax2.offset}px)` }}
+      />
+
+      <div className="max-w-6xl mx-auto px-4 relative">
+        <div className="text-center mb-16">
+          <h2
+            className={`font-display text-4xl text-neutral-800 mb-4 transition-all duration-700 ${
+              isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            Why Superfans Love Us
+          </h2>
+          <p
+            className={`text-lg text-neutral-600 max-w-2xl mx-auto transition-all duration-700 delay-100 ${
+              isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            Built by Survivor obsessives who&apos;ve watched every season.
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature, i) => (
+            <TiltCard key={i} className="h-full">
+              <div
+                className={`bg-white rounded-2xl p-6 shadow-card h-full transition-all duration-500 ${
+                  isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+                }`}
+                style={{ transitionDelay: `${i * 100}ms` }}
+              >
+                {/* Glowing Icon */}
+                <div className="relative mb-4">
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} rounded-xl blur-lg opacity-20`}
+                  />
+                  <div
+                    className={`relative w-12 h-12 rounded-xl bg-gradient-to-r ${feature.gradient} flex items-center justify-center`}
+                  >
+                    <feature.icon className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+
+                <h3 className="font-semibold text-lg text-neutral-800 mb-2">{feature.title}</h3>
+                <p className="text-neutral-600">{feature.desc}</p>
+
+                {/* Shine effect on hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
+              </div>
+            </TiltCard>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // CTA Section
 function CTASection() {
   const { user } = useAuth();
   const { ref, isInView } = useInView(0.3);
+  const ctaParallax1 = useParallax(0.12);
+  const ctaParallax2 = useParallax(-0.1);
 
   return (
     <section
       ref={ref}
       className="py-24 bg-gradient-to-br from-burgundy-600 via-burgundy-500 to-burgundy-700 relative overflow-hidden"
     >
-      {/* Decorative Elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+      {/* Decorative Elements with Parallax */}
+      <div
+        ref={ctaParallax1.elementRef}
+        className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"
+        style={{ transform: `translateY(${ctaParallax1.offset}px)` }}
+      />
+      <div
+        ref={ctaParallax2.elementRef}
+        className="absolute bottom-0 left-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"
+        style={{ transform: `translateY(${ctaParallax2.offset}px)` }}
+      />
 
       <div className="max-w-4xl mx-auto px-4 text-center relative">
         <div
@@ -782,63 +1040,8 @@ function SurvivorHome() {
         </div>
       </section>
 
-      {/* Quick Features Grid */}
-      <section className="py-20 bg-cream-100">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl text-neutral-800 mb-4">Why Superfans Love Us</h2>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-              Built by Survivor obsessives who've watched every season.
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                icon: Zap,
-                title: 'Real-Time Scoring',
-                desc: 'Watch your points update as the episode unfolds.',
-              },
-              {
-                icon: BarChart3,
-                title: '100+ Rules',
-                desc: 'Every strategic move counts. We score it all.',
-              },
-              {
-                icon: Users,
-                title: 'Private Leagues',
-                desc: 'Create leagues with friends. Up to 12 players.',
-              },
-              {
-                icon: Target,
-                title: 'Weekly Picks',
-                desc: 'New strategic decisions every episode.',
-              },
-              {
-                icon: Shield,
-                title: 'Fair Play',
-                desc: 'Snake draft and waiver wire ensure balance.',
-              },
-              {
-                icon: Trophy,
-                title: 'Global Rankings',
-                desc: 'Compete against thousands of superfans.',
-              },
-            ].map((feature, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl p-6 shadow-card hover:shadow-elevated transition-all duration-300 hover:-translate-y-1 group"
-              >
-                <div className="w-12 h-12 rounded-xl bg-burgundy-100 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <feature.icon className="h-6 w-6 text-burgundy-500" />
-                </div>
-                <h3 className="font-semibold text-lg text-neutral-800 mb-2">{feature.title}</h3>
-                <p className="text-neutral-600">{feature.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Quick Features Grid with 3D Tilt Cards */}
+      <TiltCardSection />
 
       {/* CTA Section */}
       <CTASection />
