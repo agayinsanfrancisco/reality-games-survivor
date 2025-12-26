@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { supabaseAdmin } from '../config/supabase.js';
 import { stripe, STRIPE_WEBHOOK_SECRET } from '../config/stripe.js';
+import { validateTwilioWebhook } from '../config/twilio.js';
 import Stripe from 'stripe';
 import { EmailService } from '../emails/index.js';
 
@@ -129,12 +130,52 @@ router.post('/stripe', async (req: Request, res: Response) => {
       case 'checkout.session.expired': {
         const session = event.data.object as Stripe.Checkout.Session;
         console.log(`Checkout session expired: ${session.id}`);
+
+        // Update payment status to failed
+        await supabaseAdmin
+          .from('payments')
+          .update({ status: 'failed' })
+          .eq('stripe_session_id', session.id);
+
+        // Send recovery email if this was a league donation
+        if (session.metadata?.type === 'league_donation') {
+          const { user_id, league_id } = session.metadata;
+
+          const { data: user } = await supabaseAdmin
+            .from('users')
+            .select('email, display_name')
+            .eq('id', user_id)
+            .single();
+
+          const { data: league } = await supabaseAdmin
+            .from('leagues')
+            .select('name, code')
+            .eq('id', league_id)
+            .single();
+
+          if (user && league) {
+            // Send payment recovery email
+            await EmailService.sendPaymentRecovery({
+              displayName: user.display_name,
+              email: user.email,
+              leagueName: league.name,
+              leagueCode: league.code,
+              amount: (session.amount_total || 0) / 100,
+            });
+          }
+        }
         break;
       }
 
       case 'payment_intent.payment_failed': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        console.log(`Payment failed: ${paymentIntent.id}`);
+        console.log(`Payment failed: ${paymentIntent.id}, reason: ${paymentIntent.last_payment_error?.message}`);
+
+        // Find and update the payment record
+        await supabaseAdmin
+          .from('payments')
+          .update({ status: 'failed' })
+          .eq('stripe_payment_intent_id', paymentIntent.id);
         break;
       }
 
@@ -158,6 +199,15 @@ router.post('/stripe', async (req: Request, res: Response) => {
 // POST /webhooks/sms - Handle Twilio inbound SMS
 router.post('/sms', async (req: Request, res: Response) => {
   try {
+    // Validate Twilio webhook signature to prevent spoofing
+    const twilioSignature = req.headers['x-twilio-signature'] as string;
+    const webhookUrl = `${process.env.BASE_URL || 'https://api.rgfl.app'}/webhooks/sms`;
+
+    if (!validateTwilioWebhook(twilioSignature, webhookUrl, req.body)) {
+      console.warn('Invalid Twilio webhook signature - possible spoofing attempt');
+      return res.status(403).send('Forbidden: Invalid signature');
+    }
+
     // Twilio webhook payload (form-urlencoded)
     // From = sender phone, Body = message text
     const from = req.body.From;

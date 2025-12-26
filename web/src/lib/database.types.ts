@@ -1,11 +1,5 @@
 // Database types for Supabase
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   public: {
@@ -155,7 +149,7 @@ export type Database = {
             columns: ['season_id'];
             referencedRelation: 'seasons';
             referencedColumns: ['id'];
-          }
+          },
         ];
       };
       castaways: {
@@ -171,6 +165,9 @@ export type Database = {
           status: 'active' | 'eliminated' | 'winner';
           eliminated_episode_id: string | null;
           placement: number | null;
+          previous_seasons: string[] | null;
+          best_placement: number | null;
+          fun_fact: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -186,6 +183,9 @@ export type Database = {
           status?: 'active' | 'eliminated' | 'winner';
           eliminated_episode_id?: string | null;
           placement?: number | null;
+          previous_seasons?: string[] | null;
+          best_placement?: number | null;
+          fun_fact?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -201,6 +201,9 @@ export type Database = {
           status?: 'active' | 'eliminated' | 'winner';
           eliminated_episode_id?: string | null;
           placement?: number | null;
+          previous_seasons?: string[] | null;
+          best_placement?: number | null;
+          fun_fact?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -210,7 +213,7 @@ export type Database = {
             columns: ['season_id'];
             referencedRelation: 'seasons';
             referencedColumns: ['id'];
-          }
+          },
         ];
       };
       scoring_rules: {
@@ -331,7 +334,7 @@ export type Database = {
             columns: ['season_id'];
             referencedRelation: 'seasons';
             referencedColumns: ['id'];
-          }
+          },
         ];
       };
       league_members: {
@@ -342,6 +345,7 @@ export type Database = {
           draft_position: number | null;
           total_points: number;
           rank: number | null;
+          previous_rank: number | null;
           joined_at: string;
         };
         Insert: {
@@ -351,6 +355,7 @@ export type Database = {
           draft_position?: number | null;
           total_points?: number;
           rank?: number | null;
+          previous_rank?: number | null;
           joined_at?: string;
         };
         Update: {
@@ -360,6 +365,7 @@ export type Database = {
           draft_position?: number | null;
           total_points?: number;
           rank?: number | null;
+          previous_rank?: number | null;
           joined_at?: string;
         };
         Relationships: [
@@ -374,7 +380,7 @@ export type Database = {
             columns: ['user_id'];
             referencedRelation: 'users';
             referencedColumns: ['id'];
-          }
+          },
         ];
       };
       rosters: {
@@ -429,7 +435,7 @@ export type Database = {
             columns: ['castaway_id'];
             referencedRelation: 'castaways';
             referencedColumns: ['id'];
-          }
+          },
         ];
       };
       weekly_picks: {
@@ -496,7 +502,7 @@ export type Database = {
             columns: ['castaway_id'];
             referencedRelation: 'castaways';
             referencedColumns: ['id'];
-          }
+          },
         ];
       };
       episode_scores: {
@@ -551,7 +557,7 @@ export type Database = {
             columns: ['scoring_rule_id'];
             referencedRelation: 'scoring_rules';
             referencedColumns: ['id'];
-          }
+          },
         ];
       };
     };
@@ -575,6 +581,9 @@ export type Database = {
 };
 
 // Helper types for easier usage
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row'];
-export type InsertTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert'];
-export type UpdateTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update'];
+export type Tables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Row'];
+export type InsertTables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Insert'];
+export type UpdateTables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Update'];
