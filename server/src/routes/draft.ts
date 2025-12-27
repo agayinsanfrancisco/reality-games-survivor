@@ -5,6 +5,14 @@ import { EmailService } from '../emails/index.js';
 
 const router = Router();
 
+// Snake draft helper - calculates which player picks at a given pick number
+function getSnakePickerIndex(pickNumber: number, totalMembers: number): { round: number; pickerIndex: number } {
+  const round = Math.floor(pickNumber / totalMembers) + 1;
+  const pickInRound = pickNumber % totalMembers;
+  const pickerIndex = round % 2 === 1 ? pickInRound : totalMembers - 1 - pickInRound;
+  return { round, pickerIndex };
+}
+
 // GET /api/leagues/:id/draft/state - Get draft state
 router.get('/:id/draft/state', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -45,24 +53,11 @@ router.get('/:id/draft/state', authenticate, async (req: AuthenticatedRequest, r
     const pickedCastawayIds = new Set(picks?.map((p) => p.castaway_id) || []);
     const available = castaways?.filter((c) => !pickedCastawayIds.has(c.id)) || [];
 
-    // Calculate current pick
     const totalMembers = members?.length || 0;
     const totalPicks = picks?.length || 0;
-    const currentRound = Math.floor(totalPicks / totalMembers) + 1;
-    const pickInRound = totalPicks % totalMembers;
-
-    // Snake draft logic
-    let currentPickerIndex: number;
-    if (currentRound % 2 === 1) {
-      // Odd rounds go forward
-      currentPickerIndex = pickInRound;
-    } else {
-      // Even rounds go backward
-      currentPickerIndex = totalMembers - 1 - pickInRound;
-    }
-
+    const { round: currentRound, pickerIndex } = getSnakePickerIndex(totalPicks, totalMembers);
     const draftOrder = league.draft_order || members?.map((m: any) => m.user_id) || [];
-    const currentPickUserId = draftOrder[currentPickerIndex];
+    const currentPickUserId = draftOrder[pickerIndex];
 
     // My picks
     const myPicks = picks?.filter((p) => p.user_id === userId) || [];
@@ -175,19 +170,9 @@ router.post('/:id/draft/pick', authenticate, async (req: AuthenticatedRequest, r
 
     const totalMembers = members?.length || 0;
     const totalPicks = picks?.length || 0;
-    const currentRound = Math.floor(totalPicks / totalMembers) + 1;
-    const pickInRound = totalPicks % totalMembers;
-
-    // Snake draft logic
-    let currentPickerIndex: number;
-    if (currentRound % 2 === 1) {
-      currentPickerIndex = pickInRound;
-    } else {
-      currentPickerIndex = totalMembers - 1 - pickInRound;
-    }
-
+    const { round: currentRound, pickerIndex } = getSnakePickerIndex(totalPicks, totalMembers);
     const draftOrder = league.draft_order || [];
-    const currentPickUserId = draftOrder[currentPickerIndex];
+    const currentPickUserId = draftOrder[pickerIndex];
 
     if (currentPickUserId !== userId) {
       return res.status(403).json({ error: 'Not your turn to pick' });
@@ -342,17 +327,7 @@ router.post('/:id/draft/pick', authenticate, async (req: AuthenticatedRequest, r
     }
 
     // Calculate next pick
-    const nextPickNumber = newTotalPicks + 1;
-    const nextRound = Math.floor(newTotalPicks / totalMembers) + 1;
-    const nextPickInRound = newTotalPicks % totalMembers;
-
-    let nextPickerIndex: number;
-    if (nextRound % 2 === 1) {
-      nextPickerIndex = nextPickInRound;
-    } else {
-      nextPickerIndex = totalMembers - 1 - nextPickInRound;
-    }
-
+    const { round: nextRound, pickerIndex: nextPickerIndex } = getSnakePickerIndex(newTotalPicks, totalMembers);
     const nextPickUserId = draftOrder[nextPickerIndex];
 
     res.json({
@@ -485,17 +460,8 @@ router.post('/finalize-all', requireAdmin, async (req: AuthenticatedRequest, res
 
       // Auto-pick remaining
       while (currentPicks < totalMembers * 2 && available.length > 0) {
-        const currentRound = Math.floor(currentPicks / totalMembers) + 1;
-        const pickInRound = currentPicks % totalMembers;
-
-        let currentPickerIndex: number;
-        if (currentRound % 2 === 1) {
-          currentPickerIndex = pickInRound;
-        } else {
-          currentPickerIndex = totalMembers - 1 - pickInRound;
-        }
-
-        const pickerId = draftOrder[currentPickerIndex];
+        const { round: currentRound, pickerIndex } = getSnakePickerIndex(currentPicks, totalMembers);
+        const pickerId = draftOrder[pickerIndex];
         const castaway = available.shift()!;
 
         await supabaseAdmin.from('rosters').insert({

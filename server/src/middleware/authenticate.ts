@@ -70,13 +70,5 @@ export function requireRole(...roles: Array<'player' | 'commissioner' | 'admin'>
   };
 }
 
-export function requireAdmin(
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) {
-  if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
-  next();
-}
+// Alias for requireRole('admin') - kept for backward compatibility
+export const requireAdmin = requireRole('admin');

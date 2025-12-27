@@ -410,3 +410,71 @@
 .scroll-indicator {
   animation: scroll-bounce 2s ease-in-out infinite;
 }
+
+/* Radial gradient utility */
+.bg-gradient-radial {
+  background: radial-gradient(var(--tw-gradient-stops));
+}
+
+/* Parallax Performance Optimization */
+.parallax-layer {
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Smooth transitions for scroll-based animations */
+@media (prefers-reduced-motion: no-preference) {
+  .parallax-layer {
+    transition: transform 0.1s linear;
+  }
+}
+
+/* Premium typography adjustments */
+@layer utilities {
+  .tracking-tight {
+    letter-spacing: -0.025em;
+  }
+
+  .tracking-widest {
+    letter-spacing: 0.2em;
+  }
+
+  .leading-tight {
+    line-height: 1.1;
+  }
+}
+
+/* Subtle text shadow for hero headlines */
+.text-shadow-subtle {
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Premium focus states */
+@layer components {
+  .focus-premium:focus {
+    @apply outline-none ring-2 ring-burgundy-500/30 ring-offset-2 ring-offset-cream-50;
+  }
+}
+
+/* Smooth page transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+/* Hide scrollbar for splash page while maintaining scroll functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

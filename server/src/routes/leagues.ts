@@ -10,7 +10,6 @@ import {
   createLeagueSchema,
   joinLeagueSchema,
   updateLeagueSettingsSchema,
-  uuidSchema,
 } from '../lib/validation.js';
 
 const SALT_ROUNDS = 10;
@@ -103,13 +102,6 @@ router.post('/:id/join', authenticate, joinLimiter, validate(joinLeagueSchema), 
   try {
     const userId = req.user!.id;
     const leagueId = req.params.id;
-
-    // Validate UUID format
-    const uuidResult = uuidSchema.safeParse(leagueId);
-    if (!uuidResult.success) {
-      return res.status(400).json({ error: 'Invalid league ID format' });
-    }
-
     const { password } = req.body;
 
     // Get league - use admin client to bypass RLS (user isn't a member yet)
@@ -545,13 +537,6 @@ router.patch('/:id/settings', authenticate, validate(updateLeagueSettingsSchema)
   try {
     const leagueId = req.params.id;
     const userId = req.user!.id;
-
-    // Validate UUID format
-    const uuidResult = uuidSchema.safeParse(leagueId);
-    if (!uuidResult.success) {
-      return res.status(400).json({ error: 'Invalid league ID format' });
-    }
-
     const {
       name,
       password,
