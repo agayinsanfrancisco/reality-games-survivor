@@ -1,4 +1,7 @@
 # Railway builds from repo root, so we need to handle the server subdirectory
+# IMPORTANT: In Railway dashboard, set Service Root Directory to "/server" 
+# OR ensure this nixpacks.toml is at the repo root (which it is)
+
 [phases.setup]
 nixPkgs = ["nodejs_20"]
 
@@ -10,7 +13,7 @@ cmds = [
   "cd server && npm run build",
   "cd server && ls -la dist/ || (echo 'ERROR: dist directory not found' && exit 1)",
   "cd server && test -f dist/server.js || (echo 'ERROR: server.js not found after build' && exit 1)",
-  "echo 'Build verification: dist/server.js exists'"
+  "echo '✓ Build successful: dist/server.js exists'"
 ]
 
 [start]
