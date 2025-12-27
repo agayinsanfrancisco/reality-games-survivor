@@ -44,3 +44,6 @@ export async function sendEmail({ to, subject, html, text }: EmailParams): Promi
     return false;
   }
 }
+
+// Export email queue functions for reliable email delivery
+export { sendEmailCritical, enqueueEmail, processEmailQueue, getQueueStats } from '../lib/email-queue.js';

@@ -1,5 +1,5 @@
 // Email Service - Centralized email sending with templates and triggers
-import { sendEmail } from '../config/email.js';
+import { sendEmail, sendEmailCritical, enqueueEmail } from '../config/email.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import {
   emailWrapper,
@@ -536,20 +536,20 @@ export class EmailService {
     });
   }
 
-  // Send league joined email to new member
+  // Send league joined email to new member (CRITICAL - part of payment flow)
   static async sendLeagueJoined(data: LeagueJoinedEmailData): Promise<boolean> {
     const html = leagueJoinedEmailTemplate(data);
-    return sendEmail({
+    return sendEmailCritical({
       to: data.email,
       subject: `🏝️ You've joined ${data.leagueName}!`,
       html,
     });
   }
 
-  // Send draft pick confirmation
+  // Send draft pick confirmation (CRITICAL - draft confirmations must be delivered)
   static async sendDraftPickConfirmed(data: DraftPickConfirmedEmailData): Promise<boolean> {
     const html = draftPickConfirmedEmailTemplate(data);
-    return sendEmail({
+    return sendEmailCritical({
       to: data.email,
       subject: `🏝️ Draft Pick: ${data.castawayName}`,
       html,
@@ -566,10 +566,10 @@ export class EmailService {
     });
   }
 
-  // Send weekly pick confirmation
+  // Send weekly pick confirmation (CRITICAL - pick confirmations must be delivered)
   static async sendPickConfirmed(data: PickConfirmedEmailData): Promise<boolean> {
     const html = pickConfirmedEmailTemplate(data);
-    return sendEmail({
+    return sendEmailCritical({
       to: data.email,
       subject: `🏝️ Pick confirmed: ${data.castawayName}`,
       html,
@@ -586,84 +586,98 @@ export class EmailService {
     });
   }
 
-  // Send payment confirmation
+  // Send payment confirmation (CRITICAL - uses retry logic)
   static async sendPaymentConfirmed(data: PaymentConfirmedEmailData): Promise<boolean> {
     const html = paymentConfirmedEmailTemplate(data);
-    return sendEmail({
+    return sendEmailCritical({
       to: data.email,
       subject: `✅ Payment received - ${data.leagueName}`,
       html,
     });
   }
 
-  // Send draft reminder
+  // Send draft reminder (enqueued for background delivery)
   static async sendDraftReminder(data: DraftReminderEmailData): Promise<boolean> {
     const html = draftReminderEmailTemplate(data);
-    return sendEmail({
+    const result = await enqueueEmail({
       to: data.email,
       subject: `⏰ ${data.daysRemaining} days left to complete your draft`,
       html,
+      type: 'normal',
     });
+    return result !== null;
   }
 
-  // Send draft final warning
+  // Send draft final warning (enqueued for background delivery)
   static async sendDraftFinalWarning(data: DraftFinalWarningEmailData): Promise<boolean> {
     const html = draftFinalWarningEmailTemplate(data);
-    return sendEmail({
+    const result = await enqueueEmail({
       to: data.email,
       subject: `🚨 URGENT: ${data.hoursRemaining} hours to complete rankings!`,
       html,
+      type: 'normal',
     });
+    return result !== null;
   }
 
-  // Send pick reminder
+  // Send pick reminder (enqueued for background delivery)
   static async sendPickReminder(data: PickReminderEmailData): Promise<boolean> {
     const html = pickReminderEmailTemplate(data);
-    return sendEmail({
+    const result = await enqueueEmail({
       to: data.email,
       subject: `⏰ ${data.hoursRemaining} hours to make your pick`,
       html,
+      type: 'normal',
     });
+    return result !== null;
   }
 
-  // Send pick final warning
+  // Send pick final warning (enqueued for background delivery)
   static async sendPickFinalWarning(data: PickFinalWarningEmailData): Promise<boolean> {
     const html = pickFinalWarningEmailTemplate(data);
-    return sendEmail({
+    const result = await enqueueEmail({
       to: data.email,
       subject: `🚨 PICKS LOCK IN ${data.minutesRemaining} MINUTES!`,
       html,
+      type: 'normal',
     });
+    return result !== null;
   }
 
-  // Send episode results
+  // Send episode results (enqueued for background delivery)
   static async sendEpisodeResults(data: EpisodeResultsEmailData): Promise<boolean> {
     const html = episodeResultsEmailTemplate(data);
-    return sendEmail({
+    const result = await enqueueEmail({
       to: data.email,
       subject: `🏆 Episode ${data.episodeNumber} Results: +${data.pointsEarned} points!`,
       html,
+      type: 'normal',
     });
+    return result !== null;
   }
 
-  // Send elimination alert
+  // Send elimination alert (enqueued for background delivery)
   static async sendEliminationAlert(data: EliminationAlertEmailData): Promise<boolean> {
     const html = eliminationAlertEmailTemplate(data);
-    return sendEmail({
+    const result = await enqueueEmail({
       to: data.email,
       subject: `😢 ${data.castawayName} has been eliminated`,
       html,
+      type: 'normal',
     });
+    return result !== null;
   }
 
-  // Send payment recovery email when checkout expires
+  // Send payment recovery email when checkout expires (enqueued for background delivery)
   static async sendPaymentRecovery(data: PaymentRecoveryEmailData): Promise<boolean> {
     const html = paymentRecoveryEmailTemplate(data);
-    return sendEmail({
+    const result = await enqueueEmail({
       to: data.email,
       subject: `💳 Complete your payment for ${data.leagueName}`,
       html,
+      type: 'normal',
     });
+    return result !== null;
   }
 
   // Log email to notifications table

@@ -6,6 +6,7 @@ import { autoRandomizeRankings } from './autoRandomizeRankings.js';
 import { sendPickReminders, sendDraftReminders } from './sendReminders.js';
 import { sendEpisodeResults } from './sendResults.js';
 import { sendWeeklySummary } from './weeklySummary.js';
+import { processEmailQueue } from '../lib/email-queue.js';
 
 interface ScheduledJob {
   name: string;
@@ -18,6 +19,14 @@ interface ScheduledJob {
 }
 
 const jobs: ScheduledJob[] = [
+  {
+    name: 'email-queue-processor',
+    // Every 5 minutes
+    schedule: '*/5 * * * *',
+    description: 'Process pending emails from queue with retry logic',
+    handler: processEmailQueue,
+    enabled: true,
+  },
   {
     name: 'lock-picks',
     // Wed 3pm PST (23:00 UTC during PST, 22:00 during PDT)
