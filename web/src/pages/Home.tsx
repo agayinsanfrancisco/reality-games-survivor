@@ -867,5 +867,13 @@ export function Home() {
     return <SplashPage />;
   }
 
+  // Allow previewing concepts via URL param: ?concept=A, ?concept=B, etc.
+  const params = new URLSearchParams(window.location.search);
+  const conceptParam = params.get('concept')?.toUpperCase();
+  if (conceptParam && conceptParam in Concepts) {
+    const PreviewConcept = Concepts[conceptParam as keyof typeof Concepts];
+    return <PreviewConcept />;
+  }
+
   return <ActiveConcept />;
 }
