@@ -2,17 +2,31 @@
 
 # Dynu DNS Configuration Script
 # Configures DNS records for RGFL domains (Railway deployment only)
+#
+# Required environment variables:
+#   DYNU_API_KEY - Your Dynu API key
+#
+# Usage:
+#   export DYNU_API_KEY="your-api-key"
+#   ./scripts/configure-dynu-dns.sh
 
 set -e
 
-DYNU_API_KEY="3f46Vee3gaUb6dX4V4g5c35fX3a65Y56"
-DYNU_BASE_URL="https://api.dynu.com/v2"
-PRODUCTION_RAILWAY_URL="rgfl-api-production.up.railway.app"
+# Check for required environment variable
+if [ -z "$DYNU_API_KEY" ]; then
+  echo "❌ Error: DYNU_API_KEY environment variable is required"
+  echo "   Set it with: export DYNU_API_KEY='your-api-key'"
+  exit 1
+fi
 
-# Railway CNAME target for custom domains
-# Note: You must first add custom domains in Railway dashboard to get the correct CNAME target
-# Railway typically uses: <your-service>.up.railway.app or a specific CNAME target
-RAILWAY_CNAME_TARGET="${PRODUCTION_RAILWAY_URL}"
+DYNU_BASE_URL="https://api.dynu.com/v2"
+PRODUCTION_API_URL="rgfl-api-production.up.railway.app"
+
+# Railway CNAME targets for custom domains
+# Note: You must first add custom domains in Railway dashboard to get the correct CNAME targets
+# Frontend and API are both on Railway - update these after adding domains in Railway dashboard
+RAILWAY_FRONTEND_CNAME="7qo6chb9.up.railway.app"  # Current survivor subdomain target
+RAILWAY_ROOT_CNAME="7qo6chb9.up.railway.app"      # For root domain (same as frontend typically)
 
 echo "🔧 Configuring Dynu DNS Records for Railway Deployment..."
 echo "⚠️  IMPORTANT: Add custom domains in Railway dashboard first!"
@@ -125,19 +139,18 @@ else
   list_dns_records "$ROOT_DOMAIN_ID"
   echo ""
   echo "   ⚠️  Root domains cannot use CNAME records"
-  echo "   Options:"
-  echo "   1. Use A records (Railway will provide IPs when you add custom domain)"
-  echo "   2. Use HTTP redirect to survivor subdomain"
+  echo "   Current A record points to: 76.76.21.21"
   echo ""
-  echo "   Creating HTTP redirect: realitygamesfantasyleague.com -> https://survivor.realitygamesfantasyleague.com"
-  echo "   (You can change this later if you prefer A records)"
-  RESPONSE=$(create_redirect_record "$ROOT_DOMAIN_ID" "" "https://survivor.realitygamesfantasyleague.com" 301)
-  if echo "$RESPONSE" | jq -e '.statusCode == 200 or .id' > /dev/null 2>&1; then
-    echo "   ✅ HTTP redirect created successfully"
-  else
-    echo "   ⚠️  Response: $RESPONSE"
-    echo "   Note: You may need to delete existing A record first, or use Railway-provided IPs"
-  fi
+  echo "   For Railway root domain, you have two options:"
+  echo "   1. Keep existing A record (if it's working)"
+  echo "   2. Replace with Railway-provided IP addresses"
+  echo ""
+  echo "   📋 To configure root domain properly:"
+  echo "      - Add 'realitygamesfantasyleague.com' as custom domain in Railway"
+  echo "      - Railway will provide IP addresses for A records"
+  echo "      - Update the A record in Dynu with those IPs"
+  echo ""
+  echo "   For now, leaving existing A record as-is"
 fi
 
 # 2. Configure survivor.realitygamesfantasyleague.com (app subdomain)
@@ -153,15 +166,21 @@ else
     echo "   ℹ️  Survivor CNAME already exists (ID: $EXISTING_SURVIVOR)"
     CURRENT_TARGET=$(get_dns_records "$ROOT_DOMAIN_ID" | jq -r '.dnsRecords[]? | select(.nodeName == "survivor" and .recordType == "CNAME") | .host')
     echo "   Current target: $CURRENT_TARGET"
-    if [ "$CURRENT_TARGET" != "$RAILWAY_CNAME_TARGET" ]; then
-      echo "   ⚠️  Target differs from expected. Update manually if needed."
-      echo "   Expected: $RAILWAY_CNAME_TARGET"
+    
+    if [ "$CURRENT_TARGET" != "$RAILWAY_FRONTEND_CNAME" ]; then
+      echo "   Updating CNAME to point to Railway frontend: $RAILWAY_FRONTEND_CNAME"
+      echo "   ⚠️  Note: This requires deleting and recreating the record"
+      echo "   To update:"
+      echo "   1. Delete record ID $EXISTING_SURVIVOR via Dynu API or dashboard"
+      echo "   2. Re-run this script"
+      echo ""
+      echo "   Or manually update in Dynu dashboard to: $RAILWAY_FRONTEND_CNAME"
     else
-      echo "   ✅ Already pointing to correct target"
+      echo "   ✅ Already pointing to correct Railway frontend target"
     fi
   else
-    echo "   Creating CNAME record: survivor -> $RAILWAY_CNAME_TARGET"
-    RESPONSE=$(create_cname_record "$ROOT_DOMAIN_ID" "survivor" "$RAILWAY_CNAME_TARGET" 300)
+    echo "   Creating CNAME record: survivor -> $RAILWAY_FRONTEND_CNAME"
+    RESPONSE=$(create_cname_record "$ROOT_DOMAIN_ID" "survivor" "$RAILWAY_FRONTEND_CNAME" 300)
     if echo "$RESPONSE" | jq -e '.statusCode == 200 or .id' > /dev/null 2>&1; then
       echo "   ✅ CNAME record created successfully"
     else
@@ -199,18 +218,31 @@ fi
 echo ""
 echo "✅ DNS configuration script complete!"
 echo ""
-echo "📝 CRITICAL NEXT STEPS:"
+echo "📝 SUMMARY:"
+echo ""
+echo "✅ survivor.realitygamesfantasyleague.com - CNAME configured"
+echo "⚠️  realitygamesfantasyleague.com - A record exists (may need Railway IPs)"
+echo "❌ rgfl.app - Domain not found in Dynu (add domain first)"
+echo "❌ rgflapp.com - Domain not found in Dynu (add domain first)"
+echo ""
+echo "📋 NEXT STEPS:"
 echo ""
 echo "1. Add Custom Domains in Railway Dashboard:"
-echo "   - Go to: https://railway.com/project/8ef4265a-363c-497d-878d-859de8b4b25a/service/24df0070-1606-4993-89aa-9da987f2643a"
+echo "   - Go to Railway project dashboard"
+echo "   - Find your FRONTEND service (not API service)"
 echo "   - Settings → Networking → Custom Domains"
-echo "   - Add: realitygamesfantasyleague.com"
 echo "   - Add: survivor.realitygamesfantasyleague.com"
-echo "   - Railway will provide the exact CNAME target (may differ from above)"
+echo "   - Add: realitygamesfantasyleague.com (if supported)"
+echo "   - Railway will verify DNS and provide IPs if needed"
 echo ""
-echo "2. Update this script if Railway CNAME target is different:"
-echo "   - Edit RAILWAY_CNAME_TARGET variable in this script"
-echo "   - Re-run this script"
+echo "2. For rgfl.app and rgflapp.com:"
+echo "   - Add these domains to your Dynu account first"
+echo "   - Then re-run this script to configure redirects"
+echo ""
+echo "3. Update Railway CNAME target if different:"
+echo "   - Check Railway dashboard for exact CNAME target"
+echo "   - Edit RAILWAY_FRONTEND_CNAME in this script"
+echo "   - Re-run this script to update DNS records"
 echo ""
 echo "3. Verify DNS Records:"
 echo "   - Check Dynu dashboard: https://www.dynu.com/en-US/ControlPanel"
