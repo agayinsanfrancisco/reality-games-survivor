@@ -7,6 +7,7 @@ import { sendPickReminders, sendDraftReminders } from './sendReminders.js';
 import { sendEpisodeResults } from './sendResults.js';
 import { sendWeeklySummary } from './weeklySummary.js';
 import { processEmailQueue } from '../lib/email-queue.js';
+import { pstToCron, formatCronWithTimezone } from '../lib/timezone-utils.js';
 
 interface ScheduledJob {
   name: string;
@@ -29,48 +30,48 @@ const jobs: ScheduledJob[] = [
   },
   {
     name: 'lock-picks',
-    // Wed 3pm PST (23:00 UTC during PST, 22:00 during PDT)
-    schedule: '0 23 * * 3',
+    // Wed 3pm PST (auto-adjusts for DST)
+    schedule: pstToCron(15, 0, 3),
     description: 'Lock all pending picks',
     handler: lockPicks,
     enabled: true,
   },
   {
     name: 'auto-pick',
-    // Wed 3:05pm PST
-    schedule: '5 23 * * 3',
+    // Wed 3:05pm PST (auto-adjusts for DST)
+    schedule: pstToCron(15, 5, 3),
     description: 'Fill missing picks with auto-select',
     handler: autoPick,
     enabled: true,
   },
   {
     name: 'pick-reminders',
-    // Wed 12pm PST (20:00 UTC)
-    schedule: '0 20 * * 3',
+    // Wed 12pm PST (auto-adjusts for DST)
+    schedule: pstToCron(12, 0, 3),
     description: 'Send pick reminder emails',
     handler: sendPickReminders,
     enabled: true,
   },
   {
     name: 'results-notification',
-    // Fri 12pm PST (20:00 UTC)
-    schedule: '0 20 * * 5',
+    // Fri 12pm PST (auto-adjusts for DST)
+    schedule: pstToCron(12, 0, 5),
     description: 'Send episode results',
     handler: sendEpisodeResults,
     enabled: true,
   },
   {
     name: 'weekly-summary',
-    // Sun 10am PST (18:00 UTC)
-    schedule: '0 18 * * 0',
+    // Sun 10am PST (auto-adjusts for DST)
+    schedule: pstToCron(10, 0, 0),
     description: 'Send weekly standings summary',
     handler: sendWeeklySummary,
     enabled: true,
   },
   {
     name: 'draft-reminders',
-    // Daily 9am PST (17:00 UTC) during draft window
-    schedule: '0 17 * * *',
+    // Daily 9am PST (auto-adjusts for DST)
+    schedule: pstToCron(9, 0),
     description: 'Send draft reminder emails',
     handler: sendDraftReminders,
     enabled: true,
@@ -179,7 +180,11 @@ export function startScheduler(): void {
       }
     });
 
-    console.log(`Scheduled job: ${job.name} (${job.schedule})`);
+    // Log schedule with timezone info for DST-aware jobs
+    const scheduleInfo = job.description.includes('PST')
+      ? job.schedule
+      : job.schedule;
+    console.log(`Scheduled job: ${job.name} (${scheduleInfo})`);
   }
 
   // Schedule one-time jobs

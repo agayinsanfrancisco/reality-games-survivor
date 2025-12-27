@@ -178,152 +178,29 @@ router.post('/:id/scoring/finalize', requireAdmin, async (req: AuthenticatedRequ
     const episodeId = req.params.id;
     const userId = req.user!.id;
 
-    // Get episode and session
-    const { data: episode } = await supabase
-      .from('episodes')
-      .select('*, seasons(*)')
-      .eq('id', episodeId)
-      .single();
+    // Use atomic finalization function to prevent double-finalization
+    const { data: result, error: rpcError } = await supabaseAdmin.rpc('finalize_episode_scoring', {
+      p_episode_id: episodeId,
+      p_finalized_by: userId,
+    });
 
-    if (!episode) {
-      return res.status(404).json({ error: 'Episode not found' });
+    if (rpcError) {
+      console.error('Finalize scoring RPC error:', rpcError);
+      return res.status(500).json({ error: 'Failed to finalize scoring' });
     }
 
-    const { data: session } = await supabase
-      .from('scoring_sessions')
-      .select('*')
-      .eq('episode_id', episodeId)
-      .single();
+    // Check for errors returned by the function
+    const finalizeResult = Array.isArray(result) ? result[0] : result;
 
-    if (!session) {
-      return res.status(404).json({ error: 'Scoring session not found' });
-    }
-
-    if (session.status === 'finalized') {
-      return res.status(400).json({ error: 'Session already finalized' });
-    }
-
-    // Finalize session
-    await supabaseAdmin
-      .from('scoring_sessions')
-      .update({
-        status: 'finalized',
-        finalized_at: new Date().toISOString(),
-        finalized_by: userId,
-      })
-      .eq('id', session.id);
-
-    // Mark episode as scored
-    await supabaseAdmin
-      .from('episodes')
-      .update({ is_scored: true })
-      .eq('id', episodeId);
-
-    // Get all scores for this episode
-    const { data: scores } = await supabase
-      .from('episode_scores')
-      .select('castaway_id, points')
-      .eq('episode_id', episodeId);
-
-    // Calculate total points per castaway
-    const castawayTotals: Record<string, number> = {};
-    for (const score of scores || []) {
-      castawayTotals[score.castaway_id] =
-        (castawayTotals[score.castaway_id] || 0) + score.points;
-    }
-
-    // Update weekly picks with points earned
-    const { data: picks } = await supabaseAdmin
-      .from('weekly_picks')
-      .select('id, castaway_id')
-      .eq('episode_id', episodeId);
-
-    for (const pick of picks || []) {
-      const pointsEarned = castawayTotals[pick.castaway_id] || 0;
-      await supabaseAdmin
-        .from('weekly_picks')
-        .update({ points_earned: pointsEarned })
-        .eq('id', pick.id);
-    }
-
-    // Update league member totals
-    const { data: leagues } = await supabaseAdmin
-      .from('leagues')
-      .select('id')
-      .eq('season_id', episode.season_id)
-      .eq('status', 'active');
-
-    for (const league of leagues || []) {
-      const { data: members } = await supabaseAdmin
-        .from('league_members')
-        .select('user_id')
-        .eq('league_id', league.id);
-
-      for (const member of members || []) {
-        // Sum all points earned
-        const { data: userPicks } = await supabaseAdmin
-          .from('weekly_picks')
-          .select('points_earned')
-          .eq('league_id', league.id)
-          .eq('user_id', member.user_id);
-
-        const totalPoints = userPicks?.reduce((sum, p) => sum + (p.points_earned || 0), 0) || 0;
-
-        await supabaseAdmin
-          .from('league_members')
-          .update({ total_points: totalPoints })
-          .eq('league_id', league.id)
-          .eq('user_id', member.user_id);
-      }
-
-      // Update ranks
-      const { data: rankedMembers } = await supabaseAdmin
-        .from('league_members')
-        .select('id, total_points')
-        .eq('league_id', league.id)
-        .order('total_points', { ascending: false });
-
-      for (let i = 0; i < (rankedMembers?.length || 0); i++) {
-        await supabaseAdmin
-          .from('league_members')
-          .update({ rank: i + 1 })
-          .eq('id', rankedMembers![i].id);
-      }
-    }
-
-    // Check for eliminated castaways (those with elimination rule)
-    const { data: eliminationRules } = await supabase
-      .from('scoring_rules')
-      .select('id')
-      .ilike('code', '%ELIM%');
-
-    const eliminatedCastawayIds: string[] = [];
-    if (eliminationRules && eliminationRules.length > 0) {
-      const elimRuleIds = eliminationRules.map((r) => r.id);
-
-      const { data: elimScores } = await supabase
-        .from('episode_scores')
-        .select('castaway_id')
-        .eq('episode_id', episodeId)
-        .in('scoring_rule_id', elimRuleIds);
-
-      for (const score of elimScores || []) {
-        await supabaseAdmin
-          .from('castaways')
-          .update({
-            status: 'eliminated',
-            eliminated_episode_id: episodeId,
-          })
-          .eq('id', score.castaway_id);
-
-        eliminatedCastawayIds.push(score.castaway_id);
-      }
+    if (finalizeResult?.error_code) {
+      const statusCode = finalizeResult.error_code === 'SESSION_NOT_FOUND' ? 404 : 400;
+      return res.status(statusCode).json({ error: finalizeResult.error_message });
     }
 
     res.json({
-      finalized: true,
-      eliminated: eliminatedCastawayIds,
-      standings_updated: true,
+      finalized: finalizeResult.finalized,
+      eliminated: finalizeResult.eliminated_castaway_ids || [],
+      standings_updated: finalizeResult.standings_updated,
     });
   } catch (err) {
     console.error('POST /api/episodes/:id/scoring/finalize error:', err);

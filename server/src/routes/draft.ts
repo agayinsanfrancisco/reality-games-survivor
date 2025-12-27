@@ -142,84 +142,39 @@ router.post('/:id/draft/pick', authenticate, async (req: AuthenticatedRequest, r
       return res.status(400).json({ error: 'castaway_id is required' });
     }
 
-    // Get league
-    const { data: league } = await supabase
+    // Use atomic draft pick function to prevent race conditions
+    const { data: result, error: rpcError } = await supabaseAdmin.rpc('submit_draft_pick', {
+      p_league_id: leagueId,
+      p_user_id: userId,
+      p_castaway_id: castaway_id,
+      p_idempotency_token: null, // Could use request ID for idempotency if needed
+    });
+
+    if (rpcError) {
+      console.error('Draft pick RPC error:', rpcError);
+      return res.status(500).json({ error: 'Failed to submit draft pick' });
+    }
+
+    // Check for errors returned by the function
+    const pickResult = Array.isArray(result) ? result[0] : result;
+
+    if (pickResult?.error_code) {
+      const statusCode = pickResult.error_code === 'LEAGUE_NOT_FOUND' ? 404 :
+                        pickResult.error_code === 'NOT_YOUR_TURN' ? 403 : 400;
+      return res.status(statusCode).json({ error: pickResult.error_message });
+    }
+
+    const isDraftComplete = pickResult.is_draft_complete;
+    const currentRound = pickResult.draft_round;
+
+    // Get league details for emails
+    const { data: league } = await supabaseAdmin
       .from('leagues')
-      .select('*')
+      .select('*, season_id')
       .eq('id', leagueId)
       .single();
 
-    if (!league) {
-      return res.status(404).json({ error: 'League not found' });
-    }
-
-    if (league.draft_status !== 'in_progress') {
-      return res.status(400).json({ error: 'Draft is not in progress' });
-    }
-
-    // Get existing picks to determine current turn
-    const { data: picks } = await supabase
-      .from('rosters')
-      .select('*')
-      .eq('league_id', leagueId);
-
-    const { data: members } = await supabase
-      .from('league_members')
-      .select('user_id')
-      .eq('league_id', leagueId);
-
-    const totalMembers = members?.length || 0;
-    const totalPicks = picks?.length || 0;
-    const { round: currentRound, pickerIndex } = getSnakePickerIndex(totalPicks, totalMembers);
-    const draftOrder = league.draft_order || [];
-    const currentPickUserId = draftOrder[pickerIndex];
-
-    if (currentPickUserId !== userId) {
-      return res.status(403).json({ error: 'Not your turn to pick' });
-    }
-
-    // Check castaway not already picked
-    const alreadyPicked = picks?.some((p) => p.castaway_id === castaway_id);
-    if (alreadyPicked) {
-      return res.status(400).json({ error: 'Castaway already drafted' });
-    }
-
-    // Check user doesn't already have 2 castaways
-    const userPicks = picks?.filter((p) => p.user_id === userId).length || 0;
-    if (userPicks >= 2) {
-      return res.status(400).json({ error: 'You already have 2 castaways' });
-    }
-
-    // Make the pick
-    const { data: roster, error } = await supabaseAdmin
-      .from('rosters')
-      .insert({
-        league_id: leagueId,
-        user_id: userId,
-        castaway_id,
-        draft_round: currentRound,
-        draft_pick: totalPicks + 1,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      return res.status(400).json({ error: error.message });
-    }
-
-    // Check if draft is complete (all members have 2 picks)
-    const newTotalPicks = totalPicks + 1;
-    const isDraftComplete = newTotalPicks >= totalMembers * 2;
-
     if (isDraftComplete) {
-      await supabaseAdmin
-        .from('leagues')
-        .update({
-          draft_status: 'completed',
-          draft_completed_at: new Date().toISOString(),
-          status: 'active',
-        })
-        .eq('id', leagueId);
 
       // Send draft complete emails to all members (fire and forget)
       (async () => {
@@ -309,7 +264,7 @@ router.post('/:id/draft/pick', authenticate, async (req: AuthenticatedRequest, r
               leagueName: leagueDetails.name,
               leagueId,
               round: currentRound,
-              pickNumber: totalPicks + 1,
+              pickNumber: pickResult.draft_pick,
               totalRounds: 2,
             });
 
@@ -326,18 +281,12 @@ router.post('/:id/draft/pick', authenticate, async (req: AuthenticatedRequest, r
       })();
     }
 
-    // Calculate next pick
-    const { round: nextRound, pickerIndex: nextPickerIndex } = getSnakePickerIndex(newTotalPicks, totalMembers);
-    const nextPickUserId = draftOrder[nextPickerIndex];
-
     res.json({
-      roster_entry: roster,
+      roster_id: pickResult.roster_id,
+      draft_round: pickResult.draft_round,
+      draft_pick: pickResult.draft_pick,
       draft_complete: isDraftComplete,
-      next_pick: isDraftComplete ? null : {
-        pick_number: newTotalPicks + 1,
-        round: nextRound,
-        user_id: nextPickUserId,
-      },
+      next_picker: isDraftComplete ? null : pickResult.next_picker_user_id,
     });
   } catch (err) {
     console.error('POST /api/leagues/:id/draft/pick error:', err);
