@@ -42,6 +42,7 @@ import DraftSettings from './pages/DraftSettings';
 import InviteLink from './pages/InviteLink';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import Trivia from './pages/Trivia';
 
 // Admin Pages
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -84,6 +85,7 @@ export default function App() {
             <Route path="/sms" element={<SMSCommands />} />
             <Route path="/l/:code" element={<PublicLeaderboard />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/trivia" element={<Trivia />} />
             <Route path="/castaways" element={<Castaways />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
