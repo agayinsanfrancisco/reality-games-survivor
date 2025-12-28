@@ -1,3 +1,7 @@
+/**
+ * Trivia Page - Interactive Survivor trivia game
+ * Built: Dec 28, 2025
+ */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
