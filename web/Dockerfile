@@ -11,32 +11,30 @@ RUN npm ci
 # Copy source
 COPY . .
 
-# Build args for Vite env vars (Railway passes these automatically)
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_ANON_KEY
-ARG VITE_API_URL
-
-# Convert to ENV so Vite can access them during build
-ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
-ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
-ENV VITE_API_URL=$VITE_API_URL
+# Hardcode env vars for Vite build (these are public values, not secrets)
+ENV VITE_SUPABASE_URL=https://qxrgejdfxcvsfktgysop.supabase.co
+ENV VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4cmdlamRmeGN2c2ZrdGd5c29wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNjQzNTksImV4cCI6MjA4MTg0MDM1OX0.oe7awPK-K6vIHiP64peWztuAABOw4Hb9r6SHqwdb9B0
+ENV VITE_API_URL=https://rgfl-api-production.up.railway.app
 
 # Build the app
-RUN echo "Building with VITE_SUPABASE_URL=$VITE_SUPABASE_URL" && npm run build
+RUN npm run build && ls -la dist/
 
-# Production stage
-FROM node:20-alpine
+# Production stage - tiny nginx image for static files
+FROM nginx:alpine
 
-WORKDIR /app
+# Copy built files
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Install serve
-RUN npm install -g serve
+# Copy nginx config for SPA routing
+RUN echo 'server { \
+    listen 80; \
+    listen [::]:80; \
+    root /usr/share/nginx/html; \
+    index index.html; \
+    location / { \
+        try_files $uri $uri/ /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
 
-# Copy built files from builder
-COPY --from=builder /app/dist ./dist
-
-# Expose port
-EXPOSE ${PORT:-3000}
-
-# Start server
-CMD ["sh", "-c", "serve dist -s -l ${PORT:-3000}"]
+# Railway sets PORT env var
+CMD sh -c "sed -i 's/listen 80/listen ${PORT:-3000}/g' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
