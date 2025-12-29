@@ -177,10 +177,10 @@ export default function ProfileSetup() {
 
           if (retryError) {
             console.error('Profile update retry error:', retryError);
-            throw retryError;
+            throw new Error(retryError.message || 'Retry failed');
           }
         } else {
-          throw error;
+          throw new Error(error.message || 'Update failed');
         }
       }
     },
@@ -258,18 +258,24 @@ export default function ProfileSetup() {
         season_50_winner_prediction: season50WinnerPrediction || undefined,
         notification_email: emailNotifications,
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Submit error:', err);
-      // Show a more descriptive error if possible
-      if (err instanceof Error) {
-        if (err.message.includes('JWT') || err.message.includes('session')) {
-          setError('Session issue detected. Please try refreshing the page or logging in again.');
-        } else {
-          setError(err.message);
-        }
+
+      // Extract message from various error formats
+      const message = err?.message || (typeof err === 'string' ? err : 'Unknown error');
+
+      if (
+        message.toLowerCase().includes('jwt') ||
+        message.toLowerCase().includes('session') ||
+        message.toLowerCase().includes('auth')
+      ) {
+        setError('Your login session has expired. Please refresh the page to log in again.');
+      } else if (message.includes('check your connection')) {
+        setError(`Connection issue: ${message}. If this persists, try logging out and back in.`);
       } else {
-        setError('Failed to update profile. Please check your connection.');
+        setError(message);
       }
+
       setIsSubmitting(false);
     }
   };
