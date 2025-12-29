@@ -22,6 +22,19 @@ export interface UserProfile {
   notification_push?: boolean;
   timezone?: string;
   created_at?: string;
+  updated_at?: string;
+  // Profile fields added by migrations 006, 045, 046, 047
+  hometown?: string | null;
+  favorite_castaway?: string | null;
+  bio?: string | null;
+  favorite_season?: string | null;
+  season_50_winner_prediction?: string | null; // UUID reference to castaways
+  // Trivia fields added by migrations 030, 031, 034
+  trivia_lockout_until?: string | null;
+  trivia_locked_until?: string | null;
+  trivia_questions_answered?: number;
+  trivia_questions_correct?: number;
+  trivia_attempts?: number;
 }
 
 // ============================================================================
@@ -49,7 +62,7 @@ export interface Episode {
   id: string;
   season_id: string;
   number: number;
-  week_number: number;
+  week_number?: number | null; // Added by migration 053
   title: string | null;
   air_date: string;
   picks_lock_at: string;
@@ -59,6 +72,9 @@ export interface Episode {
   is_finale: boolean | null;
   is_scored: boolean | null;
   results_released_at: string | null;
+  results_released_by?: string | null; // Added by migration 024
+  scoring_finalized_at?: string | null; // Added by migration 024
+  scoring_finalized_by?: string | null; // Added by migration 024
 }
 
 // ============================================================================
@@ -99,22 +115,23 @@ export interface League {
   status: LeagueStatus;
   is_global: boolean;
   is_public: boolean;
-  is_closed?: boolean | null; // Optional, might be derived
+  is_closed?: boolean | null; // Added by migration 003
   commissioner_id: string;
+  co_commissioners?: string[] | null; // Added by migration 003 (JSONB array of user IDs)
   max_players: number;
   require_donation: boolean;
   donation_amount?: number | null;
   donation_notes?: string | null;
   payout_method?: string | null;
   draft_status: DraftStatus | null;
-  draft_order?: string[] | null; // Array of user IDs
+  draft_order?: string[] | null; // Array of user IDs (JSONB)
   draft_started_at?: string | null;
   draft_completed_at?: string | null;
   password_hash?: string | null;
   created_at?: string;
   updated_at?: string;
-  description?: string | null;
-  photo_url?: string | null;
+  description?: string | null; // Added by migration 003
+  photo_url?: string | null; // Added by migration 053
   // Join properties
   commissioner?: {
     id: string;
@@ -129,8 +146,10 @@ export interface LeagueMembership {
   user_id: string;
   total_points: number;
   rank: number | null;
+  previous_rank?: number | null; // Added by migration 009
   draft_position?: number | null;
-  is_eliminated?: boolean | null;
+  eliminated_at?: string | null; // Added by migration 026 (timestamptz, null = active)
+  is_eliminated?: boolean | null; // Computed from eliminated_at for backwards compat
   joined_at?: string;
   league?: League;
   user?: UserProfile;
@@ -296,11 +315,10 @@ export interface SystemHealth {
 // ============================================================================
 
 export interface NotificationPreferences {
-  id: string;
-  user_id: string;
-  email_enabled: boolean;
-  sms_enabled: boolean;
-  push_enabled: boolean;
+  user_id: string; // Primary key (no separate id column)
+  email_results: boolean; // Column name from migration 022
+  sms_results: boolean;
+  push_results: boolean;
   spoiler_delay_hours: number;
   created_at?: string;
   updated_at?: string;
