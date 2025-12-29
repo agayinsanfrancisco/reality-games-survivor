@@ -141,17 +141,38 @@ export default function ProfileSetup() {
       if (data.season_50_winner_prediction)
         updateData.season_50_winner_prediction = data.season_50_winner_prediction;
 
+      console.log('Updating profile with data:', updateData);
       const { error } = await supabase.from('users').update(updateData).eq('id', user!.id);
 
       if (error) {
-        if (error.message.includes('season_50_winner_prediction') || error.code === '42703') {
-          const retryData = { ...updateData };
-          delete retryData.season_50_winner_prediction;
+        console.error('Profile update error:', error);
+
+        // If it's a "column does not exist" error (42703) or "invalid input syntax for type uuid" (22P02)
+        // or a generic error that might be related to one of the new columns
+        if (
+          error.code === '42703' ||
+          error.code === '22P02' ||
+          error.message.includes('season_50_winner_prediction') ||
+          error.message.includes('hometown') ||
+          error.message.includes('favorite_castaway') ||
+          error.message.includes('bio') ||
+          error.message.includes('favorite_season')
+        ) {
+          console.warn('Retrying profile update with core fields only...');
+          const retryData = {
+            display_name: data.display_name,
+            notification_email: data.notification_email,
+          };
+
           const { error: retryError } = await supabase
             .from('users')
             .update(retryData)
             .eq('id', user!.id);
-          if (retryError) throw retryError;
+
+          if (retryError) {
+            console.error('Profile update retry error:', retryError);
+            throw retryError;
+          }
         } else {
           throw error;
         }
@@ -211,6 +232,7 @@ export default function ProfileSetup() {
         notification_email: emailNotifications,
       });
     } catch (err) {
+      console.error('Submit error:', err);
       setError(err instanceof Error ? err.message : 'Failed to update profile');
       setIsSubmitting(false);
     }
