@@ -16,6 +16,8 @@ import { WeeklyPick } from './pages/WeeklyPick';
 import { Leaderboard } from './pages/Leaderboard';
 import { NotFound } from './pages/NotFound';
 import HowToPlay from './pages/HowToPlay';
+import ScoringRules from './pages/ScoringRules';
+import WeeklyTimeline from './pages/WeeklyTimeline';
 import JoinLeague from './pages/JoinLeague';
 import Profile from './pages/Profile';
 import ProfileSetup from './pages/ProfileSetup';
@@ -79,8 +81,9 @@ export default function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/register" element={<Signup />} />
             <Route path="/how-to-play" element={<HowToPlay />} />
-            <Route path="/scoring" element={<HowToPlay />} />
-            <Route path="/scoring-rules" element={<HowToPlay />} />
+            <Route path="/scoring" element={<ScoringRules />} />
+            <Route path="/scoring-rules" element={<ScoringRules />} />
+            <Route path="/timeline" element={<WeeklyTimeline />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/sms" element={<SMSCommands />} />
