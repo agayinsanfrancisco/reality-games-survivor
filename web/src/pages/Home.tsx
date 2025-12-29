@@ -30,7 +30,7 @@ export function Home() {
           </div>
 
           <h1
-            className="text-6xl sm:text-7xl md:text-8xl text-gray-900 leading-[0.95] mb-10"
+            className="text-4xl sm:text-5xl md:text-6xl text-gray-900 leading-[0.95] mb-10"
             style={{ fontFamily: 'Georgia, Times New Roman, serif', fontWeight: 400 }}
           >
             Fantasy Survivor
