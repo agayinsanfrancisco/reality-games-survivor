@@ -1,1158 +1,561 @@
 /**
- * Trivia Page - Interactive Survivor trivia game
- * Built: Dec 28, 2025
+ * Trivia Page - 24 Questions with 24h Lockout
+ * Account required
+ * 
+ * Rules:
+ * - Answer all 24 questions in one day if you can
+ * - 20 seconds per question or timeout
+ * - Get one wrong = locked out for 24 hours
+ * - Come back the next day to continue
+ * - Leaderboard tracks days to complete all 24
  */
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, Navigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
-
-// ============================================================================
-// TRIVIA DATA
-// ============================================================================
+import { Navigation } from '@/components/Navigation';
+import { Footer } from '@/components/Footer';
+import { Loader2, Check, X, Flame, Trophy, Clock, AlertCircle, Lock, ArrowRight } from 'lucide-react';
+import { apiWithAuth } from '@/lib/api';
+import { formatDate } from '@/lib/date-utils';
 
 interface TriviaQuestion {
+  id: string;
+  questionNumber: number;
   question: string;
   options: string[];
-  correctIndex: number;
-  funFact: string;
-  castaway: string;
 }
 
-const TRIVIA_QUESTIONS: TriviaQuestion[] = [
-  {
-    castaway: 'Cirie Fields',
-    question:
-      'Which Survivor 50 contestant holds the record for competing in the most seasons (including international)?',
-    options: ['Ozzy Lusth', 'Cirie Fields', 'Joe Anglim', 'Colby Donaldson'],
-    correctIndex: 1,
-    funFact:
-      'Cirie has played 5 times: Panama, Micronesia, HvV, Game Changers, and Australian Survivor',
-  },
-  {
-    castaway: 'Angelina Keeley',
-    question: 'In David vs. Goliath (S37), what was the final jury vote when Nick Wilson won?',
-    options: [
-      '7-3-0 (Nick-Mike-Angelina)',
-      '6-2-2 (Nick-Mike-Angelina)',
-      '5-3-2 (Nick-Mike-Angelina)',
-      '8-0-0 (Nick unanimous)',
-    ],
-    correctIndex: 0,
-    funFact: 'Angelina received zero jury votes despite making it to Final Tribal Council',
-  },
-  {
-    castaway: 'Stephenie LaGrossa',
-    question:
-      'Which contestant was the LAST person standing from the infamous Ulong tribe in Palau?',
-    options: ['Tom Westman', 'Katie Gallagher', 'Stephenie LaGrossa', 'Bobby Jon Drinkard'],
-    correctIndex: 2,
-    funFact:
-      'Ulong lost every single immunity challenge, and Stephenie survived alone before being absorbed into Koror',
-  },
-  {
-    castaway: 'Savannah Louie',
-    question: 'How many individual immunity challenges did Savannah Louie win in Season 49?',
-    options: ['2', '3', '4', '5'],
-    correctIndex: 2,
-    funFact: 'Savannah tied the record for most immunity wins by a woman in a single season',
-  },
-  {
-    castaway: 'Joe Anglim',
-    question:
-      'Which Survivor 50 contestant collapsed during an immunity challenge due to exhaustion?',
-    options: ['Jonathan Young', 'Joe Anglim', 'Ozzy Lusth', 'Coach Wade'],
-    correctIndex: 1,
-    funFact: 'Joe collapsed on Day 32 of Cambodia after pushing himself to the limit',
-  },
-  {
-    castaway: 'Cirie Fields',
-    question: 'Cirie Fields was eliminated in Game Changers (S34) in an unprecedented way. How?',
-    options: [
-      'Lost firemaking challenge',
-      'Medical evacuation',
-      'Everyone else had immunity (idol/advantage default)',
-      'Rock draw',
-    ],
-    correctIndex: 2,
-    funFact:
-      'With 6 players left, idols and advantages left Cirie as the only person who could go home - without receiving a single vote',
-  },
-  {
-    castaway: 'Joe Anglim & Sierra',
-    question:
-      'Which two Survivor 50 contestants competed on the same original season and later got married?',
-    options: [
-      'Ozzy Lusth & Amanda Kimmel',
-      'Joe Anglim & Sierra Dawn Thomas',
-      'Colby Donaldson & Jerri Manthey',
-      'Coach Wade & Debbie Beebe',
-    ],
-    correctIndex: 1,
-    funFact: 'Joe and Sierra met on Worlds Apart (S30) and married in 2019',
-  },
-  {
-    castaway: 'Kyle Fraser',
-    question: 'Kyle Fraser won Survivor 48 with what final jury vote?',
-    options: ['7-1-0', '6-2-0', '5-2-1', '4-3-1'],
-    correctIndex: 2,
-    funFact: 'All three finalists (Kyle, Eva, Joe) received at least one vote - a rare occurrence',
-  },
-  {
-    castaway: 'Cirie Fields',
-    question:
-      "Which Survivor 50 contestant convinced Erik Reichenbach to give up individual immunity in one of the show's most iconic moves?",
-    options: ['Aubry Bracco', 'Stephenie LaGrossa', 'Cirie Fields', 'Angelina Keeley'],
-    correctIndex: 2,
-    funFact:
-      "The Black Widow Brigade's manipulation of Erik in Micronesia is considered one of Survivor's greatest moves",
-  },
-  {
-    castaway: 'Rick Devens',
-    question:
-      'How many Hidden Immunity Idols did Rick Devens possess during Edge of Extinction (S38)?',
-    options: ['2', '3', '4', '5'],
-    correctIndex: 2,
-    funFact: 'Rick holds the record for most idols possessed in a single season with 4',
-  },
-  {
-    castaway: 'Colby Donaldson',
-    question:
-      'In Australian Outback, Colby made a controversial decision at Final 3. What did he do?',
-    options: [
-      'Kept the immunity necklace',
-      'Took Tina instead of Keith to Final 2',
-      'Refused to vote',
-      'Gave away his reward',
-    ],
-    correctIndex: 1,
-    funFact: "Colby's decision to take Tina cost him $1 million - she won 4-3",
-  },
-  {
-    castaway: 'Ozzy Lusth',
-    question: 'How many times has Ozzy Lusth competed on Survivor?',
-    options: ['2', '3', '4', '5'],
-    correctIndex: 2,
-    funFact: 'Ozzy played in Cook Islands, Micronesia, South Pacific, and Game Changers',
-  },
-  {
-    castaway: 'Coach Wade',
-    question: "What is Coach Wade's self-proclaimed nickname?",
-    options: ['The Warrior', 'The Dragon Slayer', 'The Maestro', 'The Survivor'],
-    correctIndex: 1,
-    funFact:
-      "Coach's eccentric personality and stories made him one of Survivor's most memorable characters",
-  },
-  {
-    castaway: 'Aubry Bracco',
-    question: 'In Kaôh Rōng, Aubry lost the final jury vote to which winner?',
-    options: ['Natalie Anderson', 'Michele Fitzgerald', 'Sarah Lacina', 'Wendell Holland'],
-    correctIndex: 1,
-    funFact: "The jury vote was 5-2 in favor of Michele in one of Survivor's most debated outcomes",
-  },
-  {
-    castaway: 'Christian Hubicki',
-    question: "What is Christian Hubicki's profession outside of Survivor?",
-    options: ['Software Engineer', 'Robotics Scientist', 'Data Analyst', 'Math Teacher'],
-    correctIndex: 1,
-    funFact:
-      "Christian's nerdy charm and puzzle-solving skills made him a fan favorite in David vs. Goliath",
-  },
-  {
-    castaway: 'Mike White',
-    question: 'Mike White is known outside Survivor for creating which hit TV show?',
-    options: ['Succession', 'The White Lotus', 'Yellowjackets', 'The Bear'],
-    correctIndex: 1,
-    funFact:
-      'Mike finished 2nd on David vs. Goliath and later won multiple Emmys for The White Lotus',
-  },
-  {
-    castaway: 'Chrissy Hofbeck',
-    question:
-      'How many individual immunity challenges did Chrissy Hofbeck win in Heroes vs. Healers vs. Hustlers?',
-    options: ['2', '3', '4', '5'],
-    correctIndex: 2,
-    funFact: "Chrissy tied the women's record for immunity wins at the time with 4 necklaces",
-  },
-  {
-    castaway: 'Jonathan Young',
-    question: 'Jonathan Young was known in Season 42 for his dominance in what area?',
-    options: ['Puzzle solving', 'Physical challenges', 'Finding idols', 'Social manipulation'],
-    correctIndex: 1,
-    funFact: "Jonathan's incredible strength carried his tribe through the pre-merge challenges",
-  },
-  {
-    castaway: 'Dee Valladares',
-    question: 'Dee Valladares won Season 45 with what final jury vote?',
-    options: ['7-1-0', '6-2-0', '5-3-0', '4-3-1'],
-    correctIndex: 2,
-    funFact: 'Dee dominated Season 45 and is considered one of the best New Era winners',
-  },
-  {
-    castaway: 'Emily Flippen',
-    question: 'Emily Flippen was known early in Season 45 for being extremely:',
-    options: ['Strategic', 'Physical', 'Blunt and abrasive', 'Under the radar'],
-    correctIndex: 2,
-    funFact:
-      'Emily had one of the best redemption arcs, going from most disliked to respected player',
-  },
-  {
-    castaway: 'Q Burdette',
-    question:
-      'Q Burdette became infamous in Season 46 for repeatedly doing what at Tribal Council?',
-    options: [
-      'Refusing to vote',
-      'Asking to be voted out',
-      'Playing fake idols',
-      'Switching his vote last second',
-    ],
-    correctIndex: 1,
-    funFact:
-      "Q's chaotic gameplay including asking to go home made him one of the most unpredictable players ever",
-  },
-  {
-    castaway: 'Charlie Davis',
-    question: 'Charlie Davis finished as runner-up in Season 46, losing to which winner?',
-    options: ['Maria Shrime Gonzalez', 'Kenzie Petty', 'Ben Katzman', 'Liz Wilcox'],
-    correctIndex: 1,
-    funFact:
-      'Charlie lost 5-3-0 despite being considered one of the best strategic players of the season',
-  },
-  {
-    castaway: 'Kamilla Karthigesu',
-    question: 'Kamilla Karthigesu was eliminated in Season 48 by losing what challenge?',
-    options: ['Final immunity', 'Firemaking', 'Rock draw', 'Shot in the dark'],
-    correctIndex: 1,
-    funFact: 'The jury confirmed Kamilla would have won if she made Final Tribal Council',
-  },
-  {
-    castaway: 'Rizo Velovic',
-    question: 'Rizo Velovic holds what distinction as a Survivor contestant?',
-    options: [
-      'First Gen Z winner',
-      'First Albanian-American contestant',
-      'Youngest male finalist',
-      'Most idols found by a rookie',
-    ],
-    correctIndex: 1,
-    funFact:
-      "Rizo, aka 'Rizgod,' was a superfan who became the first Albanian-American on the show",
-  },
-];
+interface TriviaResponse {
+  question: TriviaQuestion | null;
+  progress: {
+    totalQuestions: number;
+    questionsAnswered: number;
+    questionsCorrect: number;
+  };
+  alreadyAnswered: boolean;
+  userAnswer: {
+    selectedIndex: number;
+    isCorrect: boolean;
+    answeredAt: string;
+    correctIndex: number;
+  } | null;
+  funFact: string | null;
+  isLocked: boolean;
+  lockedUntil: string | null;
+  isComplete: boolean;
+  daysToComplete: number | null;
+}
+
+interface ProgressData {
+  totalQuestions: number;
+  questionsAnswered: number;
+  questionsCorrect: number;
+  isLocked: boolean;
+  lockedUntil: string | null;
+  isComplete: boolean;
+  daysToComplete: number | null;
+}
 
 const WRONG_MESSAGES = [
-  'The Tribe Has Spoken.',
-  'Your torch has been snuffed.',
-  'Time for you to go.',
-  'Blindsided!',
+  "It's time for you to go.",
+  "The Tribe Has Spoken.",
+  "Your torch has been snuffed.",
+  "Time for you to go.",
+  "Blindsided!",
   "That's a vote against you.",
   "You've been voted out of the trivia.",
-  'Grab your torch, head back to camp... to study.',
+  "Grab your torch and head out.",
   "You didn't have the numbers.",
   "Should've played your idol.",
-  'The jury saw right through that.',
+  "The jury saw right through that.",
+  "Outplayed. Outwitted. Outlasted... by this quiz.",
+  "Drop your buff.",
+  "The tribe has spoken... and they said no.",
+  "Not immunity-worthy.",
 ];
 
-// ============================================================================
-// ANIMATED TORCH COMPONENT
-// ============================================================================
-
-function AnimatedTorch({
-  size = 'large',
-  lit = true,
-}: {
-  size?: 'small' | 'large';
-  lit?: boolean;
-}) {
-  const dimensions = size === 'large' ? { width: 80, height: 180 } : { width: 32, height: 72 };
-  const scale = size === 'large' ? 1 : 0.4;
-
-  return (
-    <div className="relative flex flex-col items-center">
-      {/* Glow effect */}
-      {lit && (
-        <div
-          className="absolute -top-8 w-32 h-40 rounded-full blur-2xl"
-          style={{
-            background:
-              'radial-gradient(ellipse at center, rgba(255, 147, 41, 0.6) 0%, rgba(255, 87, 34, 0.3) 40%, transparent 70%)',
-            animation: 'glowPulse 2s ease-in-out infinite alternate',
-            transform: `scale(${scale})`,
-          }}
-        />
-      )}
-
-      <svg
-        width={dimensions.width}
-        height={dimensions.height}
-        viewBox="0 0 80 180"
-        className="relative z-10"
-      >
-        <defs>
-          <linearGradient id="torchHandleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#5D4037" />
-            <stop offset="30%" stopColor="#8D6E63" />
-            <stop offset="70%" stopColor="#6D4C41" />
-            <stop offset="100%" stopColor="#4E342E" />
-          </linearGradient>
-          <linearGradient id="torchBowlGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FFD54F" />
-            <stop offset="50%" stopColor="#C9A050" />
-            <stop offset="100%" stopColor="#8D6E63" />
-          </linearGradient>
-          <filter id="flameGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        {/* Torch handle */}
-        <rect x="35" y="90" width="10" height="85" rx="2" fill="url(#torchHandleGrad)" />
-
-        {/* Torch bowl/cup */}
-        <ellipse cx="40" cy="90" rx="18" ry="8" fill="url(#torchBowlGrad)" />
-        <path d="M22 90 Q22 75 40 75 Q58 75 58 90" fill="url(#torchBowlGrad)" />
-
-        {/* Flame layers - only show if lit */}
-        {lit && (
-          <g filter="url(#flameGlow)" style={{ transformOrigin: '40px 75px' }}>
-            {/* Outer flame - deep red */}
-            <path
-              d="M40 10 C55 25, 65 45, 60 65 C55 80, 48 88, 40 90 C32 88, 25 80, 20 65 C15 45, 25 25, 40 10"
-              fill="#B22222"
-              style={{ animation: 'flameOuter 0.6s ease-in-out infinite alternate' }}
-            />
-            {/* Middle flame - orange */}
-            <path
-              d="M40 18 C52 30, 58 48, 54 65 C50 78, 45 85, 40 87 C35 85, 30 78, 26 65 C22 48, 28 30, 40 18"
-              fill="#ED8936"
-              style={{ animation: 'flameMid 0.5s ease-in-out infinite alternate' }}
-            />
-            {/* Inner flame - yellow */}
-            <path
-              d="M40 28 C48 38, 52 52, 48 67 C45 77, 42 83, 40 84 C38 83, 35 77, 32 67 C28 52, 32 38, 40 28"
-              fill="#F6E05E"
-              style={{ animation: 'flameInner 0.45s ease-in-out infinite alternate' }}
-            />
-            {/* Core - white/light yellow */}
-            <path
-              d="M40 40 C45 48, 47 58, 45 70 C43 78, 41 82, 40 82 C39 82, 37 78, 35 70 C33 58, 35 48, 40 40"
-              fill="#FFFACD"
-              style={{ animation: 'flameCore 0.4s ease-in-out infinite alternate' }}
-            />
-          </g>
-        )}
-
-        {/* Smoke for unlit torch */}
-        {!lit && (
-          <g className="animate-pulse opacity-30">
-            <path d="M40 70 Q42 60 40 50 Q38 40 42 30" stroke="#666" strokeWidth="2" fill="none" />
-          </g>
-        )}
-      </svg>
-    </div>
-  );
-}
-
-// ============================================================================
-// MINI TORCH FOR PROGRESS TRACKER
-// ============================================================================
-
-function MiniTorchIcon({
-  lit,
-  snuffed,
-  pulsing,
-}: {
-  lit: boolean;
-  snuffed?: boolean;
-  pulsing?: boolean;
-}) {
-  return (
-    <div className={`relative transition-all duration-500 ${pulsing ? 'animate-pulse' : ''}`}>
-      <svg width="28" height="48" viewBox="0 0 28 48" className="relative">
-        {/* Handle */}
-        <rect x="11" y="28" width="6" height="18" rx="1" fill={snuffed ? '#444' : '#6D4C41'} />
-
-        {/* Bowl */}
-        <ellipse cx="14" cy="28" rx="8" ry="3" fill={snuffed ? '#555' : '#C9A050'} />
-
-        {/* Flame or smoke */}
-        {lit && !snuffed && (
-          <g style={{ transformOrigin: '14px 28px' }}>
-            <path
-              d="M14 4 C20 10, 24 16, 22 24 C20 28, 17 30, 14 30 C11 30, 8 28, 6 24 C4 16, 8 10, 14 4"
-              fill="#ED8936"
-              style={{ animation: 'flameOuter 0.5s ease-in-out infinite alternate' }}
-            />
-            <path
-              d="M14 10 C18 14, 20 20, 18 26 C17 28, 15 29, 14 29 C13 29, 11 28, 10 26 C8 20, 10 14, 14 10"
-              fill="#F6E05E"
-              style={{ animation: 'flameInner 0.4s ease-in-out infinite alternate' }}
-            />
-          </g>
-        )}
-
-        {/* Snuffed smoke */}
-        {snuffed && (
-          <g className="animate-pulse">
-            <path
-              d="M14 24 Q16 18 14 12 Q12 6 16 2"
-              stroke="#666"
-              strokeWidth="1.5"
-              fill="none"
-              opacity="0.5"
-            />
-          </g>
-        )}
-      </svg>
-
-      {/* Glow for lit torch */}
-      {lit && !snuffed && (
-        <div
-          className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full blur-md"
-          style={{
-            background: 'radial-gradient(circle, rgba(255,147,41,0.5) 0%, transparent 70%)',
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-// ============================================================================
-// TRIVIA CARD COMPONENT
-// ============================================================================
-
-interface TriviaCardProps {
-  question: TriviaQuestion;
-  questionNumber: number;
-  onAnswer: (correct: boolean) => void;
-  showResult: 'correct' | 'wrong' | null;
-  funFact: string | null;
-}
-
-function TriviaCard({ question, questionNumber, onAnswer, showResult, funFact }: TriviaCardProps) {
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [wrongMessage] = useState(
-    () => WRONG_MESSAGES[Math.floor(Math.random() * WRONG_MESSAGES.length)]
-  );
-
-  const handleSubmit = () => {
-    if (selectedAnswer === null) return;
-    setIsSubmitted(true);
-    const isCorrect = selectedAnswer === question.correctIndex;
-    onAnswer(isCorrect);
-  };
-
-  // Reset state when question changes
-  useEffect(() => {
-    setSelectedAnswer(null);
-    setIsSubmitted(false);
-  }, [question]);
-
-  return (
-    <div
-      className={`relative transition-all duration-500 ${showResult === 'wrong' ? 'animate-burn' : ''}`}
-    >
-      {/* Card */}
-      <div
-        className={`
-          relative max-w-xl mx-auto p-8 rounded-lg transform rotate-1
-          transition-all duration-500
-          ${showResult === 'correct' ? 'ring-4 ring-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.4)]' : ''}
-          ${showResult === 'wrong' ? 'opacity-0 scale-95' : ''}
-        `}
-        style={{
-          background: 'linear-gradient(135deg, #F4ECD8 0%, #E8DCC8 100%)',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)',
-        }}
-      >
-        {/* Burnt edge texture overlay */}
-        <div
-          className="absolute inset-0 rounded-lg pointer-events-none opacity-30"
-          style={{
-            background:
-              'radial-gradient(ellipse at top left, transparent 85%, rgba(139,69,19,0.3) 100%), radial-gradient(ellipse at bottom right, transparent 85%, rgba(139,69,19,0.3) 100%)',
-          }}
-        />
-
-        {/* Question number */}
-        <div className="text-center mb-4">
-          <span className="text-sm font-medium text-amber-800/60 tracking-widest uppercase">
-            Question {questionNumber} of {TRIVIA_QUESTIONS.length}
-          </span>
-          <p className="text-xs text-amber-600 mt-1">Featuring: {question.castaway}</p>
-        </div>
-
-        {/* Question text */}
-        <h3 className="font-display text-lg md:text-xl text-neutral-800 text-center mb-6 leading-relaxed">
-          {question.question}
-        </h3>
-
-        {/* Answer options */}
-        <div className="space-y-3 mb-8">
-          {question.options.map((option, index) => (
-            <button
-              key={index}
-              onClick={() => !isSubmitted && setSelectedAnswer(index)}
-              disabled={isSubmitted}
-              className={`
-                w-full p-4 rounded-lg text-left transition-all duration-200
-                flex items-center gap-4 group
-                ${
-                  selectedAnswer === index
-                    ? 'bg-amber-800/20 border-2 border-amber-800'
-                    : 'bg-white/50 border-2 border-transparent hover:bg-white/70 hover:border-amber-800/30'
-                }
-                ${isSubmitted && index === question.correctIndex ? 'bg-emerald-500/20 border-emerald-500' : ''}
-                ${isSubmitted && selectedAnswer === index && index !== question.correctIndex ? 'bg-red-500/20 border-red-500' : ''}
-                disabled:cursor-default
-              `}
-            >
-              <span
-                className={`
-                w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
-                transition-all duration-200
-                ${
-                  selectedAnswer === index
-                    ? 'bg-amber-800 text-white'
-                    : 'bg-amber-800/10 text-amber-800 group-hover:bg-amber-800/20'
-                }
-              `}
-              >
-                {String.fromCharCode(65 + index)}
-              </span>
-              <span className="text-neutral-700 font-medium">{option}</span>
-
-              {/* Checkmark for correct */}
-              {isSubmitted && index === question.correctIndex && (
-                <span className="ml-auto text-emerald-600 text-xl">✓</span>
-              )}
-
-              {/* X for wrong */}
-              {isSubmitted && selectedAnswer === index && index !== question.correctIndex && (
-                <span className="ml-auto text-red-600 text-xl">✗</span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Submit button */}
-        {!isSubmitted && (
-          <button
-            onClick={handleSubmit}
-            disabled={selectedAnswer === null}
-            className={`
-              w-full py-4 rounded-lg font-display font-semibold text-lg
-              transition-all duration-200
-              ${
-                selectedAnswer !== null
-                  ? 'bg-amber-800 text-white hover:bg-amber-900 shadow-lg'
-                  : 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
-              }
-            `}
-          >
-            Submit Answer
-          </button>
-        )}
-
-        {/* Fun fact for correct answers */}
-        {showResult === 'correct' && funFact && (
-          <div className="mt-6 p-4 bg-amber-100/50 rounded-lg border border-amber-300/50">
-            <p className="text-amber-900 text-sm">
-              <span className="font-semibold">🔥 Fun Fact:</span> {funFact}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Wrong answer overlay */}
-      {showResult === 'wrong' && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center animate-fade-in">
-            <p className="font-display text-3xl md:text-4xl text-orange-400 font-bold mb-2 text-shadow-fire">
-              {wrongMessage}
-            </p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============================================================================
-// PROGRESS TRACKER
-// ============================================================================
-
-function ProgressTracker({
-  answers,
-  currentQuestion,
-}: {
-  answers: (boolean | null)[];
-  currentQuestion: number;
-}) {
-  return (
-    <div className="flex items-center justify-center gap-2 md:gap-3 flex-wrap">
-      {answers.map((answer, index) => (
-        <MiniTorchIcon
-          key={index}
-          lit={answer === true || (answer === null && index <= currentQuestion)}
-          snuffed={answer === false}
-          pulsing={index === currentQuestion && answer === null}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ============================================================================
-// COUNTDOWN TIMER
-// ============================================================================
-
-function CountdownTimer() {
-  const calculateTimeLeft = useCallback(() => {
-    const target = new Date('2026-02-25T15:00:00-08:00').getTime();
-    const now = Date.now();
-    const diff = target - now;
-
-    if (diff <= 0) {
-      return { days: 0, hours: 0, minutes: 0 };
-    }
-
-    return {
-      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-      minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-    };
-  }, []);
-
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [calculateTimeLeft]);
-
-  return (
-    <div className="flex items-center justify-center gap-4">
-      <div className="text-center">
-        <div className="font-display text-4xl md:text-5xl font-bold text-burgundy-500 tabular-nums">
-          {timeLeft.days}
-        </div>
-        <div className="text-xs tracking-widest uppercase text-neutral-500 mt-1">Days</div>
-      </div>
-      <span className="text-2xl text-burgundy-500/30">:</span>
-      <div className="text-center">
-        <div className="font-display text-4xl md:text-5xl font-bold text-burgundy-500 tabular-nums">
-          {String(timeLeft.hours).padStart(2, '0')}
-        </div>
-        <div className="text-xs tracking-widest uppercase text-neutral-500 mt-1">Hours</div>
-      </div>
-      <span className="text-2xl text-burgundy-500/30">:</span>
-      <div className="text-center">
-        <div className="font-display text-4xl md:text-5xl font-bold text-burgundy-500 tabular-nums">
-          {String(timeLeft.minutes).padStart(2, '0')}
-        </div>
-        <div className="text-xs tracking-widest uppercase text-neutral-500 mt-1">Minutes</div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// MAIN TRIVIA PAGE
-// ============================================================================
-
 export function Trivia() {
-  const { user } = useAuth();
-  const [scrollY, setScrollY] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<(boolean | null)[]>(
-    Array(TRIVIA_QUESTIONS.length).fill(null)
-  );
-  const [showResult, setShowResult] = useState<'correct' | 'wrong' | null>(null);
+  const { user, loading: authLoading, session } = useAuth();
+  const queryClient = useQueryClient();
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState(20);
+  const [isTimedOut, setIsTimedOut] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
   const [funFact, setFunFact] = useState<string | null>(null);
-  const [gameComplete, setGameComplete] = useState(false);
-  const [showScrollIndicator, setShowScrollIndicator] = useState(true);
-  const triviaRef = useRef<HTMLDivElement>(null);
+  const [wrongMessage, setWrongMessage] = useState<string>("It's time for you to go.");
 
-  const totalQuestions = TRIVIA_QUESTIONS.length;
-  const lastQuestionIndex = totalQuestions - 1;
+  // Fetch next question and progress
+  const { data: triviaData, isLoading: questionLoading, refetch: refetchQuestion } = useQuery<TriviaResponse>({
+    queryKey: ['trivia', 'next'],
+    queryFn: async () => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      const response = await apiWithAuth<{ data: TriviaResponse }>('/trivia/next', session.access_token);
+      if (response.error) throw new Error(response.error);
+      if (!response.data) throw new Error('No data returned');
+      return response.data;
+    },
+    enabled: !!user && !!session?.access_token,
+    retry: false,
+  });
 
-  // Handle scroll for parallax
+  // Fetch progress separately
+  const { data: progress } = useQuery<ProgressData>({
+    queryKey: ['trivia', 'progress'],
+    queryFn: async () => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      const response = await apiWithAuth<{ data: ProgressData }>('/trivia/progress', session.access_token);
+      if (response.error) throw new Error(response.error);
+      if (!response.data) throw new Error('No data returned');
+      return response.data;
+    },
+    enabled: !!user && !!session?.access_token,
+    refetchInterval: 60000, // Refetch every minute to check lockout status
+  });
+
+  // Timer countdown (20 seconds per question)
   useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-      if (window.scrollY > 100) {
-        setShowScrollIndicator(false);
+    if (!triviaData?.question || triviaData.alreadyAnswered || showResult || isTimedOut || triviaData.isLocked) {
+      return;
+    }
+
+    if (timeRemaining <= 0) {
+      setIsTimedOut(true);
+      handleTimeout();
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          setIsTimedOut(true);
+          handleTimeout();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeRemaining, triviaData, showResult, isTimedOut]);
+
+  // Reset timer when new question loads
+  useEffect(() => {
+    if (triviaData?.question && !triviaData.alreadyAnswered && !triviaData.isLocked) {
+      setTimeRemaining(20);
+      setIsTimedOut(false);
+      setShowResult(false);
+      setSelectedIndex(null);
+      setFunFact(null);
+    }
+  }, [triviaData?.question?.id]);
+
+  // Submit answer mutation
+  const submitAnswer = useMutation({
+    mutationFn: async (selectedIndex: number) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      if (!triviaData?.question) throw new Error('No question available');
+
+      const response = await apiWithAuth<{ data: { isCorrect: boolean; correctIndex: number; funFact: string | null; isLocked: boolean; lockedUntil: string | null } }>(
+        '/trivia/answer',
+        session.access_token,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            questionId: triviaData.question.id,
+            selectedIndex,
+          }),
+        }
+      );
+      if (response.error) throw new Error(response.error);
+      if (!response.data) throw new Error('No data returned');
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setIsCorrect(data.isCorrect);
+      setFunFact(data.funFact || null);
+      setShowResult(true);
+      
+      // Set random wrong message if incorrect
+      if (!data.isCorrect) {
+        setWrongMessage(WRONG_MESSAGES[Math.floor(Math.random() * WRONG_MESSAGES.length)]);
       }
-    };
+      
+      // Invalidate queries to refetch next question
+      queryClient.invalidateQueries({ queryKey: ['trivia', 'next'] });
+      queryClient.invalidateQueries({ queryKey: ['trivia', 'progress'] });
+    },
+  });
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Handle answer submission
-  const handleAnswer = (correct: boolean) => {
-    const newAnswers = [...answers];
-    newAnswers[currentQuestion] = correct;
-    setAnswers(newAnswers);
-
-    if (correct) {
-      setShowResult('correct');
-      setFunFact(TRIVIA_QUESTIONS[currentQuestion].funFact);
-
-      // Move to next question after delay
-      setTimeout(() => {
-        if (currentQuestion < lastQuestionIndex) {
-          setCurrentQuestion((prev) => prev + 1);
-          setShowResult(null);
-          setFunFact(null);
-        } else {
-          setGameComplete(true);
-        }
-      }, 3000);
-    } else {
-      setShowResult('wrong');
-
-      // Move to next question after burn animation
-      setTimeout(() => {
-        if (currentQuestion < lastQuestionIndex) {
-          setCurrentQuestion((prev) => prev + 1);
-          setShowResult(null);
-        } else {
-          setGameComplete(true);
-        }
-      }, 2000);
+  const handleTimeout = () => {
+    if (triviaData?.question && !triviaData.alreadyAnswered && !showResult) {
+      setWrongMessage(WRONG_MESSAGES[Math.floor(Math.random() * WRONG_MESSAGES.length)]);
+      submitAnswer.mutate(-1); // -1 indicates timeout
     }
   };
 
-  // Calculate score
-  const score = answers.filter((a) => a === true).length;
-  const isPerfect = score === totalQuestions;
-
-  // Reset game
-  const resetGame = () => {
-    setCurrentQuestion(0);
-    setAnswers(Array(totalQuestions).fill(null));
-    setShowResult(null);
-    setFunFact(null);
-    setGameComplete(false);
+  const handleAnswer = (index: number) => {
+    if (triviaData?.alreadyAnswered || showResult || isTimedOut || triviaData?.isLocked) return;
+    setSelectedIndex(index);
+    submitAnswer.mutate(index);
   };
 
-  // Scroll to trivia section
-  const scrollToTrivia = () => {
-    triviaRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Auto-advance to next question after showing result
+  useEffect(() => {
+    if (showResult && !triviaData?.isLocked && isCorrect) {
+      const timer = setTimeout(() => {
+        refetchQuestion();
+        setShowResult(false);
+        setSelectedIndex(null);
+        setIsTimedOut(false);
+        setTimeRemaining(20);
+      }, 3000); // Show result for 3 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [showResult, triviaData?.isLocked, isCorrect, refetchQuestion]);
+
+  // Redirect to login if not authenticated
+  if (!authLoading && !user) {
+    return <Navigate to="/login" state={{ from: '/trivia' }} replace />;
+  }
+
+  if (authLoading || questionLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex flex-col">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const question = triviaData?.question;
+  const alreadyAnswered = triviaData?.alreadyAnswered;
+  const userAnswer = triviaData?.userAnswer;
+  const isLocked = triviaData?.isLocked || progress?.isLocked;
+  const lockedUntil = triviaData?.lockedUntil || progress?.lockedUntil;
+  const isComplete = triviaData?.isComplete || progress?.isComplete;
+
+  // Calculate lockout time remaining
+  const getLockoutTimeRemaining = () => {
+    if (!lockedUntil) return null;
+    const now = new Date();
+    const lockout = new Date(lockedUntil);
+    const diff = lockout.getTime() - now.getTime();
+    if (diff <= 0) return null;
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
-      {/* ================================================================== */}
-      {/* SECTION 1: HERO WITH PARALLAX */}
-      {/* ================================================================== */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Parallax background */}
-        <div
-          className="absolute inset-0 parallax-layer"
-          style={{
-            background: 'linear-gradient(180deg, #F5F0E8 0%, #E8E0D5 100%)',
-            transform: `translateY(${scrollY * 0.5}px)`,
-          }}
-        />
+    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex flex-col">
+      <Navigation />
 
-        {/* Subtle texture overlay */}
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          }}
-        />
-
-        {/* Content */}
-        <div
-          className="relative z-10 text-center px-6 max-w-3xl mx-auto"
-          style={{ transform: `translateY(${scrollY * 0.2}px)` }}
-        >
-          {/* Logo */}
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <img src="/logo.png" alt="Survivor Fantasy" className="w-12 h-12" />
-            <span className="font-display text-2xl font-semibold text-neutral-800">
-              Survivor Fantasy
-            </span>
-          </div>
-
-          {/* Status badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-8">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-sm font-medium text-emerald-700">
-              Registration Open for Season 50
-            </span>
-          </div>
-
-          {/* Main headline */}
-          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-neutral-900 leading-tight mb-6">
-            Fantasy Survivor
-            <br />
-            for People Who
-            <br />
-            <span className="italic text-burgundy-500">Actually</span> Watch
-          </h1>
-
-          {/* Subheadline */}
-          <p className="text-lg md:text-xl text-neutral-600 max-w-xl mx-auto mb-10 leading-relaxed">
-            100+ scoring rules. Real strategy. No luck required. Draft your castaways, make weekly
-            picks, and prove you know Survivor better than anyone.
-          </p>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to={user ? '/dashboard' : '/signup'}
-              className="px-8 py-4 bg-burgundy-500 text-white font-display font-semibold rounded-lg hover:bg-burgundy-600 transition-all shadow-lg shadow-burgundy-500/25 flex items-center gap-2"
-            >
-              Join Season 50
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 8l4 4m0 0l-4 4m4-4H3"
-                />
-              </svg>
-            </Link>
-            <button
-              onClick={scrollToTrivia}
-              className="px-8 py-4 bg-white text-neutral-700 font-display font-medium rounded-lg border border-neutral-200 hover:border-burgundy-500 hover:text-burgundy-500 transition-all"
-            >
-              Learn More
-            </button>
-          </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div
-          className={`absolute bottom-8 left-1/2 -translate-x-1/2 transition-opacity duration-500 ${showScrollIndicator ? 'opacity-100' : 'opacity-0'}`}
-        >
-          <button
-            onClick={scrollToTrivia}
-            className="flex flex-col items-center gap-2 text-neutral-400 hover:text-burgundy-500 transition-colors"
-          >
-            <span className="text-sm font-medium">Scroll to test your knowledge</span>
-            <svg
-              className="w-6 h-6 scroll-indicator"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 14l-7 7m0 0l-7-7m7 7V3"
-              />
-            </svg>
-          </button>
-        </div>
-      </section>
-
-      {/* ================================================================== */}
-      {/* SECTION 2: TORCH TRIVIA GAME */}
-      {/* ================================================================== */}
-      <section
-        ref={triviaRef}
-        className="relative min-h-screen py-20 overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, #1a1a1a 0%, #0d1f0d 50%, #1a1a1a 100%)',
-        }}
-      >
-        {/* Ambient jungle glow */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(ellipse at 50% 0%, rgba(34, 139, 34, 0.1) 0%, transparent 50%), radial-gradient(ellipse at 50% 100%, rgba(139, 69, 19, 0.1) 0%, transparent 50%)',
-          }}
-        />
-
-        {/* Torch at top */}
-        <div className="relative z-10 flex justify-center mb-12">
-          <AnimatedTorch size="large" lit={!gameComplete || isPerfect} />
-        </div>
-
-        {/* Section header */}
-        <div className="relative z-10 text-center mb-12">
-          <h2
-            className="font-display text-3xl md:text-4xl font-bold tracking-widest uppercase"
-            style={{
-              background: 'linear-gradient(180deg, #FFD700 0%, #FF8C00 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              textShadow: '0 0 40px rgba(255, 165, 0, 0.5)',
-            }}
-          >
-            🔥 ARE YOU A TRUE SURVIVOR FAN? 🔥
-          </h2>
-          <p className="text-amber-200/70 mt-2">
-            {totalQuestions} Questions • One for each castaway
-          </p>
-        </div>
-
-        {/* Game content */}
-        <div className="relative z-10 container mx-auto px-4">
-          {!gameComplete ? (
-            <>
-              {/* Trivia card */}
-              <TriviaCard
-                question={TRIVIA_QUESTIONS[currentQuestion]}
-                questionNumber={currentQuestion + 1}
-                onAnswer={handleAnswer}
-                showResult={showResult}
-                funFact={funFact}
-              />
-
-              {/* Progress tracker */}
-              <div className="mt-12">
-                <ProgressTracker answers={answers} currentQuestion={currentQuestion} />
-
-                {/* Streak counter */}
-                <div className="text-center mt-6">
-                  <p className="text-orange-400 font-display text-lg">
-                    🔥 STREAK: {score}/{currentQuestion + (showResult ? 1 : 0)} | Can you go{' '}
-                    {totalQuestions} for {totalQuestions}?
-                  </p>
+      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Hero Section - Explains Rules */}
+        {!isLocked && !isComplete && (
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <Flame className="h-12 w-12 text-burgundy-500" />
+              <h1 className="text-5xl md:text-6xl font-display font-bold text-neutral-800">
+                Survivor Trivia Challenge
+              </h1>
+            </div>
+            
+            <div className="bg-white rounded-2xl shadow-card p-8 border-2 border-burgundy-200 mb-8 max-w-3xl mx-auto">
+              <h2 className="text-2xl font-display font-bold text-burgundy-600 mb-6">
+                How It Works
+              </h2>
+              
+              <div className="space-y-4 text-left">
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 bg-burgundy-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-burgundy-600 font-bold">1</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-neutral-800 mb-1">Answer All 24 Questions</p>
+                    <p className="text-neutral-600 text-sm">
+                      You can answer all 24 questions in one day if you get them all right. Prove you're a true Survivor fan!
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <Clock className="h-4 w-4 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-neutral-800 mb-1">20 Seconds Per Question</p>
+                    <p className="text-neutral-600 text-sm">
+                      Each question has a 20-second timer. Time runs out? That counts as wrong.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <Lock className="h-4 w-4 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-neutral-800 mb-1">Get One Wrong? <span className="text-red-600">It's Time For You To Go</span></p>
+                    <p className="text-neutral-600 text-sm">
+                      Miss a question or run out of time? You're locked out for 24 hours. Come back tomorrow to continue.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 bg-burgundy-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <Trophy className="h-4 w-4 text-burgundy-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-neutral-800 mb-1">Leaderboard Tracks Your Progress</p>
+                    <p className="text-neutral-600 text-sm">
+                      See how many days it took you to complete all 24 questions. Fastest completion wins!
+                    </p>
+                  </div>
                 </div>
               </div>
-            </>
-          ) : (
-            /* End state */
-            <div className="text-center max-w-xl mx-auto">
-              {isPerfect ? (
-                <>
-                  {/* Perfect score celebration */}
-                  <div className="relative mb-8">
-                    <div className="text-8xl mb-4">👑</div>
-                    <h3
-                      className="font-display text-4xl md:text-5xl font-bold"
-                      style={{
-                        background: 'linear-gradient(180deg, #FFD700 0%, #FF8C00 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                      }}
-                    >
-                      SOLE SURVIVOR OF TRIVIA!
-                    </h3>
-                    <p className="text-xl text-amber-200 mt-2">
-                      Perfect {totalQuestions}/{totalQuestions}!
-                    </p>
-                  </div>
-                  <p className="text-xl text-neutral-300 mb-8">
-                    You truly know your Survivor. Now prove it in fantasy.
-                  </p>
-                  <Link
-                    to={user ? '/dashboard' : '/signup'}
-                    className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-display font-bold rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-orange-500/30"
-                  >
-                    Join Season 50 and Dominate
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                      />
-                    </svg>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  {/* Regular completion */}
-                  <div className="mb-8">
-                    <div className="text-6xl mb-4">
-                      {score >= 20 ? '🔥' : score >= 12 ? '⚔️' : '📺'}
-                    </div>
-                    <h3 className="font-display text-3xl md:text-4xl font-bold text-white mb-2">
-                      {score >= 20 ? 'Impressive!' : score >= 12 ? 'Not Bad!' : 'Time to Rewatch'}
-                    </h3>
-                    <p className="text-xl text-amber-200 mb-2">
-                      {score}/{totalQuestions} Correct
-                    </p>
-                    <p className="text-lg text-neutral-400">
-                      {score >= 20
-                        ? "You're merge-worthy. Ready to dominate fantasy?"
-                        : score >= 12
-                          ? "You might get blindsided, but you've got potential."
-                          : 'Hit up Paramount+ and study up before Season 50!'}
-                    </p>
-                  </div>
+            </div>
+          </div>
+        )}
 
-                  {/* Progress display */}
-                  <div className="mb-8">
-                    <ProgressTracker answers={answers} currentQuestion={totalQuestions} />
-                  </div>
+        {/* Progress Bar */}
+        {progress && !isComplete && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-neutral-600">
+                Progress: {progress.questionsAnswered} / {progress.totalQuestions} questions
+              </span>
+              <span className="text-sm font-medium text-burgundy-600">
+                Correct: {progress.questionsCorrect}
+              </span>
+            </div>
+            <div className="w-full bg-cream-200 rounded-full h-3">
+              <div
+                className="bg-gradient-to-r from-burgundy-500 to-red-600 h-3 rounded-full transition-all duration-300"
+                style={{ width: `${(progress.questionsAnswered / progress.totalQuestions) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
 
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <button
-                      onClick={resetGame}
-                      className="px-8 py-4 bg-white/10 text-white font-display font-semibold rounded-lg border border-white/20 hover:bg-white/20 transition-all"
-                    >
-                      Try Again
-                    </button>
-                    <Link
-                      to={user ? '/dashboard' : '/signup'}
-                      className="px-8 py-4 bg-burgundy-500 text-white font-display font-semibold rounded-lg hover:bg-burgundy-600 transition-all shadow-lg flex items-center gap-2"
-                    >
-                      Join Season 50 Anyway
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 8l4 4m0 0l-4 4m4-4H3"
-                        />
-                      </svg>
-                    </Link>
-                  </div>
-                </>
+        {/* Lockout Message - Simple "Time For You To Go" */}
+        {isLocked && lockedUntil && (
+          <div className="bg-gradient-to-br from-red-50 to-red-100 border-4 border-red-400 rounded-2xl p-8 mb-8 text-center shadow-lg">
+            <div className="text-6xl mb-4">💀</div>
+            <h2 className="text-4xl font-display font-bold text-red-800 mb-4">
+              It's Time For You To Go
+            </h2>
+            <p className="text-xl text-red-700 mb-2 font-semibold">
+              The tribe has spoken.
+            </p>
+            <p className="text-lg text-red-600 mb-6">
+              You got a question wrong. Come back in <strong className="text-2xl">{getLockoutTimeRemaining() || '24 hours'}</strong> to continue.
+            </p>
+            <p className="text-sm text-red-500 mb-6">
+              Lockout expires: {formatDate(lockedUntil)}
+            </p>
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-burgundy-600 text-white font-bold rounded-xl hover:bg-burgundy-700 transition-colors shadow-md text-lg"
+            >
+              Join a League While You Wait
+              <ArrowRight className="h-5 w-5" />
+            </Link>
+          </div>
+        )}
+
+        {/* Completion Message */}
+        {isComplete && progress?.daysToComplete && (
+          <div className="bg-green-50 border-2 border-green-300 rounded-2xl p-8 mb-8 text-center">
+            <Trophy className="h-12 w-12 text-green-600 mx-auto mb-4" />
+            <h3 className="text-2xl font-display font-bold text-green-800 mb-2">
+              Congratulations! You Completed All 24 Questions!
+            </h3>
+            <p className="text-green-700 text-lg mb-4">
+              You finished in <strong>{progress.daysToComplete} day{progress.daysToComplete !== 1 ? 's' : ''}</strong>
+            </p>
+            <Link
+              to="/dashboard"
+              className="inline-block bg-green-600 text-white font-bold px-8 py-3 rounded-xl hover:bg-green-700 transition-colors"
+            >
+              Join a League Now
+            </Link>
+          </div>
+        )}
+
+        {/* Question Card */}
+        {!isLocked && !isComplete && question && (
+          <div className="bg-white rounded-2xl shadow-card p-8 border-2 border-burgundy-200">
+            {/* Question Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-display font-bold text-neutral-800">
+                  Question {question.questionNumber} of {progress?.totalQuestions || 24}
+                </h2>
+              </div>
+              {!alreadyAnswered && !showResult && (
+                <div className="flex items-center gap-2 bg-red-50 border-2 border-red-300 rounded-xl px-4 py-2">
+                  <Clock className="h-5 w-5 text-red-600" />
+                  <span className="font-bold text-red-700 text-lg">{timeRemaining}s</span>
+                </div>
               )}
             </div>
-          )}
-        </div>
-      </section>
 
-      {/* ================================================================== */}
-      {/* SECTION 3: FINAL CTA */}
-      {/* ================================================================== */}
-      <section
-        className="relative py-32 md:py-40 overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, #E8E0D5 0%, #F5F0E8 100%)',
-        }}
-      >
-        {/* Decorative torches */}
-        <div className="absolute left-8 md:left-16 top-1/2 -translate-y-1/2 opacity-30">
-          <AnimatedTorch size="small" />
-        </div>
-        <div className="absolute right-8 md:right-16 top-1/2 -translate-y-1/2 opacity-30">
-          <AnimatedTorch size="small" />
-        </div>
+            <p className="text-2xl font-display font-bold text-neutral-800 mb-6">
+              {question.question}
+            </p>
 
-        <div className="relative z-10 container mx-auto px-4 text-center max-w-2xl">
-          {/* Main headline */}
-          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6">
-            So, are you a <span className="text-burgundy-500">TRUE</span> Survivor fan?
-          </h2>
+            {/* Answer Options */}
+            <div className="space-y-3 mb-6">
+              {question.options.map((option, index) => {
+                const isSelected = selectedIndex === index || userAnswer?.selectedIndex === index;
+                const showCorrect = showResult || alreadyAnswered;
+                const isUserAnswer = isSelected;
+                const correctIndex = submitAnswer.data?.correctIndex ?? userAnswer?.correctIndex ?? -1;
+                const isRightAnswer = showCorrect && index === correctIndex;
 
-          <p className="text-xl text-neutral-600 mb-10 leading-relaxed">
-            You've proven you know the game.
-            <br />
-            Now it's time to play it.
-          </p>
+                let buttonClass = 'w-full text-left p-4 rounded-xl border-2 transition-all ';
+                if (alreadyAnswered) {
+                  if (isUserAnswer) {
+                    buttonClass += userAnswer.isCorrect
+                      ? 'bg-green-50 border-green-300 text-green-800'
+                      : 'bg-red-50 border-red-300 text-red-800';
+                  } else if (isRightAnswer) {
+                    buttonClass += 'bg-green-50 border-green-300 text-green-800';
+                  } else {
+                    buttonClass += 'bg-neutral-50 border-cream-200 text-neutral-600';
+                  }
+                } else if (showResult) {
+                  if (isSelected) {
+                    buttonClass += isCorrect
+                      ? 'bg-green-50 border-green-300 text-green-800'
+                      : 'bg-red-50 border-red-300 text-red-800';
+                  } else if (isRightAnswer) {
+                    buttonClass += 'bg-green-50 border-green-300 text-green-800';
+                  } else {
+                    buttonClass += 'bg-neutral-50 border-cream-200 text-neutral-600';
+                  }
+                } else {
+                  buttonClass += 'bg-neutral-50 border-cream-200 text-neutral-700 hover:border-burgundy-300 hover:bg-cream-50 cursor-pointer';
+                }
 
-          {/* CTA */}
-          <Link
-            to={user ? '/dashboard' : '/signup'}
-            className="inline-flex items-center gap-2 px-10 py-5 bg-burgundy-500 text-white font-display text-lg font-bold rounded-lg hover:bg-burgundy-600 transition-all shadow-xl shadow-burgundy-500/30"
-          >
-            Join Us for Season 50
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 8l4 4m0 0l-4 4m4-4H3"
-              />
-            </svg>
-          </Link>
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswer(index)}
+                    disabled={alreadyAnswered || showResult || isTimedOut || submitAnswer.isPending}
+                    className={buttonClass}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{option}</span>
+                      {showResult || alreadyAnswered ? (
+                        <>
+                          {isUserAnswer && (
+                            <span className="ml-2">
+                              {userAnswer?.isCorrect || isCorrect ? (
+                                <Check className="h-5 w-5 text-green-600" />
+                              ) : (
+                                <X className="h-5 w-5 text-red-600" />
+                              )}
+                            </span>
+                          )}
+                          {!isUserAnswer && isRightAnswer && (
+                            <Check className="h-5 w-5 text-green-600 ml-2" />
+                          )}
+                        </>
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
 
-          {/* Season info */}
-          <div className="mt-12">
-            <p className="text-neutral-500 mb-4">Season 50 premieres February 26, 2026</p>
-            <p className="text-sm text-neutral-400 mb-4">Registration closes:</p>
-            <CountdownTimer />
+            {/* Result Message */}
+            {(showResult || alreadyAnswered) && (funFact || triviaData?.funFact) && (
+              <div className={`p-6 rounded-xl mb-6 ${
+                (userAnswer?.isCorrect || isCorrect) 
+                  ? 'bg-green-50 border-2 border-green-300' 
+                  : 'bg-red-50 border-2 border-red-300'
+              }`}>
+                {isCorrect ? (
+                  <>
+                    <p className="text-lg font-bold text-green-800 mb-2 flex items-center gap-2">
+                      <span className="text-2xl">🔥</span> Correct!
+                    </p>
+                    <p className="text-sm text-neutral-700">{funFact || triviaData?.funFact}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-2xl font-bold text-red-800 mb-3 text-center">
+                      💀 {wrongMessage}
+                    </p>
+                    <p className="text-sm text-red-700 text-center mb-2">
+                      Correct answer: <span className="font-semibold">{question.options[correctIndex]}</span>
+                    </p>
+                    <p className="text-sm text-neutral-700 mb-3">{funFact || triviaData?.funFact}</p>
+                    <div className="bg-red-100 border border-red-300 rounded-lg p-3 mt-3">
+                      <p className="text-sm font-semibold text-red-800 text-center">
+                        ⏰ You're locked out for 24 hours. Come back tomorrow to continue.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Timeout Message */}
+            {isTimedOut && !showResult && (
+              <div className="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-xl mb-6">
+                <p className="text-sm font-medium text-yellow-800 text-center">
+                  ⏰ Time's up! {wrongMessage}
+                </p>
+              </div>
+            )}
           </div>
-        </div>
-      </section>
+        )}
 
-      {/* ================================================================== */}
-      {/* CUSTOM STYLES */}
-      {/* ================================================================== */}
-      <style>{`
-        @keyframes glowPulse {
-          0% { opacity: 0.6; transform: scale(1); }
-          100% { opacity: 1; transform: scale(1.1); }
-        }
-        
-        @keyframes flameOuter {
-          0% { transform: scaleY(1) scaleX(1); }
-          100% { transform: scaleY(1.08) scaleX(0.95); }
-        }
-        
-        @keyframes flameMid {
-          0% { transform: scaleY(1); }
-          100% { transform: scaleY(1.1) translateY(-2px); }
-        }
-        
-        @keyframes flameInner {
-          0% { transform: scaleY(1); }
-          100% { transform: scaleY(1.12); }
-        }
-        
-        @keyframes flameCore {
-          0% { transform: scaleY(1) scaleX(1); }
-          100% { transform: scaleY(1.15) scaleX(0.9); }
-        }
-        
-        @keyframes burn {
-          0% { 
-            opacity: 1; 
-            transform: scale(1) rotate(1deg);
-            filter: brightness(1);
-          }
-          30% {
-            filter: brightness(1.5) sepia(1) saturate(3);
-          }
-          60% {
-            opacity: 0.5;
-            transform: scale(0.95) rotate(-1deg);
-            filter: brightness(0.5) sepia(1);
-          }
-          100% { 
-            opacity: 0; 
-            transform: scale(0.9) rotate(2deg) translateY(20px);
-            filter: brightness(0);
-          }
-        }
-        
-        .animate-burn {
-          animation: burn 1.5s ease-out forwards;
-        }
-        
-        .text-shadow-fire {
-          text-shadow: 0 0 20px rgba(255, 165, 0, 0.8), 0 0 40px rgba(255, 87, 34, 0.6);
-        }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; transform: scale(0.9); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        
-        .animate-fade-in {
-          animation: fadeIn 0.5s ease-out forwards;
-        }
-      `}</style>
+        {/* No Question Available */}
+        {!isLocked && !isComplete && !question && (
+          <div className="bg-white rounded-2xl shadow-card p-12 border border-cream-200 text-center">
+            <AlertCircle className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-neutral-800 mb-2">No Questions Available</h3>
+            <p className="text-neutral-500">
+              Check back later for trivia questions!
+            </p>
+          </div>
+        )}
+
+        {/* Conversion CTA */}
+        {!isComplete && (
+          <div className="mt-8 bg-gradient-to-r from-burgundy-500 to-red-600 rounded-2xl p-8 text-white text-center shadow-lg">
+            <Trophy className="h-12 w-12 mx-auto mb-4" />
+            <h3 className="text-2xl font-display font-bold mb-2">
+              Ready to Play for Real?
+            </h3>
+            <p className="text-burgundy-100 mb-6 max-w-lg mx-auto">
+              Join Season 50 and compete in fantasy leagues. Draft castaways, make weekly picks, and prove you're the ultimate Survivor fan!
+            </p>
+            <Link
+              to="/dashboard"
+              className="inline-block bg-white text-burgundy-600 font-bold px-8 py-4 rounded-xl hover:bg-cream-100 transition-colors"
+            >
+              Join a League Now
+            </Link>
+          </div>
+        )}
+      </main>
+
+      <Footer />
     </div>
   );
 }
 
 export default Trivia;
-// Trigger deploy Sun Dec 28 05:13:59 PST 2025

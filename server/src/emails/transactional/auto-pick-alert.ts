@@ -1,4 +1,4 @@
-import { emailWrapper, button } from '../base.js';
+import { emailWrapper, heading, paragraph, button, card, highlight, featureItem, centeredText } from '../base.js';
 
 interface AutoPickAlertEmailParams {
   displayName: string;
@@ -9,24 +9,29 @@ interface AutoPickAlertEmailParams {
 }
 
 export function autoPickAlertEmail({ displayName, leagueName, castawayName, episodeNumber, leagueId }: AutoPickAlertEmailParams): string {
-  return emailWrapper(`
-    <h1>⚠️ Auto-Pick Applied</h1>
-    <p>Hey ${displayName},</p>
-    <p>You missed the pick deadline for Episode ${episodeNumber} in <span class="highlight">${leagueName}</span>.</p>
+  const content = `
+    ${heading('Auto-Pick Applied')}
+    
+    ${paragraph(`Hey ${displayName},`)}
+    
+    ${paragraph(`You missed the pick deadline for Episode ${episodeNumber} in ${highlight(leagueName)}.`)}
 
-    <div class="card" style="background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.3);">
-      <p style="color: #fbbf24; margin: 0;"><strong>Auto-selected:</strong> ${castawayName}</p>
-      <p style="color: #b8a; margin-top: 8px; margin-bottom: 0;">We automatically selected your highest-performing active castaway.</p>
-    </div>
+    ${card(`
+      ${centeredText(`
+        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #8B6914; margin: 0 0 12px 0;">Auto-Selected</p>
+        <p style="font-family: Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 700; color: #8B6914; margin: 0;">${castawayName}</p>
+        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #8A7654; margin: 12px 0 0 0;">We selected your highest-performing active castaway.</p>
+      `)}
+    `, 'warning')}
 
-    ${button('View Your Team', `https://rgfl.app/leagues/${leagueId}/team`)}
+    ${button('View Your Team', `https://survivor.realitygamesfantasyleague.com/leagues/${leagueId}/team`)}
 
-    <div class="card">
-      <h2>Don't Miss Future Picks!</h2>
-      <p>📱 Enable SMS reminders for deadline alerts</p>
-      <p>🔔 Turn on push notifications in your profile</p>
-    </div>
+    ${card(`
+      ${heading("Don't Miss Future Picks", 3)}
+      ${featureItem('📱', 'Enable SMS Reminders', 'Get text alerts before pick deadlines.')}
+      ${featureItem('🔔', 'Turn On Notifications', 'Update your preferences in your profile.')}
+    `)}
+  `;
 
-    <p>Set a reminder for next week!</p>
-  `, `Auto-pick alert: ${castawayName} was selected for Episode ${episodeNumber}`);
+  return emailWrapper(content, `Auto-pick: ${castawayName} selected for Episode ${episodeNumber}`, 'immunity');
 }

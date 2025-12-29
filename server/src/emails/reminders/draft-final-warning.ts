@@ -1,4 +1,4 @@
-import { emailWrapper, button } from '../base.js';
+import { emailWrapper, heading, paragraph, button, card, highlight, centeredText } from '../base.js';
 
 interface DraftFinalWarningEmailParams {
   displayName: string;
@@ -8,18 +8,24 @@ interface DraftFinalWarningEmailParams {
 }
 
 export function draftFinalWarningEmail({ displayName, leagueName, hoursLeft, leagueId }: DraftFinalWarningEmailParams): string {
-  return emailWrapper(`
-    <h1>🚨 FINAL DRAFT WARNING</h1>
-    <p>Hey ${displayName},</p>
-    <p>The draft for <span class="highlight">${leagueName}</span> closes in <span style="color: #ef4444; font-weight: bold;">${hoursLeft} hours!</span></p>
+  const content = `
+    ${heading('Draft Closes Soon', 1, 'error')}
+    
+    ${paragraph(`Hey ${displayName},`)}
+    
+    ${paragraph(`The draft for ${highlight(leagueName)} closes in <strong style="color: #DC2626;">${hoursLeft} hours</strong>.`)}
 
-    <div class="card" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); text-align: center;">
-      <div style="font-size: 48px; font-weight: bold; color: #ef4444;">${hoursLeft}h</div>
-      <div style="color: #fbbf24; text-transform: uppercase; font-size: 12px;">Until Auto-Draft</div>
-    </div>
+    ${card(`
+      ${centeredText(`
+        <p style="font-family: Georgia, 'Times New Roman', serif; font-size: 56px; font-weight: 700; color: #DC2626; margin: 0;">${hoursLeft}h</p>
+        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #991B1B; margin: 8px 0 0 0;">Until Auto-Draft</p>
+      `)}
+    `, 'error')}
 
-    ${button('COMPLETE DRAFT NOW', `https://rgfl.app/leagues/${leagueId}/draft`)}
+    ${button('Complete Draft Now', `https://survivor.realitygamesfantasyleague.com/leagues/${leagueId}/draft`, 'urgent')}
 
-    <p style="color: #ef4444;">⚠️ After the deadline, remaining picks will be auto-assigned!</p>
-  `, `⚠️ URGENT: ${hoursLeft} hours left to complete your draft!`);
+    ${paragraph(`<span style="color: #DC2626; font-size: 14px;">After the deadline, remaining picks will be auto-assigned.</span>`)}
+  `;
+
+  return emailWrapper(content, `URGENT: ${hoursLeft} hours left to complete your draft`, 'tribal_council');
 }

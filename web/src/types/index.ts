@@ -48,13 +48,16 @@ export interface Episode {
   id: string;
   season_id: string;
   number: number;
-  week_number?: number;
-  title?: string;
+  week_number: number;
+  title: string | null;
   air_date: string;
   picks_lock_at: string;
-  results_posted_at?: string;
-  is_scored: boolean;
-  results_released_at?: string;
+  results_posted_at: string | null;
+  waiver_opens_at: string | null;
+  waiver_closes_at: string | null;
+  is_finale: boolean | null;
+  is_scored: boolean | null;
+  results_released_at: string | null;
 }
 
 // ============================================================================
@@ -67,22 +70,24 @@ export interface Castaway {
   id: string;
   season_id: string;
   name: string;
-  age?: number;
-  hometown?: string;
-  occupation?: string;
-  photo_url?: string;
-  tribe_original?: string;
-  tribe_current?: string;
+  age: number | null;
+  hometown: string | null;
+  occupation: string | null;
+  photo_url: string | null;
+  tribe_original: string | null;
   status: CastawayStatus;
-  placement?: number;
-  eliminated_episode_id?: string;
+  placement: number | null;
+  eliminated_episode_id: string | null;
+  previous_seasons: string[] | null;
+  best_placement: number | null;
+  fun_fact: string | null;
 }
 
 // ============================================================================
 // League Types
 // ============================================================================
 
-export type LeagueStatus = 'pending' | 'active' | 'completed' | 'archived';
+export type LeagueStatus = 'forming' | 'drafting' | 'active' | 'completed';
 export type DraftStatus = 'pending' | 'in_progress' | 'completed';
 
 export interface League {
@@ -93,28 +98,38 @@ export interface League {
   status: LeagueStatus;
   is_global: boolean;
   is_public: boolean;
-  is_closed: boolean;
+  is_closed?: boolean | null; // Optional, might be derived
   commissioner_id: string;
-  co_commissioners?: string[];
   max_players: number;
   require_donation: boolean;
-  donation_amount?: number;
-  donation_notes?: string;
-  payout_method?: string;
-  draft_status: DraftStatus;
-  password_hash?: string;
+  donation_amount?: number | null;
+  donation_notes?: string | null;
+  payout_method?: string | null;
+  draft_status: DraftStatus | null;
+  draft_order?: string[] | null; // Array of user IDs
+  draft_started_at?: string | null;
+  draft_completed_at?: string | null;
+  password_hash?: string | null;
   created_at?: string;
+  // Join properties
+  commissioner?: {
+    id: string;
+    display_name: string;
+  };
+  seasons?: Season;
 }
 
 export interface LeagueMembership {
+  id: string;
   league_id: string;
   user_id: string;
   total_points: number;
   rank: number | null;
-  draft_position?: number;
-  is_eliminated?: boolean;
+  draft_position?: number | null;
+  is_eliminated?: boolean | null;
   joined_at?: string;
   league?: League;
+  user?: UserProfile;
 }
 
 export interface LeagueWithSeason extends League {
@@ -130,25 +145,28 @@ export interface RosterEntry {
   league_id: string;
   user_id: string;
   castaway_id: string;
-  draft_position?: number;
-  pick_number?: number;
-  dropped_at?: string;
-  castaway?: Castaway;
+  draft_round: number | null;
+  draft_pick: number | null;
+  acquired_via: string;
+  acquired_at?: string;
+  dropped_at?: string | null;
+  castaways?: Castaway;
 }
 
-export type PickStatus = 'pending' | 'locked' | 'scored';
+export type PickStatus = 'pending' | 'locked' | 'auto_picked';
 
 export interface WeeklyPick {
   id: string;
   league_id: string;
   user_id: string;
   episode_id: string;
-  castaway_id: string;
+  castaway_id: string | null;
   status: PickStatus;
-  is_auto_pick?: boolean;
-  picked_at?: string;
   points_earned?: number;
-  castaway?: Castaway;
+  picked_at?: string;
+  locked_at?: string;
+  created_at?: string;
+  castaways?: Castaway;
   episode?: Episode;
 }
 
@@ -159,12 +177,14 @@ export interface WeeklyPick {
 export interface ScoringRule {
   id: string;
   season_id: string;
+  code: string;
   name: string;
-  description?: string;
+  description?: string | null;
   category: string;
   points: number;
-  is_active: boolean;
-  sort_order?: number;
+  is_active: boolean | null;
+  is_negative: boolean | null;
+  sort_order?: number | null;
 }
 
 export interface EpisodeScore {
@@ -172,8 +192,10 @@ export interface EpisodeScore {
   episode_id: string;
   castaway_id: string;
   scoring_rule_id: string;
-  count: number;
+  quantity: number;
   points: number;
+  notes?: string;
+  entered_by?: string;
   created_at?: string;
 }
 

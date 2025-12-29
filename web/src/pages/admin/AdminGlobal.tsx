@@ -274,7 +274,7 @@ export function AdminGlobal() {
             <div>
               <span className="text-neutral-400">Created:</span>{' '}
               <span className="text-neutral-800">
-                {new Date(globalLeague.created_at).toLocaleDateString()}
+                {globalLeague.created_at ? new Date(globalLeague.created_at).toLocaleDateString() : 'N/A'}
               </span>
             </div>
             <div>

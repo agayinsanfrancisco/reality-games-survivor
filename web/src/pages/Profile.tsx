@@ -233,37 +233,37 @@ export default function Profile() {
       {/* Phone Verification Prompt */}
       {!user?.phone_verified && <PhoneVerificationPrompt />}
 
-      {/* Profile Info */}
-      <ProfileHeader
-        displayName={user?.display_name}
-        email={user?.email}
-        onUpdateName={(name) => updateProfile.mutate({ display_name: name })}
-        isUpdating={updateProfile.isPending}
-        error={nameError}
-        success={profileSuccess}
-      />
+          {/* Profile Info */}
+          <ProfileHeader
+            displayName={user?.display_name || ''}
+            email={user?.email || ''}
+            onUpdateName={(name) => updateProfile.mutate({ display_name: name })}
+            isUpdating={updateProfile.isPending}
+            error={nameError}
+            success={profileSuccess}
+          />
 
-      {/* Timezone */}
-      <TimezoneSection
-        currentTimezone={user?.timezone}
-        onTimezoneChange={(tz) => updateProfile.mutate({ timezone: tz })}
-      />
+          {/* Timezone */}
+          <TimezoneSection
+            currentTimezone={user?.timezone || 'America/Los_Angeles'}
+            onTimezoneChange={(tz) => updateProfile.mutate({ timezone: tz })}
+          />
 
-      {/* Phone Number */}
-      <PhoneSection
-        currentPhone={user?.phone}
-        isPhoneVerified={user?.phone_verified ?? false}
-        onUpdatePhone={(phone) => updatePhone.mutate(phone)}
-        onVerifyCode={(code) => verifyPhone.mutate(code)}
-        onResendCode={() => resendCode.mutate()}
-        isUpdating={updatePhone.isPending}
-        isVerifying={verifyPhone.isPending}
-        isResending={resendCode.isPending}
-        error={phoneError}
-        success={phoneSuccess}
-        showVerification={showVerification}
-        onShowVerification={setShowVerification}
-      />
+          {/* Phone Number */}
+          <PhoneSection
+            currentPhone={user?.phone || null}
+            isPhoneVerified={user?.phone_verified ?? false}
+            onUpdatePhone={(phone) => updatePhone.mutate(phone)}
+            onVerifyCode={(code) => verifyPhone.mutate(code)}
+            onResendCode={() => resendCode.mutate()}
+            isUpdating={updatePhone.isPending}
+            isVerifying={verifyPhone.isPending}
+            isResending={resendCode.isPending}
+            error={phoneError}
+            success={phoneSuccess}
+            showVerification={showVerification}
+            onShowVerification={setShowVerification}
+          />
 
       {/* Notification Preferences */}
       <NotificationsSection

@@ -30,8 +30,8 @@ export function useWeeklyPick(
             id,
             name,
             status,
-            tribe,
-            image_url
+            tribe_original,
+            photo_url
           )
         `
         )
@@ -41,7 +41,7 @@ export function useWeeklyPick(
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      return data as (WeeklyPick & { castaways: Castaway }) | null;
+      return data as unknown as (WeeklyPick & { castaways: Castaway }) | null;
     },
     enabled: !!leagueId && !!userId && !!episodeId,
     staleTime: 1 * 60 * 1000, // 1 minute - picks can change frequently
@@ -72,8 +72,8 @@ export function useUserLeaguePicks(leagueId: string | undefined, userId: string 
             id,
             name,
             status,
-            tribe,
-            image_url
+            tribe_original,
+            photo_url
           )
         `
         )
@@ -82,7 +82,7 @@ export function useUserLeaguePicks(leagueId: string | undefined, userId: string 
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as (WeeklyPick & {
+      return data as unknown as (WeeklyPick & {
         episodes: { id: string; number: number; title: string; air_date: string };
         castaways: Castaway;
       })[];
@@ -114,8 +114,8 @@ export function useEpisodePicks(leagueId: string | undefined, episodeId: string 
             id,
             name,
             status,
-            tribe,
-            image_url
+            tribe_original,
+            photo_url
           )
         `
         )
@@ -123,7 +123,7 @@ export function useEpisodePicks(leagueId: string | undefined, episodeId: string 
         .eq('episode_id', episodeId);
 
       if (error) throw error;
-      return data as (WeeklyPick & {
+      return data as unknown as (WeeklyPick & {
         users: { id: string; display_name: string };
         castaways: Castaway;
       })[];
@@ -144,14 +144,14 @@ export function usePicksLocked(episodeId: string | undefined) {
 
       const { data, error } = await supabase
         .from('episodes')
-        .select('picks_locked_at')
+        .select('picks_lock_at')
         .eq('id', episodeId)
         .single();
 
       if (error) throw error;
 
-      if (!data.picks_locked_at) return false;
-      return new Date(data.picks_locked_at) <= new Date();
+      if (!data.picks_lock_at) return false;
+      return new Date(data.picks_lock_at) <= new Date();
     },
     enabled: !!episodeId,
     staleTime: 30 * 1000, // 30 seconds - check frequently near lock time
@@ -178,35 +178,35 @@ export function useCurrentPickStatus(leagueId: string | undefined, userId: strin
 
       const { data: episode } = await supabase
         .from('episodes')
-        .select('id, number, picks_locked_at')
+        .select('id, number, picks_lock_at')
         .eq('season_id', season.id)
         .gte('air_date', new Date().toISOString().split('T')[0])
         .order('air_date', { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!episode) return null;
 
       // Get the user's pick for this episode
       const { data: pick } = await supabase
         .from('weekly_picks')
-        .select('id, castaway_id, is_auto_pick')
+        .select('id, castaway_id, status')
         .eq('league_id', leagueId)
         .eq('user_id', userId)
         .eq('episode_id', episode.id)
-        .single();
+        .maybeSingle();
 
-      const isLocked = episode.picks_locked_at
-        ? new Date(episode.picks_locked_at) <= new Date()
+      const isLocked = episode.picks_lock_at
+        ? new Date(episode.picks_lock_at) <= new Date()
         : false;
 
       return {
         episodeId: episode.id,
         episodeNumber: episode.number,
         hasPick: !!pick,
-        isAutoPick: pick?.is_auto_pick || false,
+        isAutoPick: pick?.status === 'auto_picked',
         isLocked,
-        locksAt: episode.picks_locked_at,
+        locksAt: episode.picks_lock_at,
       };
     },
     enabled: !!leagueId && !!userId,

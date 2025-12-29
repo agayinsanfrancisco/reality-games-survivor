@@ -163,7 +163,7 @@ function renderSpoilerSafeEmail(episode: Episode, token: string, userName: strin
     <!-- Footer -->
     <div style="text-align: center; margin-top: 32px; color: #9ca3af; font-size: 12px;">
       <p style="margin: 0 0 8px 0;">
-        You're receiving this because you're enrolled in RGFL Survivor Fantasy League.
+        You're receiving this because you're enrolled in Reality Games: Survivor.
       </p>
       <p style="margin: 0;">
         <a href="${appUrl}/profile/notifications" style="color: #7f1d1d; text-decoration: none;">Update notification preferences</a>
@@ -199,7 +199,7 @@ ${resultsUrl}
 Not ready to see spoilers? No problem! Results will be available in your app whenever you're ready.
 
 ---
-You're receiving this because you're enrolled in RGFL Survivor Fantasy League.
+You're receiving this because you're enrolled in Reality Games: Survivor.
 Update preferences: ${appUrl}/profile/notifications
   `.trim();
 }
@@ -232,7 +232,7 @@ export async function sendSpoilerSafeNotification(
     const appUrl = process.env.APP_URL || 'https://survivor.realitygamesfantasyleague.com';
     await sendSMS({
       to: user.phone,
-      text: `[RGFL] Episode ${episode.number} results are ready! Check the app to view your scores and standings. ${appUrl}/results Reply STOP to opt out.`,
+      text: `[RG:S] Episode ${episode.number} results are ready! Check the app to view your scores and standings. ${appUrl}/results Reply STOP to opt out.`,
     });
 
     console.log(`[Spoiler-Safe] SMS sent to ${user.phone} (Episode ${episode.number})`);

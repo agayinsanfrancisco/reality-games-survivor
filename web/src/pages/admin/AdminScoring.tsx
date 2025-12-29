@@ -4,59 +4,24 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
-import {
-  Loader2,
-  Save,
-  Grid3X3,
-  ChevronDown,
-  ChevronRight,
-  Star,
-  CheckCircle,
-  AlertTriangle,
-  X,
+import { 
+  ScoringRuleRow, 
+  FinalizeModal, 
+  FinalizeResultModal, 
+  CastawayList,
+  CastawayHeader 
+} from '@/components/admin/scoring';
+import { 
+  Loader2, 
+  Grid3X3, 
+  ChevronDown, 
+  ChevronRight, 
+  Star, 
+  CheckCircle, 
+  AlertTriangle
 } from 'lucide-react';
 import { apiWithAuth } from '@/lib/api';
-
-interface Episode {
-  id: string;
-  number: number;
-  title: string | null;
-  air_date: string;
-  is_scored: boolean;
-  season_id: string;
-}
-
-interface Castaway {
-  id: string;
-  name: string;
-  photo_url: string | null;
-  status: string;
-}
-
-interface ScoringRule {
-  id: string;
-  code: string;
-  name: string;
-  description: string | null;
-  points: number;
-  category: string | null;
-  is_negative: boolean;
-}
-
-interface EpisodeScore {
-  id: string;
-  episode_id: string;
-  castaway_id: string;
-  scoring_rule_id: string;
-  quantity: number;
-  points: number;
-}
-
-interface UserProfile {
-  id: string;
-  display_name: string;
-  role: string;
-}
+import type { Episode, Castaway, ScoringRule, EpisodeScore, UserProfile } from '@/types';
 
 interface ScoringStatus {
   is_complete: boolean;
@@ -453,11 +418,6 @@ export function AdminScoring() {
     setIsDirty(true);
   };
 
-  const calculateCastawayTotal = (castawayId: string) => {
-    const castawayScores = existingScores?.filter((s) => s.castaway_id === castawayId) || [];
-    return castawayScores.reduce((sum, s) => sum + s.points, 0);
-  };
-
   const selectedEpisode = episodes?.find((e) => e.id === selectedEpisodeId);
   const selectedCastaway = castaways?.find((c) => c.id === selectedCastawayId);
 
@@ -591,51 +551,21 @@ export function AdminScoring() {
 
             {/* Castaway List */}
             {selectedEpisodeId && (
-              <div className="bg-white rounded-2xl shadow-elevated overflow-hidden">
-                <div className="p-5 border-b border-cream-100">
+              <div className="bg-white rounded-2xl shadow-elevated overflow-hidden flex flex-col h-[500px]">
+                <div className="p-5 border-b border-cream-100 flex items-center justify-between">
                   <h3 className="font-semibold text-neutral-800">Castaways</h3>
+                  {scoringStatus && (
+                    <span className="text-[10px] bg-cream-100 text-neutral-500 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                      {scoringStatus.scored_castaways}/{scoringStatus.total_castaways}
+                    </span>
+                  )}
                 </div>
-                <div className="max-h-96 overflow-y-auto">
-                  {castaways?.map((castaway) => {
-                    const total = calculateCastawayTotal(castaway.id);
-                    return (
-                      <button
-                        key={castaway.id}
-                        onClick={() => setSelectedCastawayId(castaway.id)}
-                        className={`w-full p-4 flex items-center gap-3 text-left transition-colors ${
-                          selectedCastawayId === castaway.id
-                            ? 'bg-burgundy-50 border-l-4 border-burgundy-500'
-                            : 'hover:bg-cream-50'
-                        }`}
-                      >
-                        <div className="w-10 h-10 bg-cream-200 rounded-full flex items-center justify-center">
-                          {castaway.photo_url ? (
-                            <img
-                              src={castaway.photo_url}
-                              alt={castaway.name}
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-sm font-bold text-neutral-500">
-                              {castaway.name.charAt(0)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-neutral-800">{castaway.name}</p>
-                        </div>
-                        {total !== 0 && (
-                          <span
-                            className={`text-sm font-bold ${total >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                          >
-                            {total >= 0 ? '+' : ''}
-                            {total}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                <CastawayList 
+                  castaways={castaways || []}
+                  selectedCastawayId={selectedCastawayId}
+                  onSelect={(id) => setSelectedCastawayId(id)}
+                  existingScores={existingScores || []}
+                />
               </div>
             )}
           </div>
@@ -653,61 +583,14 @@ export function AdminScoring() {
             ) : (
               <div className="space-y-6">
                 {/* Castaway Header with Live Total */}
-                <div className="bg-gradient-to-r from-burgundy-500 to-burgundy-600 rounded-2xl p-6 text-white shadow-elevated">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
-                        {selectedCastaway?.photo_url ? (
-                          <img
-                            src={selectedCastaway.photo_url}
-                            alt={selectedCastaway.name}
-                            className="w-16 h-16 rounded-xl object-cover"
-                          />
-                        ) : (
-                          <span className="text-2xl font-bold">
-                            {selectedCastaway?.name.charAt(0)}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <h2 className="text-2xl font-display">{selectedCastaway?.name}</h2>
-                        <p className="text-burgundy-100">Episode {selectedEpisode?.number}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      {/* Live Total */}
-                      <div className="text-center">
-                        <p className="text-burgundy-200 text-sm">Episode Total</p>
-                        <p
-                          className={`text-4xl font-display font-bold ${liveTotal >= 0 ? 'text-white' : 'text-red-200'}`}
-                        >
-                          {liveTotal >= 0 ? '+' : ''}
-                          {liveTotal}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <div className="flex items-center gap-2">
-                          {isSaving && (
-                            <span className="text-xs text-burgundy-200 flex items-center gap-1">
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                              Saving...
-                            </span>
-                          )}
-                          {isDirty && !isSaving && (
-                            <span className="text-xs text-burgundy-200">Unsaved changes</span>
-                          )}
-                          {lastSavedAt && !isDirty && !isSaving && (
-                            <span className="text-xs text-green-200 flex items-center gap-1">
-                              <Save className="h-3 w-3" />
-                              Saved
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-burgundy-200">Auto-saves after 2 seconds</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <CastawayHeader 
+                  castaway={selectedCastaway!}
+                  totalPoints={liveTotal}
+                  episodeNumber={selectedEpisode?.number || 0}
+                  isSaving={isSaving}
+                  isDirty={isDirty}
+                  lastSavedAt={lastSavedAt}
+                />
 
                 {/* Most Common Rules (Always Expanded) */}
                 {mostCommonRules.length > 0 && (
@@ -719,8 +602,8 @@ export function AdminScoring() {
                       <div className="flex items-center gap-2">
                         <Star className="h-5 w-5 text-burgundy-500 fill-burgundy-500" />
                         <h3 className="font-semibold text-burgundy-700">Most Common Rules</h3>
-                        <span className="text-xs bg-burgundy-100 text-burgundy-600 px-2 py-0.5 rounded-full">
-                          {mostCommonRules.length} rules
+                        <span className="text-xs bg-burgundy-100 text-burgundy-600 px-2 py-0.5 rounded-full font-bold">
+                          {mostCommonRules.length}
                         </span>
                       </div>
                       {expandedCategories['Most Common'] ? (
@@ -730,69 +613,15 @@ export function AdminScoring() {
                       )}
                     </button>
                     {expandedCategories['Most Common'] && (
-                      <div className="divide-y divide-cream-100">
-                        {mostCommonRules.map((rule) => {
-                          const quantity = scores[rule.id] || 0;
-                          const ruleTotal = rule.points * quantity;
-                          return (
-                            <div
-                              key={rule.id}
-                              className="p-4 flex items-center gap-4 hover:bg-cream-50 transition-colors"
-                            >
-                              <div
-                                className={`w-14 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${
-                                  rule.is_negative
-                                    ? 'bg-red-100 text-red-700'
-                                    : 'bg-green-100 text-green-700'
-                                }`}
-                              >
-                                {rule.points >= 0 ? '+' : ''}
-                                {rule.points}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-neutral-800">{rule.name}</p>
-                                {rule.description && (
-                                  <p className="text-xs text-neutral-500 mt-0.5 truncate">
-                                    {rule.description}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={() => updateScore(rule.id, quantity - 1)}
-                                    className="w-8 h-8 rounded-lg bg-cream-100 text-neutral-600 hover:bg-cream-200 flex items-center justify-center font-bold"
-                                  >
-                                    −
-                                  </button>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    value={quantity}
-                                    onChange={(e) =>
-                                      updateScore(rule.id, parseInt(e.target.value) || 0)
-                                    }
-                                    className="w-14 h-10 text-center border border-cream-200 rounded-lg focus:ring-2 focus:ring-burgundy-500"
-                                  />
-                                  <button
-                                    onClick={() => updateScore(rule.id, quantity + 1)}
-                                    className="w-8 h-8 rounded-lg bg-cream-100 text-neutral-600 hover:bg-cream-200 flex items-center justify-center font-bold"
-                                  >
-                                    +
-                                  </button>
-                                </div>
-                                {quantity > 0 && (
-                                  <div
-                                    className={`w-16 text-right font-bold ${ruleTotal >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                                  >
-                                    = {ruleTotal >= 0 ? '+' : ''}
-                                    {ruleTotal}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-cream-100">
+                        {mostCommonRules.map((rule) => (
+                          <ScoringRuleRow
+                            key={rule.id}
+                            rule={rule}
+                            currentCount={scores[rule.id] || 0}
+                            onChange={(value: number) => updateScore(rule.id, value)}
+                          />
+                        ))}
                       </div>
                     )}
                   </div>
@@ -823,8 +652,8 @@ export function AdminScoring() {
                             <ChevronRight className="h-5 w-5 text-neutral-400" />
                           )}
                           <h3 className="font-semibold text-neutral-800">{category}</h3>
-                          <span className="text-xs bg-cream-200 text-neutral-500 px-2 py-0.5 rounded-full">
-                            {rules.length} rules
+                          <span className="text-xs bg-cream-200 text-neutral-500 px-2 py-0.5 rounded-full font-bold">
+                            {rules.length}
                           </span>
                         </div>
                         {hasScores && (
@@ -837,69 +666,15 @@ export function AdminScoring() {
                         )}
                       </button>
                       {isExpanded && (
-                        <div className="divide-y divide-cream-100">
-                          {rules.map((rule) => {
-                            const quantity = scores[rule.id] || 0;
-                            const ruleTotal = rule.points * quantity;
-                            return (
-                              <div
-                                key={rule.id}
-                                className="p-4 flex items-center gap-4 hover:bg-cream-50 transition-colors"
-                              >
-                                <div
-                                  className={`w-14 h-10 rounded-lg flex items-center justify-center font-bold text-sm ${
-                                    rule.is_negative
-                                      ? 'bg-red-100 text-red-700'
-                                      : 'bg-green-100 text-green-700'
-                                  }`}
-                                >
-                                  {rule.points >= 0 ? '+' : ''}
-                                  {rule.points}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-neutral-800">{rule.name}</p>
-                                  {rule.description && (
-                                    <p className="text-xs text-neutral-500 mt-0.5 truncate">
-                                      {rule.description}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      onClick={() => updateScore(rule.id, quantity - 1)}
-                                      className="w-8 h-8 rounded-lg bg-cream-100 text-neutral-600 hover:bg-cream-200 flex items-center justify-center font-bold"
-                                    >
-                                      −
-                                    </button>
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      value={quantity}
-                                      onChange={(e) =>
-                                        updateScore(rule.id, parseInt(e.target.value) || 0)
-                                      }
-                                      className="w-14 h-10 text-center border border-cream-200 rounded-lg focus:ring-2 focus:ring-burgundy-500"
-                                    />
-                                    <button
-                                      onClick={() => updateScore(rule.id, quantity + 1)}
-                                      className="w-8 h-8 rounded-lg bg-cream-100 text-neutral-600 hover:bg-cream-200 flex items-center justify-center font-bold"
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-                                  {quantity > 0 && (
-                                    <div
-                                      className={`w-16 text-right font-bold ${ruleTotal >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                                    >
-                                      = {ruleTotal >= 0 ? '+' : ''}
-                                      {ruleTotal}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-cream-100">
+                          {rules.map((rule) => (
+                            <ScoringRuleRow
+                              key={rule.id}
+                              rule={rule}
+                              currentCount={scores[rule.id] || 0}
+                              onChange={(value: number) => updateScore(rule.id, value)}
+                            />
+                          ))}
                         </div>
                       )}
                     </div>
@@ -911,151 +686,31 @@ export function AdminScoring() {
         </div>
 
         {/* Finalize Confirmation Modal */}
-        {showFinalizeModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-elevated max-w-md w-full p-6 animate-slide-up">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
-                    <AlertTriangle className="h-6 w-6 text-amber-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-display font-bold text-neutral-800">
-                      Finalize Episode {selectedEpisode?.number}?
-                    </h3>
-                    <p className="text-sm text-neutral-500">
-                      {selectedEpisode?.title || 'This action cannot be undone'}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowFinalizeModal(false)}
-                  className="text-neutral-400 hover:text-neutral-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {scoringStatus && !scoringStatus.is_complete && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-                  <p className="text-sm font-medium text-red-800 mb-2">
-                    Incomplete Scoring Detected
-                  </p>
-                  <p className="text-sm text-red-700 mb-2">
-                    {scoringStatus.scored_castaways} of {scoringStatus.total_castaways} castaways
-                    scored. Missing:
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {scoringStatus.unscored_castaway_names.map((name) => (
-                      <span
-                        key={name}
-                        className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs"
-                      >
-                        {name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-                <p className="text-sm text-amber-800">
-                  <strong>Warning:</strong> Finalizing will:
-                </p>
-                <ul className="text-sm text-amber-700 mt-2 space-y-1">
-                  <li>• Lock all scores for this episode</li>
-                  <li>• Update all players' points and rankings</li>
-                  <li>• Mark eliminated castaways</li>
-                  <li>• Make results visible to all users</li>
-                </ul>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowFinalizeModal(false)}
-                  className="flex-1 btn btn-secondary"
-                  disabled={finalizeMutation.isPending}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => finalizeMutation.mutate()}
-                  className="flex-1 btn btn-primary flex items-center justify-center gap-2"
-                  disabled={finalizeMutation.isPending || !scoringStatus?.is_complete}
-                >
-                  {finalizeMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Finalizing...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4" />
-                      Finalize Scores
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <FinalizeModal
+          isOpen={showFinalizeModal}
+          onClose={() => setShowFinalizeModal(false)}
+          onConfirm={() => finalizeMutation.mutate()}
+          isPending={finalizeMutation.isPending}
+          scoringStatus={scoringStatus || {
+            is_complete: false,
+            total_castaways: 0,
+            scored_castaways: 0,
+            unscored_castaway_ids: [],
+            unscored_castaway_names: [],
+            is_finalized: false
+          }}
+        />
 
         {/* Success/Error Result Modal */}
         {finalizeResult && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-elevated max-w-md w-full p-6 animate-slide-up">
-              {finalizeResult.success ? (
-                <>
-                  <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <CheckCircle className="h-8 w-8 text-green-600" />
-                    </div>
-                    <h3 className="text-xl font-display font-bold text-neutral-800 mb-2">
-                      Scores Finalized!
-                    </h3>
-                    <p className="text-neutral-500">
-                      Episode {selectedEpisode?.number} has been scored and all standings updated.
-                    </p>
-                  </div>
-
-                  {finalizeResult.eliminated.length > 0 && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-                      <p className="text-sm font-medium text-red-800 mb-2">Eliminated Castaways:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {finalizeResult.eliminated.map((id) => {
-                          const castaway = castaways?.find((c) => c.id === id);
-                          return (
-                            <span
-                              key={id}
-                              className="px-2 py-1 bg-red-100 text-red-700 rounded text-sm"
-                            >
-                              {castaway?.name || id}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <AlertTriangle className="h-8 w-8 text-red-600" />
-                  </div>
-                  <h3 className="text-xl font-display font-bold text-neutral-800 mb-2">
-                    Finalization Failed
-                  </h3>
-                  <p className="text-neutral-500">
-                    There was an error finalizing the scores. Please try again.
-                  </p>
-                </div>
-              )}
-
-              <button onClick={() => setFinalizeResult(null)} className="w-full btn btn-primary">
-                {finalizeResult.success ? 'Done' : 'Close'}
-              </button>
-            </div>
-          </div>
+          <FinalizeResultModal
+            isOpen={!!finalizeResult}
+            onClose={() => setFinalizeResult(null)}
+            result={{
+              success: finalizeResult.success,
+              eliminated: finalizeResult.eliminated.map(id => castaways?.find(c => c.id === id)?.name || id)
+            }}
+          />
         )}
       </main>
     </div>

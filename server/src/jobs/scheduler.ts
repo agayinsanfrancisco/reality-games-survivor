@@ -7,6 +7,7 @@ import { sendPickReminders, sendDraftReminders } from './sendReminders.js';
 import { sendEpisodeResults } from './sendResults.js';
 import { sendWeeklySummary } from './weeklySummary.js';
 import { releaseWeeklyResults } from './releaseResults.js';
+import { nurtureTriviaCompleters } from './nurtureTriviaCompleters.js';
 import { processEmailQueue } from '../lib/email-queue.js';
 import { pstToCron, formatCronWithTimezone } from '../lib/timezone-utils.js';
 import { monitoredJobExecution } from './jobMonitor.js';
@@ -85,6 +86,14 @@ const jobs: ScheduledJob[] = [
     schedule: pstToCron(9, 0),
     description: 'Send draft reminder emails',
     handler: sendDraftReminders,
+    enabled: true,
+  },
+  {
+    name: 'nurture-trivia-completers',
+    // Daily 11am PST (auto-adjusts for DST)
+    schedule: pstToCron(11, 0),
+    description: 'Send nurture emails to trivia completers who haven\'t joined a league',
+    handler: nurtureTriviaCompleters,
     enabled: true,
   },
 ];
@@ -188,7 +197,7 @@ export async function scheduleDraftFinalize(targetDate?: Date): Promise<void> {
  * Start all scheduled jobs
  */
 export async function startScheduler(): Promise<void> {
-  console.log('Starting RGFL job scheduler...');
+  console.log('Starting Reality Games: Survivor job scheduler...');
 
   // Load season info for logging
   const seasonInfo = await seasonConfig.getSeasonInfo();
@@ -249,7 +258,7 @@ export async function startScheduler(): Promise<void> {
  * Stop all scheduled jobs
  */
 export function stopScheduler(): void {
-  console.log('Stopping RGFL job scheduler...');
+  console.log('Stopping Reality Games: Survivor job scheduler...');
 
   // Cancel one-time jobs
   for (const [name, timeoutId] of oneTimeJobs) {

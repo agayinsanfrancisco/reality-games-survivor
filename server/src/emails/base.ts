@@ -1,71 +1,93 @@
-// Base email template wrapper with RGFL Survivor branding
+// Base email template wrapper with Reality Games: Survivor branding
+//
+// DESIGN SYSTEM:
+// - Logo always on cream/white background for brand consistency
+// - Cream/tan palette with burgundy accents (Survivor island aesthetic)
+// - Serif headings (Georgia) for premium feel
+// - Clean, modern layout with generous spacing
 //
 // THEME SYSTEM:
-// - default: Cream background (#F5F0E6), burgundy accents - standard notifications
-// - tribal: Burgundy background (#A52A2A), cream text - important game events (draft, picks)
-// - immunity: Gold border (#D4A574), cream background - achievements, wins, positive news
-// - tribal_council: Dark burgundy/fire theme - eliminations, urgent deadlines
-// - merge: Green accents - waivers, team changes, new acquisitions
+// - default: Standard notifications - burgundy accents
+// - tribal: Important game events (draft, picks) - deeper burgundy borders
+// - immunity: Achievements, wins, positive news - gold accents
+// - tribal_council: Eliminations, urgent deadlines - fire red accents
+// - merge: Team changes, new acquisitions - green accents
 
 const LOGO_URL = 'https://survivor.realitygamesfantasyleague.com/logo.png';
 const BASE_URL = process.env.BASE_URL || 'https://survivor.realitygamesfantasyleague.com';
 
+// Brand Colors
+const COLORS = {
+  // Backgrounds
+  outerBg: '#F5F0E6',        // Cream outer background
+  logoBg: '#FEFDFB',         // White/cream for logo area
+  contentBg: '#FEFDFB',      // White content area
+  footerBg: '#F5F0E6',       // Cream footer
+  cardBg: '#F8F5EF',         // Slightly darker cream for cards
+  
+  // Text
+  headingText: '#5C1717',    // Dark burgundy for headings
+  bodyText: '#4A3728',       // Warm dark brown for body
+  mutedText: '#8A7654',      // Muted tan for secondary text
+  
+  // Accents
+  burgundy: '#A52A2A',       // Primary burgundy
+  darkBurgundy: '#8B2323',   // Darker burgundy for emphasis
+  gold: '#D4A574',           // Gold accent
+  darkGold: '#8B6914',       // Darker gold for text
+  green: '#166534',          // Success green
+  lightGreen: '#22C55E',     // Bright green
+  red: '#DC2626',            // Alert/error red
+  
+  // Borders
+  borderLight: '#EDE5D5',    // Light tan border
+  borderMedium: '#D4C4A8',   // Medium tan border
+};
+
 export type EmailTheme = 'default' | 'tribal' | 'immunity' | 'tribal_council' | 'merge';
 
-interface ThemeColors {
-  headerBg: string;
-  headerText: string;
-  contentBg: string;
-  contentText: string;
+interface ThemeConfig {
   accentColor: string;
+  accentColorDark: string;
   borderColor: string;
+  highlightBg: string;
 }
 
-const themes: Record<EmailTheme, ThemeColors> = {
+const themes: Record<EmailTheme, ThemeConfig> = {
   default: {
-    headerBg: '#F5F0E6',
-    headerText: '#A52A2A',
-    contentBg: '#FEFDFB',
-    contentText: '#5C1717',
-    accentColor: '#A52A2A',
-    borderColor: '#EDE5D5',
+    accentColor: COLORS.burgundy,
+    accentColorDark: COLORS.darkBurgundy,
+    borderColor: COLORS.borderLight,
+    highlightBg: '#FDF8F3',
   },
   tribal: {
-    headerBg: '#F5F0E6',
-    headerText: '#A52A2A',
-    contentBg: '#FEFDFB',
-    contentText: '#5C1717',
-    accentColor: '#A52A2A',
-    borderColor: '#A52A2A',
+    accentColor: COLORS.burgundy,
+    accentColorDark: COLORS.darkBurgundy,
+    borderColor: COLORS.burgundy,
+    highlightBg: '#FDF5F5',
   },
   immunity: {
-    headerBg: '#F5F0E6',
-    headerText: '#8B6914',
-    contentBg: '#FEFDFB',
-    contentText: '#5C1717',
-    accentColor: '#8B6914',
-    borderColor: '#D4A574',
+    accentColor: COLORS.gold,
+    accentColorDark: COLORS.darkGold,
+    borderColor: COLORS.gold,
+    highlightBg: '#FDF9F3',
   },
   tribal_council: {
-    headerBg: '#F5F0E6',
-    headerText: '#8B2323',
-    contentBg: '#FEFDFB',
-    contentText: '#5C1717',
-    accentColor: '#DC2626',
-    borderColor: '#DC2626',
+    accentColor: COLORS.red,
+    accentColorDark: '#B91C1C',
+    borderColor: COLORS.red,
+    highlightBg: '#FEF2F2',
   },
   merge: {
-    headerBg: '#F5F0E6',
-    headerText: '#166534',
-    contentBg: '#FEFDFB',
-    contentText: '#5C1717',
-    accentColor: '#22C55E',
-    borderColor: '#22C55E',
+    accentColor: COLORS.lightGreen,
+    accentColorDark: COLORS.green,
+    borderColor: COLORS.lightGreen,
+    highlightBg: '#F0FDF4',
   },
 };
 
 export function emailWrapper(content: string, preheader?: string, theme: EmailTheme = 'default'): string {
-  const colors = themes[theme];
+  const config = themes[theme];
 
   return `
 <!DOCTYPE html>
@@ -73,40 +95,75 @@ export function emailWrapper(content: string, preheader?: string, theme: EmailTh
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RGFL Survivor Fantasy</title>
-  ${preheader ? `<span style="display:none;font-size:1px;color:#fff;max-height:0px;overflow:hidden;">${preheader}</span>` : ''}
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Reality Games: Survivor</title>
+  ${preheader ? `<!--[if !mso]><!--><span style="display:none;font-size:1px;color:#F5F0E6;max-height:0px;overflow:hidden;mso-hide:all;">${preheader}</span><!--<![endif]-->` : ''}
   <!--[if mso]>
   <style type="text/css">
-    body, table, td {font-family: Arial, sans-serif !important;}
+    body, table, td {font-family: Georgia, 'Times New Roman', serif !important;}
+    .button-td { padding: 14px 28px !important; }
   </style>
+  <noscript>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+  </xml>
+  </noscript>
   <![endif]-->
 </head>
-<body style="margin: 0; padding: 0; background-color: #F5F0E6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #F5F0E6;">
+<body style="margin: 0; padding: 0; background-color: ${COLORS.outerBg}; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+  <!-- Outer wrapper table -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${COLORS.outerBg};">
     <tr>
-      <td style="padding: 24px;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; margin: 0 auto; background-color: ${colors.contentBg}; border-radius: 12px; overflow: hidden; border: 2px solid ${colors.borderColor};">
-          <!-- Header with logo on cream/tan -->
+      <td style="padding: 32px 16px;">
+        <!-- Inner container -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" align="center" style="max-width: 600px; margin: 0 auto; background-color: ${COLORS.contentBg}; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(92, 23, 23, 0.08);">
+          
+          <!-- Logo Header - Always cream/white background -->
           <tr>
-            <td style="background-color: ${colors.headerBg}; padding: 32px; text-align: center; border-bottom: 2px solid ${colors.borderColor};">
-              <img src="${LOGO_URL}" alt="Reality Games Fantasy League" height="60" style="height: 60px; width: auto;" />
+            <td style="background-color: ${COLORS.logoBg}; padding: 32px 40px; text-align: center; border-bottom: 3px solid ${config.borderColor};">
+              <img src="${LOGO_URL}" alt="Reality Games Fantasy League" width="180" height="60" style="display: block; margin: 0 auto; width: 180px; height: auto; max-height: 60px;" />
             </td>
           </tr>
-          <!-- Content -->
+          
+          <!-- Main Content -->
           <tr>
-            <td style="padding: 32px; color: ${colors.contentText}; background-color: ${colors.contentBg};">
+            <td style="background-color: ${COLORS.contentBg}; padding: 40px 40px 32px 40px;">
               ${content}
             </td>
           </tr>
+          
           <!-- Footer -->
           <tr>
-            <td style="background-color: #F5F0E6; padding: 24px; text-align: center; color: #8A7654; font-size: 12px; border-top: 1px solid ${colors.borderColor};">
-              <p style="margin: 0 0 8px 0; font-weight: 500;">Reality Games Fantasy League | Survivor</p>
-              <p style="margin: 0 0 8px 0;">You're receiving this because you're part of the tribe.</p>
-              <p style="margin: 0;"><a href="${BASE_URL}/profile/notifications" style="color: ${colors.accentColor}; text-decoration: underline;">Manage notification preferences</a></p>
+            <td style="background-color: ${COLORS.footerBg}; padding: 28px 40px; border-top: 1px solid ${COLORS.borderLight};">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="margin: 0 0 8px 0; font-family: Georgia, 'Times New Roman', serif; font-size: 14px; font-weight: 600; color: ${COLORS.headingText};">Reality Games Fantasy League</p>
+                    <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: ${COLORS.mutedText};">You're receiving this because you're part of the tribe.</p>
+                    <p style="margin: 0;">
+                      <a href="${BASE_URL}/profile" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: ${config.accentColor}; text-decoration: underline;">Manage Preferences</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+        </table>
+        
+        <!-- Legal footer outside main card -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" align="center" style="max-width: 600px; margin: 16px auto 0 auto;">
+          <tr>
+            <td style="text-align: center; padding: 0 16px;">
+              <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; color: ${COLORS.mutedText};">
+                © ${new Date().getFullYear()} Reality Games Fantasy League. All rights reserved.
+              </p>
             </td>
           </tr>
         </table>
+        
       </td>
     </tr>
   </table>
@@ -115,58 +172,85 @@ export function emailWrapper(content: string, preheader?: string, theme: EmailTh
 `;
 }
 
+// ============================================================================
+// COMPONENT HELPERS
+// ============================================================================
+
+export function heading(text: string, level: 1 | 2 | 3 = 1, color: 'burgundy' | 'gold' | 'error' | 'green' = 'burgundy'): string {
+  const colorMap = {
+    burgundy: COLORS.headingText,
+    gold: COLORS.darkGold,
+    error: COLORS.red,
+    green: COLORS.green,
+  };
+  
+  const styles = {
+    1: `font-size: 28px; line-height: 1.2; margin: 0 0 20px 0;`,
+    2: `font-size: 22px; line-height: 1.3; margin: 24px 0 16px 0;`,
+    3: `font-size: 18px; line-height: 1.4; margin: 20px 0 12px 0;`,
+  };
+  
+  return `<h${level} style="font-family: Georgia, 'Times New Roman', serif; font-weight: 700; color: ${colorMap[color]}; ${styles[level]}">${text}</h${level}>`;
+}
+
+export function paragraph(text: string, muted: boolean = false): string {
+  return `<p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; line-height: 1.65; color: ${muted ? COLORS.mutedText : COLORS.bodyText}; margin: 0 0 16px 0;">${text}</p>`;
+}
+
+export function highlight(text: string, color: 'burgundy' | 'gold' | 'green' = 'burgundy'): string {
+  const colorMap = {
+    burgundy: COLORS.burgundy,
+    gold: COLORS.darkGold,
+    green: COLORS.green,
+  };
+  return `<strong style="color: ${colorMap[color]}; font-weight: 600;">${text}</strong>`;
+}
+
 export function button(text: string, url: string, variant: 'primary' | 'urgent' | 'gold' | 'success' = 'primary'): string {
   const colors = {
-    primary: '#A52A2A',
-    urgent: '#DC2626',
-    gold: '#8B6914',
-    success: '#166534',
+    primary: { bg: COLORS.burgundy, text: '#FFFFFF' },
+    urgent: { bg: COLORS.red, text: '#FFFFFF' },
+    gold: { bg: COLORS.darkGold, text: '#FFFFFF' },
+    success: { bg: COLORS.green, text: '#FFFFFF' },
   };
+  
+  const { bg, text: textColor } = colors[variant];
 
   return `
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 20px auto;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 28px 0;" align="center">
   <tr>
-    <td style="background-color: ${colors[variant]}; border-radius: 8px;">
-      <a href="${url}" style="display: inline-block; padding: 14px 28px; color: #FEFDFB; text-decoration: none; font-weight: 600; font-size: 16px;">${text}</a>
+    <td style="border-radius: 10px; background-color: ${bg};">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${url}" style="height:52px;v-text-anchor:middle;width:220px;" arcsize="20%" strokecolor="${bg}" fillcolor="${bg}">
+        <w:anchorlock/>
+        <center style="color:${textColor};font-family:sans-serif;font-size:16px;font-weight:bold;">${text}</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !mso]><!-->
+      <a href="${url}" style="display: inline-block; padding: 16px 36px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: ${textColor}; text-decoration: none; border-radius: 10px; background-color: ${bg};">${text}</a>
+      <!--<![endif]-->
     </td>
   </tr>
 </table>
 `;
 }
 
-export function statBox(value: string | number, label: string, color: 'burgundy' | 'gold' | 'dark' | 'green' = 'burgundy'): string {
-  const colorMap = {
-    burgundy: '#A52A2A',
-    gold: '#8B6914',
-    dark: '#5C1717',
-    green: '#166534',
+export function card(content: string, variant: 'default' | 'warning' | 'success' | 'error' | 'immunity' | 'highlight' = 'default'): string {
+  const styles: Record<string, { bg: string; border: string; borderWidth: string }> = {
+    default: { bg: COLORS.cardBg, border: COLORS.borderLight, borderWidth: '1px' },
+    warning: { bg: '#FEF9E7', border: '#F59E0B', borderWidth: '2px' },
+    success: { bg: '#F0FDF4', border: COLORS.lightGreen, borderWidth: '2px' },
+    error: { bg: '#FEF2F2', border: COLORS.red, borderWidth: '2px' },
+    immunity: { bg: '#FFFBEB', border: COLORS.gold, borderWidth: '3px' },
+    highlight: { bg: '#FDF8F3', border: COLORS.burgundy, borderWidth: '2px' },
   };
+  
+  const style = styles[variant];
 
   return `
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background-color: #F5F0E6; border-radius: 12px; display: inline-block; min-width: 120px; text-align: center; margin: 8px;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 24px 0;">
   <tr>
-    <td style="padding: 20px;">
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 36px; font-weight: 700; color: ${colorMap[color]};">${value}</div>
-      <div style="color: #8A7654; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">${label}</div>
-    </td>
-  </tr>
-</table>
-`;
-}
-
-export function card(content: string, variant: 'default' | 'warning' | 'success' | 'error' | 'immunity' = 'default'): string {
-  const styles = {
-    default: 'background-color: #F5F0E6; border: 1px solid #EDE5D5;',
-    warning: 'background-color: #FEF3C7; border: 2px solid #F59E0B;',
-    success: 'background-color: #DCFCE7; border: 2px solid #22C55E;',
-    error: 'background-color: #FEE2E2; border: 2px solid #DC2626;',
-    immunity: 'background-color: #F5F0E6; border: 3px solid #D4A574;',
-  };
-
-  return `
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="${styles[variant]} border-radius: 12px; margin: 20px 0;">
-  <tr>
-    <td style="padding: 24px;">
+    <td style="background-color: ${style.bg}; border: ${style.borderWidth} solid ${style.border}; border-radius: 12px; padding: 24px;">
       ${content}
     </td>
   </tr>
@@ -174,32 +258,101 @@ export function card(content: string, variant: 'default' | 'warning' | 'success'
 `;
 }
 
-export function heading(text: string, level: 1 | 2 = 1, color: 'burgundy' | 'gold' | 'error' | 'green' = 'burgundy'): string {
-  const colorMap = { burgundy: '#A52A2A', gold: '#8B6914', error: '#DC2626', green: '#166534' };
-  const sizes = { 1: '28px', 2: '20px' };
-  return `<h${level} style="font-family: Georgia, 'Times New Roman', serif; color: ${colorMap[color]}; margin: 0 0 16px 0; font-size: ${sizes[level]}; font-weight: 700;">${text}</h${level}>`;
-}
+export function statBox(value: string | number, label: string, color: 'burgundy' | 'gold' | 'dark' | 'green' | 'red' = 'burgundy'): string {
+  const colorMap = {
+    burgundy: COLORS.burgundy,
+    gold: COLORS.darkGold,
+    dark: COLORS.headingText,
+    green: COLORS.green,
+    red: COLORS.red,
+  };
 
-export function paragraph(text: string): string {
-  return `<p style="color: #5C1717; line-height: 1.7; margin: 0 0 16px 0;">${text}</p>`;
-}
-
-export function highlight(text: string, color: 'burgundy' | 'gold' | 'green' = 'burgundy'): string {
-  const colorMap = { burgundy: '#A52A2A', gold: '#8B6914', green: '#166534' };
-  return `<span style="color: ${colorMap[color]}; font-weight: 600;">${text}</span>`;
-}
-
-export function divider(): string {
   return `
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 24px 0;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="display: inline-block; margin: 8px; min-width: 130px;">
   <tr>
-    <td style="height: 1px; background: linear-gradient(90deg, transparent, #D4C4A8, transparent);"></td>
+    <td style="background-color: ${COLORS.cardBg}; border-radius: 12px; padding: 20px 24px; text-align: center; border: 1px solid ${COLORS.borderLight};">
+      <div style="font-family: Georgia, 'Times New Roman', serif; font-size: 36px; font-weight: 700; color: ${colorMap[color]}; line-height: 1;">${value}</div>
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: ${COLORS.mutedText}; margin-top: 8px;">${label}</div>
+    </td>
   </tr>
 </table>
 `;
 }
 
-// Helper to format dates consistently
+export function statsRow(stats: Array<{ value: string | number; label: string; color?: 'burgundy' | 'gold' | 'dark' | 'green' | 'red' }>): string {
+  const boxes = stats.map(s => statBox(s.value, s.label, s.color || 'burgundy')).join('');
+  return `
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 24px 0;">
+  <tr>
+    <td style="text-align: center;">
+      ${boxes}
+    </td>
+  </tr>
+</table>
+`;
+}
+
+export function featureItem(emoji: string, title: string, description: string): string {
+  return `
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 16px 0;">
+  <tr>
+    <td style="width: 48px; vertical-align: top; padding-right: 16px;">
+      <div style="width: 40px; height: 40px; background-color: ${COLORS.cardBg}; border-radius: 10px; text-align: center; line-height: 40px; font-size: 20px;">${emoji}</div>
+    </td>
+    <td style="vertical-align: top;">
+      <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: ${COLORS.headingText}; margin: 0 0 4px 0;">${title}</p>
+      <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: ${COLORS.mutedText}; margin: 0; line-height: 1.5;">${description}</p>
+    </td>
+  </tr>
+</table>
+`;
+}
+
+export function listItem(text: string, icon: string = '•'): string {
+  return `
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 8px 0;">
+  <tr>
+    <td style="width: 24px; vertical-align: top; font-size: 16px; color: ${COLORS.burgundy}; font-weight: bold;">${icon}</td>
+    <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: ${COLORS.bodyText}; line-height: 1.5;">${text}</td>
+  </tr>
+</table>
+`;
+}
+
+export function divider(): string {
+  return `
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 28px 0;">
+  <tr>
+    <td style="height: 1px; background: linear-gradient(90deg, transparent, ${COLORS.borderMedium}, transparent);"></td>
+  </tr>
+</table>
+`;
+}
+
+export function spacer(height: number = 24): string {
+  return `<div style="height: ${height}px; line-height: ${height}px; font-size: 1px;">&nbsp;</div>`;
+}
+
+export function centeredText(content: string): string {
+  return `<div style="text-align: center;">${content}</div>`;
+}
+
+export function badge(text: string, color: 'burgundy' | 'gold' | 'green' | 'red' = 'burgundy'): string {
+  const colorMap = {
+    burgundy: { bg: '#FDF5F5', text: COLORS.burgundy },
+    gold: { bg: '#FFFBEB', text: COLORS.darkGold },
+    green: { bg: '#F0FDF4', text: COLORS.green },
+    red: { bg: '#FEF2F2', text: COLORS.red },
+  };
+  const style = colorMap[color];
+  
+  return `<span style="display: inline-block; padding: 4px 12px; background-color: ${style.bg}; color: ${style.text}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 600; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">${text}</span>`;
+}
+
+// ============================================================================
+// DATE FORMATTING
+// ============================================================================
+
 export function formatDate(date: Date, options?: { includeTime?: boolean }): string {
   const dateStr = date.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -220,63 +373,6 @@ export function formatDate(date: Date, options?: { includeTime?: boolean }): str
   return dateStr;
 }
 
-// Survivor catchphrases for different contexts
-export const survivorPhrases = {
-  // Greetings
-  welcome: [
-    "Come on in!",
-    "Welcome to the island.",
-    "The adventure begins.",
-  ],
-  // Encouragement
-  goodLuck: [
-    "Outwit. Outplay. Outlast.",
-    "The tribe has spoken... in your favor!",
-    "May your torch burn bright.",
-    "Worth playing for? Absolutely.",
-    "Dig deep!",
-  ],
-  // Urgency
-  hurry: [
-    "The clock is ticking!",
-    "Time to make your move!",
-    "Don't get caught without a plan.",
-    "This is Survivor!",
-  ],
-  // Elimination/Bad news
-  elimination: [
-    "The tribe has spoken.",
-    "Your torch has been snuffed.",
-    "Time to go.",
-  ],
-  // Success
-  victory: [
-    "Immunity!",
-    "You've earned your place.",
-    "Safe tonight.",
-    "Individual immunity is yours!",
-  ],
-  // Draft/Picks
-  strategy: [
-    "Trust your gut.",
-    "Make your move.",
-    "Play the game.",
-    "This is your moment.",
-  ],
-  // Closings
-  signOff: [
-    "See you at Tribal.",
-    "The game is afoot.",
-    "Stay sharp out there.",
-    "39 days, 18 people, 1 Survivor.",
-  ],
-};
 
-// Helper to get random phrase from category
-export function getPhrase(category: keyof typeof survivorPhrases): string {
-  const phrases = survivorPhrases[category];
-  return phrases[Math.floor(Math.random() * phrases.length)];
-}
-
-// Export common constants
-export { LOGO_URL, BASE_URL };
+// Export constants
+export { LOGO_URL, BASE_URL, COLORS };

@@ -21,6 +21,7 @@ import {
   TransferOwnershipSection,
   DangerZone,
 } from '@/components/settings';
+// import type { League, Season, UserProfile, DraftStatus } from '@/types';
 
 interface LeagueMember {
   id: string;
@@ -301,33 +302,33 @@ export default function LeagueSettings() {
                 onPasswordChange={setPassword}
               />
 
-              <VisibilitySettings
-                isPublic={isPublic}
-                maxPlayers={maxPlayers}
-                currentMemberCount={members?.length || 0}
-                draftStatus={league?.draft_status}
-                onPublicChange={setIsPublic}
-                onMaxPlayersChange={setMaxPlayers}
-              />
+                  <VisibilitySettings
+                    isPublic={isPublic}
+                    maxPlayers={maxPlayers}
+                    currentMemberCount={members?.length || 0}
+                    draftStatus={league?.draft_status || 'pending'}
+                    onPublicChange={setIsPublic}
+                    onMaxPlayersChange={setMaxPlayers}
+                  />
 
-              <DonationSettings
-                requireDonation={requireDonation}
-                donationAmount={donationAmount}
-                draftStatus={league?.draft_status}
-                onRequireDonationChange={setRequireDonation}
-                onDonationAmountChange={setDonationAmount}
-              />
-            </>
-          )}
+                  <DonationSettings
+                    requireDonation={requireDonation}
+                    donationAmount={donationAmount}
+                    draftStatus={league?.draft_status || 'pending'}
+                    onRequireDonationChange={setRequireDonation}
+                    onDonationAmountChange={setDonationAmount}
+                  />
+                </>
+              )}
 
-          <MembersList
-            members={members}
-            currentUserId={currentUser?.id}
-            draftStatus={league?.draft_status}
-            onRemoveMember={handleRemoveMember}
-            isRemoving={removeMember.isPending}
-            removeError={removeMember.isError}
-          />
+              <MembersList
+                members={members}
+                currentUserId={currentUser?.id}
+                draftStatus={league?.draft_status || 'pending'}
+                onRemoveMember={handleRemoveMember}
+                isRemoving={removeMember.isPending}
+                removeError={removeMember.isError}
+              />
 
           {/* Save Button */}
           <button

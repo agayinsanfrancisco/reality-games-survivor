@@ -26,18 +26,18 @@ export function useRoster(leagueId: string | undefined, userId: string | undefin
             id,
             name,
             status,
-            tribe,
+            tribe_original,
             placement,
-            image_url
+            photo_url
           )
         `
         )
         .eq('league_id', leagueId)
         .eq('user_id', userId)
-        .order('draft_order', { ascending: true });
+        .order('draft_pick', { ascending: true });
 
       if (error) throw error;
-      return data as (Roster & { castaways: Castaway })[];
+      return data as unknown as (Roster & { castaways: Castaway })[];
     },
     enabled: !!leagueId && !!userId,
     staleTime: 2 * 60 * 1000,
@@ -66,18 +66,18 @@ export function useLeagueRosters(leagueId: string | undefined) {
             id,
             name,
             status,
-            tribe,
+            tribe_original,
             placement,
-            image_url
+            photo_url
           )
         `
         )
         .eq('league_id', leagueId)
         .order('user_id', { ascending: true })
-        .order('draft_order', { ascending: true });
+        .order('draft_pick', { ascending: true });
 
       if (error) throw error;
-      return data as (Roster & {
+      return data as unknown as (Roster & {
         users: { id: string; display_name: string };
         castaways: Castaway;
       })[];
@@ -109,18 +109,18 @@ export function useMyRosters(userId: string | undefined) {
             id,
             name,
             status,
-            tribe,
+            tribe_original,
             placement,
-            image_url
+            photo_url
           )
         `
         )
         .eq('user_id', userId)
         .order('league_id', { ascending: true })
-        .order('draft_order', { ascending: true });
+        .order('draft_pick', { ascending: true });
 
       if (error) throw error;
-      return data as (Roster & {
+      return data as unknown as (Roster & {
         leagues: { id: string; name: string };
         castaways: Castaway;
       })[];

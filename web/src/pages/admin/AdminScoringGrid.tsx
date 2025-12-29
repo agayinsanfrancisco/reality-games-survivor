@@ -6,47 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
 import { Loader2, Save, Grid3X3, List, CheckCircle, AlertTriangle } from 'lucide-react';
 
-interface Episode {
-  id: string;
-  number: number;
-  title: string | null;
-  air_date: string;
-  is_scored: boolean;
-  season_id: string;
-}
-
-interface Castaway {
-  id: string;
-  name: string;
-  photo_url: string | null;
-  status: string;
-}
-
-interface ScoringRule {
-  id: string;
-  code: string;
-  name: string;
-  description: string | null;
-  points: number;
-  category: string | null;
-  is_negative: boolean;
-  sort_order: number;
-}
-
-interface EpisodeScore {
-  id: string;
-  episode_id: string;
-  castaway_id: string;
-  scoring_rule_id: string;
-  quantity: number;
-  points: number;
-}
-
-interface UserProfile {
-  id: string;
-  display_name: string;
-  role: string;
-}
+import type { Episode, Castaway, ScoringRule, EpisodeScore, UserProfile } from '@/types';
 
 interface ScoringStatus {
   is_complete: boolean;

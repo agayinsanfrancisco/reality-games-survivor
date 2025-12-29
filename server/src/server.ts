@@ -15,6 +15,7 @@ import notificationRoutes from './routes/notifications.js';
 import adminRoutes from './routes/admin.js';
 import webhookRoutes from './routes/webhooks.js';
 import resultsRoutes from './routes/results.js';
+import triviaRoutes from './routes/trivia.js';
 
 // Jobs scheduler
 import { startScheduler } from './jobs/index.js';
@@ -76,6 +77,7 @@ app.use('/api/episodes', scoringRoutes);
 app.use('/api', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/results', resultsRoutes);
+app.use('/api/trivia', triviaRoutes);
 app.use('/webhooks', webhookRoutes);
 
 // Error handler
@@ -109,7 +111,7 @@ process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) =>
   if (adminEmail) {
     enqueueEmail({
       to: adminEmail,
-      subject: '[RGFL] Unhandled Rejection',
+      subject: '[RG:S] Unhandled Rejection',
       html: `
         <h2>Unhandled Promise Rejection</h2>
         <p><strong>Time:</strong> ${new Date().toISOString()}</p>
@@ -147,7 +149,7 @@ process.on('uncaughtException', (error: Error) => {
   if (adminEmail) {
     enqueueEmail({
       to: adminEmail,
-      subject: '[RGFL] Critical Error',
+      subject: '[RG:S] Critical Error',
       html: `
         <h2>Uncaught Exception - Server Shutdown</h2>
         <p><strong>Time:</strong> ${new Date().toISOString()}</p>
@@ -233,7 +235,7 @@ async function gracefulShutdown(signal: string, exitCode: number): Promise<void>
 }
 
 server = app.listen(PORT, async () => {
-  console.log(`🚀 RGFL Server running on port ${PORT}`);
+  console.log(`🚀 Reality Games: Survivor API running on port ${PORT}`);
 
   // Initialize job alerting system
   initializeAlerting({

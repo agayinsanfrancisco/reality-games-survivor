@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Lock, ArrowLeft, Loader2, Check, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { LoadingTorch } from '@/components/LoadingTorch';
 
 export default function UpdatePassword() {
   const navigate = useNavigate();
@@ -60,7 +61,7 @@ export default function UpdatePassword() {
   if (isValidSession === null) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center p-4">
-        <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
+        <LoadingTorch />
       </div>
     );
   }

@@ -32,9 +32,9 @@ export function LeagueHeader({
           <h1 className="text-2xl font-display font-bold text-neutral-800">{league.name}</h1>
           <div className="flex items-center gap-2 mt-1 text-neutral-500">
             <Crown className="h-4 w-4 text-burgundy-400" />
-            <span className="text-sm">{(league.commissioner as any)?.display_name}</span>
+            <span className="text-sm">{league.commissioner?.display_name}</span>
             <span className="text-neutral-300">·</span>
-            <span className="text-sm">Season {(league as any).seasons?.number}</span>
+            <span className="text-sm">Season {league.seasons?.number}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">

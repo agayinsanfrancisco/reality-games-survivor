@@ -1,113 +1,96 @@
 /**
- * Finalize Modal Component
- *
- * Confirmation modal for finalizing episode scores.
+ * Finalize Scoring Modal Component
  */
-
-import { Loader2, CheckCircle, AlertTriangle, X } from 'lucide-react';
-
-interface ScoringStatus {
-  is_complete: boolean;
-  total_castaways: number;
-  scored_castaways: number;
-  unscored_castaway_ids: string[];
-  unscored_castaway_names: string[];
-  is_finalized: boolean;
-}
-
-interface Episode {
-  id: string;
-  number: number;
-  title: string | null;
-}
+import { AlertTriangle, CheckCircle, Loader2, X } from 'lucide-react';
 
 interface FinalizeModalProps {
-  episode: Episode | undefined;
-  scoringStatus: ScoringStatus | null | undefined;
-  isPending: boolean;
+  isOpen: boolean;
+  onClose: () => void;
   onConfirm: () => void;
-  onCancel: () => void;
+  isPending: boolean;
+  scoringStatus: any;
 }
 
-export function FinalizeModal({
-  episode,
-  scoringStatus,
-  isPending,
-  onConfirm,
-  onCancel,
+export function FinalizeModal({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  isPending, 
+  scoringStatus 
 }: FinalizeModalProps) {
+  if (!isOpen) return null;
+  const isReady = scoringStatus?.is_complete;
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-elevated max-w-md w-full p-6 animate-slide-up">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
-              <AlertTriangle className="h-6 w-6 text-amber-600" />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="p-6">
+          <div className="flex justify-between items-start mb-4">
+            <div className={`p-3 rounded-full ${isReady ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
+              {isReady ? <CheckCircle className="h-6 w-6" /> : <AlertTriangle className="h-6 w-6" />}
             </div>
-            <div>
-              <h3 className="text-lg font-display font-bold text-neutral-800">
-                Finalize Episode {episode?.number}?
-              </h3>
-              <p className="text-sm text-neutral-500">
-                {episode?.title || 'This action cannot be undone'}
+            <button onClick={onClose} className="p-1 hover:bg-cream-100 rounded-full transition-colors text-neutral-400">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <h3 className="text-xl font-display font-bold text-neutral-900 mb-2">
+            Finalize Episode Scoring
+          </h3>
+          
+          <div className="space-y-4 mb-6">
+            <p className="text-neutral-600">
+              Finalizing will lock all scores for this episode and update the global and private league standings.
+            </p>
+
+            {!isReady && scoringStatus && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <p className="text-sm text-amber-800 font-medium mb-2">
+                  Warning: Scoring is incomplete
+                </p>
+                <p className="text-xs text-amber-700">
+                  {scoringStatus.total_castaways - scoringStatus.scored_castaways} castaways have no points recorded. 
+                  Finalizing will assume they earned 0 points.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {scoringStatus.unscored_castaway_names.map((name: string) => (
+                    <span key={name} className="px-1.5 py-0.5 bg-amber-200/50 text-amber-800 rounded text-[10px]">
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="bg-red-50 border border-red-100 rounded-xl p-4">
+              <p className="text-xs text-red-700 font-medium flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" /> This action cannot be easily undone.
               </p>
             </div>
           </div>
-          <button onClick={onCancel} className="text-neutral-400 hover:text-neutral-600">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
 
-        {scoringStatus && !scoringStatus.is_complete && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-            <p className="text-sm font-medium text-red-800 mb-2">Incomplete Scoring Detected</p>
-            <p className="text-sm text-red-700 mb-2">
-              {scoringStatus.scored_castaways} of {scoringStatus.total_castaways} castaways scored.
-              Missing:
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {scoringStatus.unscored_castaway_names.map((name) => (
-                <span key={name} className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">
-                  {name}
-                </span>
-              ))}
-            </div>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-3 bg-cream-100 text-neutral-700 font-bold rounded-xl hover:bg-cream-200 transition-colors"
+            >
+              Back
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={isPending}
+              className="flex-1 px-4 py-3 bg-burgundy-600 text-white font-bold rounded-xl hover:bg-burgundy-700 transition-colors shadow-lg shadow-burgundy-500/20 flex items-center justify-center gap-2"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Finalizing...
+                </>
+              ) : (
+                'Finalize Now'
+              )}
+            </button>
           </div>
-        )}
-
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-          <p className="text-sm text-amber-800">
-            <strong>Warning:</strong> Finalizing will:
-          </p>
-          <ul className="text-sm text-amber-700 mt-2 space-y-1">
-            <li>• Lock all scores for this episode</li>
-            <li>• Update all players' points and rankings</li>
-            <li>• Mark eliminated castaways</li>
-            <li>• Make results visible to all users</li>
-          </ul>
-        </div>
-
-        <div className="flex gap-3">
-          <button onClick={onCancel} className="flex-1 btn btn-secondary" disabled={isPending}>
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 btn btn-primary flex items-center justify-center gap-2"
-            disabled={isPending || !scoringStatus?.is_complete}
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Finalizing...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="h-4 w-4" />
-                Finalize Scores
-              </>
-            )}
-          </button>
         </div>
       </div>
     </div>

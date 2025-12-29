@@ -6,8 +6,8 @@ if (!process.env.RESEND_API_KEY) {
 
 export const resend = new Resend(process.env.RESEND_API_KEY || '');
 
-export const FROM_EMAIL = 'RGFL Survivor <noreply@rgfl.app>';
-export const REPLY_TO = 'support@rgfl.app';
+export const FROM_EMAIL = 'Reality Games: Survivor <noreply@rgfl.app>';
+export const REPLY_TO = 'support@realitygamesfantasyleague.com';
 
 interface EmailParams {
   to: string | string[];

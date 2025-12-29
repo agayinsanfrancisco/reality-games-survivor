@@ -45,18 +45,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('id, email, display_name, role, phone, phone_verified, avatar_url')
-      .eq('id', userId)
-      .single();
+  const fetchProfile = async (userId: string, retries = 3): Promise<UserProfile | null> => {
+    for (let attempt = 0; attempt < retries; attempt++) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, email, display_name, role, phone, phone_verified, avatar_url')
+        .eq('id', userId)
+        .single();
 
-    if (error) {
+      if (!error && data) {
+        return data as UserProfile;
+      }
+
+      // If profile doesn't exist yet (new user), wait a bit and retry
+      if (error?.code === 'PGRST116' && attempt < retries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+        continue;
+      }
+
       console.error('Error fetching profile:', error);
       return null;
     }
-    return data as UserProfile;
+    return null;
   };
 
   const refreshProfile = async () => {
@@ -74,10 +84,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Fetch user profile if authenticated
       if (session?.user) {
-        const profileData = await fetchProfile(session.user.id);
-        setProfile(profileData);
+        try {
+          const profileData = await fetchProfile(session.user.id);
+          setProfile(profileData);
+        } catch (error) {
+          console.error('Failed to fetch profile:', error);
+          // Continue even if profile fetch fails - don't block the app
+        }
       }
 
+      setLoading(false);
+    }).catch((error) => {
+      console.error('Failed to get session:', error);
       setLoading(false);
     });
 

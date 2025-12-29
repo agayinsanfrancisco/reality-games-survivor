@@ -157,23 +157,23 @@ export function Draft() {
     );
   }
 
-  // Success view after save
-  if (saveSuccess) {
-    return (
-      <DraftSuccessView
-        leagueId={leagueId!}
-        league={league}
-        rankings={rankings}
-        castawayMap={castawayMap}
-        onEditRankings={() => setSaveSuccess(false)}
-      />
-    );
-  }
+      // Success view after save
+      if (saveSuccess) {
+        return (
+          <DraftSuccessView
+            leagueId={leagueId!}
+            league={league || undefined}
+            rankings={rankings}
+            castawayMap={castawayMap}
+            onEditRankings={() => setSaveSuccess(false)}
+          />
+        );
+      }
 
-  // Draft results view
-  if (draftProcessed && myRoster && myRoster.length > 0) {
-    return <DraftResultsView leagueId={leagueId!} league={league} roster={myRoster} />;
-  }
+      // Draft results view
+      if (draftProcessed && myRoster && myRoster.length > 0) {
+        return <DraftResultsView leagueId={leagueId!} league={league || undefined} roster={myRoster} />;
+      }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">

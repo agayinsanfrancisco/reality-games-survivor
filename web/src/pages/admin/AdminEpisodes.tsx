@@ -70,6 +70,7 @@ export function AdminEpisodes() {
       const payload = {
         season_id: seasonId as string,
         number: parseInt(formData.number),
+        week_number: parseInt(formData.number), // Assuming week_number matches number for now
         title: formData.title || null,
         air_date: formData.air_date,
         picks_lock_at: formData.picks_lock_at,
@@ -160,6 +161,7 @@ export function AdminEpisodes() {
         episodesToCreate.push({
           season_id: seasonId as string,
           number: i,
+          week_number: i,
           title: i === 14 ? 'Finale' : `Episode ${i}`,
           air_date: airDate.toISOString(),
           picks_lock_at: picksLock.toISOString(),

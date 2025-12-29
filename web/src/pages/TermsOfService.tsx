@@ -75,14 +75,29 @@ export default function TermsOfService() {
             <ul className="list-disc list-inside text-neutral-600 space-y-2 ml-4">
               <li>You authorize us to process payment through Stripe</li>
               <li>Refunds are available only if you leave before the draft begins</li>
-              <li>Prize distribution is managed by league commissioners</li>
-              <li>We are not responsible for commissioner payout decisions</li>
+              <li>Site administrators have final discretion on all league payouts and prize distribution</li>
             </ul>
           </section>
 
           <section>
             <h2 className="text-xl font-display font-bold text-neutral-800 mb-3">
-              5. User Conduct
+              5. Mobile and Device Usage
+            </h2>
+            <p className="text-neutral-600 mb-3">
+              The Service is designed to be accessible on mobile devices, tablets, and desktop computers. By using the Service on any device:
+            </p>
+            <ul className="list-disc list-inside text-neutral-600 space-y-2 ml-4">
+              <li>You are responsible for ensuring your device meets minimum technical requirements</li>
+              <li>You are responsible for any data charges incurred through your mobile carrier</li>
+              <li>We are not responsible for device-specific issues or compatibility problems</li>
+              <li>Some features may be optimized for specific screen sizes or device types</li>
+              <li>You agree to use the Service in compliance with your device's terms of service</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-display font-bold text-neutral-800 mb-3">
+              6. User Conduct
             </h2>
             <p className="text-neutral-600 mb-3">You agree not to:</p>
             <ul className="list-disc list-inside text-neutral-600 space-y-2 ml-4">
@@ -97,7 +112,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-xl font-display font-bold text-neutral-800 mb-3">
-              6. Scoring and Game Rules
+              7. Scoring and Game Rules
             </h2>
             <p className="text-neutral-600">
               Scoring is determined by our proprietary system based on castaway actions during each
@@ -109,7 +124,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-xl font-display font-bold text-neutral-800 mb-3">
-              7. Intellectual Property
+              8. Intellectual Property
             </h2>
             <p className="text-neutral-600">
               The Service and its original content, features, and functionality are owned by Reality
@@ -120,7 +135,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-xl font-display font-bold text-neutral-800 mb-3">
-              8. Disclaimer of Warranties
+              9. Disclaimer of Warranties
             </h2>
             <p className="text-neutral-600">
               THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND,
@@ -131,7 +146,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-xl font-display font-bold text-neutral-800 mb-3">
-              9. Limitation of Liability
+              10. Limitation of Liability
             </h2>
             <p className="text-neutral-600">
               TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR ANY INDIRECT,
@@ -142,7 +157,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-xl font-display font-bold text-neutral-800 mb-3">
-              10. Termination
+              11. Termination
             </h2>
             <p className="text-neutral-600">
               We may terminate or suspend your account at any time for violations of these Terms or
@@ -153,7 +168,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-xl font-display font-bold text-neutral-800 mb-3">
-              11. Changes to Terms
+              12. Changes to Terms
             </h2>
             <p className="text-neutral-600">
               We reserve the right to modify these Terms at any time. We will provide notice of
@@ -163,7 +178,7 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-xl font-display font-bold text-neutral-800 mb-3">12. Contact Us</h2>
+            <h2 className="text-xl font-display font-bold text-neutral-800 mb-3">13. Contact Us</h2>
             <p className="text-neutral-600">
               If you have any questions about these Terms, please contact us at{' '}
               <Link to="/contact" className="text-burgundy-600 hover:text-burgundy-700 underline">

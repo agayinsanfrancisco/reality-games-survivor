@@ -30,7 +30,7 @@ export async function handleStop(ctx: SmsContext): Promise<SmsResult> {
 
   if (!ctx.userId) {
     return {
-      response: "You've been unsubscribed from RGFL SMS. Reply START to resubscribe or visit rgfl.app to manage preferences.",
+      response: "You've been unsubscribed from Reality Games: Survivor SMS. Reply START to resubscribe or visit survivor.realitygamesfantasyleague.com to manage preferences.",
       parsedData: { ...parsedData, compliance_action: 'unsubscribe_no_user' },
     };
   }
@@ -56,7 +56,7 @@ export async function handleStop(ctx: SmsContext): Promise<SmsResult> {
   );
 
   return {
-    response: "You've been unsubscribed from RGFL SMS. Reply START to resubscribe or visit rgfl.app to manage preferences.",
+    response: "You've been unsubscribed from Reality Games: Survivor SMS. Reply START to resubscribe or visit survivor.realitygamesfantasyleague.com to manage preferences.",
     parsedData: { ...parsedData, compliance_action: 'unsubscribe_success' },
   };
 }
@@ -70,7 +70,7 @@ export async function handleStart(ctx: SmsContext): Promise<SmsResult> {
 
   if (!ctx.userId) {
     return {
-      response: 'Phone not registered. Visit rgfl.app to link your phone and enable SMS notifications.',
+      response: 'Phone not registered. Visit survivor.realitygamesfantasyleague.com to link your phone and enable SMS notifications.',
       parsedData: { ...parsedData, compliance_action: 'subscribe_no_user' },
     };
   }
@@ -96,7 +96,7 @@ export async function handleStart(ctx: SmsContext): Promise<SmsResult> {
   );
 
   return {
-    response: "You've been subscribed to RGFL SMS notifications. Text STOP to unsubscribe anytime.",
+    response: "You've been subscribed to Reality Games: Survivor SMS notifications. Text STOP to unsubscribe anytime.",
     parsedData: { ...parsedData, compliance_action: 'subscribe_success' },
   };
 }
@@ -110,7 +110,7 @@ export async function handlePick(ctx: SmsContext): Promise<SmsResult> {
 
   if (!ctx.userId) {
     return {
-      response: 'Phone not registered. Visit rgfl.app to link your phone.',
+      response: 'Phone not registered. Visit survivor.realitygamesfantasyleague.com to link your phone.',
       parsedData,
     };
   }
@@ -118,7 +118,7 @@ export async function handlePick(ctx: SmsContext): Promise<SmsResult> {
   const castawayName = ctx.args.join(' ');
   if (!castawayName) {
     return {
-      response: 'Usage: PICK [castaway name]',
+      response: 'Usage: PICK [castaway name]\n\nExample: PICK Kenzie',
       parsedData,
     };
   }
@@ -133,7 +133,7 @@ export async function handlePick(ctx: SmsContext): Promise<SmsResult> {
 
   if (!castaway) {
     return {
-      response: `Castaway "${castawayName}" not found or eliminated.`,
+      response: `Castaway "${castawayName}" not found or eliminated. Text TEAM to see your roster.`,
       parsedData,
     };
   }
@@ -148,7 +148,7 @@ export async function handlePick(ctx: SmsContext): Promise<SmsResult> {
 
   if (!memberships || memberships.length === 0) {
     return {
-      response: 'You are not in any leagues.',
+      response: 'You are not in any leagues. Visit survivor.realitygamesfantasyleague.com to join one!',
       parsedData,
     };
   }
@@ -164,7 +164,7 @@ export async function handlePick(ctx: SmsContext): Promise<SmsResult> {
 
   if (!episode) {
     return {
-      response: 'No episode currently accepting picks.',
+      response: 'No episode currently accepting picks. Check back before the next episode!',
       parsedData,
     };
   }
@@ -198,8 +198,15 @@ export async function handlePick(ctx: SmsContext): Promise<SmsResult> {
     }
   }
 
+  if (pickCount === 0) {
+    return {
+      response: `${castaway.name} is not on your roster. Text TEAM to see your castaways.`,
+      parsedData: { ...parsedData, pickCount: 0 },
+    };
+  }
+
   return {
-    response: `Picked ${castaway.name} for Episode ${episode.number} in ${pickCount} league(s).`,
+    response: `✅ Picked ${castaway.name} for Episode ${episode.number} in ${pickCount} league${pickCount > 1 ? 's' : ''}.`,
     parsedData: { ...parsedData, pickCount, episodeNumber: episode.number },
   };
 }
@@ -213,27 +220,27 @@ export async function handleStatus(ctx: SmsContext): Promise<SmsResult> {
 
   if (!ctx.userId) {
     return {
-      response: 'Phone not registered. Visit rgfl.app to link your phone.',
+      response: 'Phone not registered. Visit survivor.realitygamesfantasyleague.com to link your phone.',
       parsedData,
     };
   }
 
   const { data: picks } = await supabaseAdmin
     .from('weekly_picks')
-    .select('castaways(name), leagues(name)')
+    .select('castaways(name), leagues(name), episodes(number)')
     .eq('user_id', ctx.userId)
     .order('picked_at', { ascending: false })
     .limit(5);
 
   if (!picks || picks.length === 0) {
     return {
-      response: 'No recent picks found.',
+      response: 'No recent picks found. Text PICK [name] to make a pick!',
       parsedData,
     };
   }
 
-  const response = 'Recent picks:\n' + picks.map((p: any) =>
-    `${p.castaways?.name} - ${p.leagues?.name}`
+  const response = '📊 Recent picks:\n' + picks.map((p: any) =>
+    `• ${p.castaways?.name} (Ep ${p.episodes?.number}) - ${p.leagues?.name}`
   ).join('\n');
 
   return { response, parsedData: { ...parsedData, pickCount: picks.length } };
@@ -248,7 +255,7 @@ export async function handleTeam(ctx: SmsContext): Promise<SmsResult> {
 
   if (!ctx.userId) {
     return {
-      response: 'Phone not registered. Visit rgfl.app to link your phone.',
+      response: 'Phone not registered. Visit survivor.realitygamesfantasyleague.com to link your phone.',
       parsedData,
     };
   }
@@ -261,14 +268,15 @@ export async function handleTeam(ctx: SmsContext): Promise<SmsResult> {
 
   if (!rosters || rosters.length === 0) {
     return {
-      response: 'No castaways on roster.',
+      response: 'No castaways on roster. Complete your draft to get your team!',
       parsedData,
     };
   }
 
-  const response = 'Your team:\n' + rosters.map((r: any) =>
-    `${r.castaways?.name} (${r.castaways?.status}) - ${r.leagues?.name}`
-  ).join('\n');
+  const response = '🏝️ Your team:\n' + rosters.map((r: any) => {
+    const status = r.castaways?.status === 'eliminated' ? '❌' : '✅';
+    return `${status} ${r.castaways?.name} - ${r.leagues?.name}`;
+  }).join('\n');
 
   return { response, parsedData: { ...parsedData, rosterCount: rosters.length } };
 }
@@ -279,7 +287,16 @@ export async function handleTeam(ctx: SmsContext): Promise<SmsResult> {
 
 export function handleHelp(ctx: SmsContext): SmsResult {
   return {
-    response: 'RGFL SMS Commands:\n\nPICK [name] - Pick castaway\nSTATUS - View picks\nTEAM - View roster\nSTOP - Unsubscribe\nSTART - Resubscribe\nHELP - Show this message',
+    response: `Reality Games: Survivor SMS Commands:
+
+PICK [name] - Pick castaway
+STATUS - View recent picks
+TEAM - View your roster
+STOP - Unsubscribe
+START - Resubscribe
+HELP - Show this message
+
+Example: PICK Kenzie`,
     parsedData: { command: ctx.command, args: ctx.args },
   };
 }
@@ -316,7 +333,7 @@ export async function processSmsCommand(ctx: SmsContext): Promise<SmsResult> {
 
     default:
       return {
-        response: 'Unknown command. Text HELP for options.',
+        response: 'Unknown command. Text HELP for available commands.',
         parsedData: { command: ctx.command, args: ctx.args },
       };
   }

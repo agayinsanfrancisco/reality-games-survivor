@@ -190,14 +190,13 @@ function welcomeEmailTemplate({ displayName }: WelcomeEmailData): string {
         ${heading('Text Your Picks!', 2)}
         ${paragraph(`Add your phone number to use SMS commands. Text <strong>PICK [Name]</strong> to make picks, <strong>STATUS</strong> to check your current pick, and <strong>TEAM</strong> to see your roster — all from your phone.`)}
         <p style="color: #8A7654; font-size: 14px; margin: 16px 0 8px 0;">Text us at:</p>
-        <div style="font-family: -apple-system, sans-serif; font-size: 28px; font-weight: 700; color: #A52A2A; letter-spacing: 2px;">(918) 505-RGFL</div>
-        <p style="color: #8A7654; font-size: 12px; margin: 4px 0 16px 0;">(918) 505-7435</p>
+        <div style="font-family: -apple-system, sans-serif; font-size: 28px; font-weight: 700; color: #A52A2A; letter-spacing: 2px;">(918) 505-7435</div>
         ${button('Set Up SMS', `${BASE_URL}/profile/notifications`, 'success')}
       </div>
     `)}
     ${paragraph(`Questions? Reply to this email or check out our <a href="${BASE_URL}/how-to-play" style="color:#A52A2A; font-weight: 500;">How to Play</a> guide.`)}
     ${paragraph(`<em style="color: #8A7654;">The tribe has spoken. Let's play.</em>`)}
-  `, 'Welcome to RGFL Survivor - your fantasy league adventure begins!');
+  `, 'Welcome to Reality Games: Survivor');
 }
 
 function leagueCreatedEmailTemplate(data: LeagueCreatedEmailData): string {
@@ -515,7 +514,7 @@ function paymentRecoveryEmailTemplate(data: PaymentRecoveryEmailData): string {
       ${paragraph('• The session timed out')}
       ${paragraph(`<strong>Don't worry</strong> — just click the button above to try again!`)}
     `)}
-    ${paragraph(`<p style="color: #8A7654; font-size: 14px; text-align: center;">Need help? Reply to this email or contact us at support@rgfl.app</p>`)}
+    ${paragraph(`<p style="color: #8A7654; font-size: 14px; text-align: center;">Need help? Reply to this email or contact us at support@realitygamesfantasyleague.com</p>`)}
   `, `Complete your payment for ${data.leagueName}`);
 }
 
@@ -560,7 +559,7 @@ export class EmailService {
     const html = welcomeEmailTemplate(data);
     return sendEmail({
       to: data.email,
-      subject: '🏝️ Welcome to RGFL Survivor!',
+      subject: '🏝️ Welcome to Reality Games: Survivor!',
       html,
     });
   }

@@ -10,7 +10,7 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <img src="/logo.png" alt="RGFL" className="h-10 w-auto brightness-0 invert" />
+              <img src="/logo.png" alt="RGFL" className="h-10 w-auto" />
             </Link>
             <p className="text-neutral-400 text-sm">
               Fantasy Survivor for people who actually watch Survivor.
@@ -99,20 +99,12 @@ export function Footer() {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="mailto:support@realitygamesfantasyleague.com"
-                  className="text-neutral-300 hover:text-burgundy-400 transition-colors text-sm"
-                >
-                  support@realitygamesfantasyleague.com
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://instagram.com/rgfantasyleague"
+                  href="https://twitter.com/realitygamesfl"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-neutral-300 hover:text-burgundy-400 transition-colors text-sm"
                 >
-                  @rgfantasyleague
+                  @realitygamesfl
                 </a>
               </li>
             </ul>

@@ -22,7 +22,6 @@ export function useMyLeagues(userId: string | undefined) {
         .select(
           `
           league_id,
-          role,
           total_points,
           rank,
           joined_at,
@@ -31,9 +30,9 @@ export function useMyLeagues(userId: string | undefined) {
             name,
             code,
             season_id,
-            max_members,
-            is_paid,
-            entry_fee,
+            max_players,
+            require_donation,
+            donation_amount,
             commissioner_id,
             created_at
           )
@@ -45,9 +44,8 @@ export function useMyLeagues(userId: string | undefined) {
 
       // Transform the data to include league info at the top level
       return data.map((membership) => ({
-        ...membership.leagues,
+        ...(membership.leagues as unknown as League),
         membership: {
-          role: membership.role,
           total_points: membership.total_points,
           rank: membership.rank,
           joined_at: membership.joined_at,

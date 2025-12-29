@@ -1,4 +1,4 @@
-import { emailWrapper, button } from '../base.js';
+import { emailWrapper, heading, paragraph, button, card, highlight, featureItem, centeredText } from '../base.js';
 
 interface LeagueJoinedEmailParams {
   displayName: string;
@@ -10,23 +10,28 @@ interface LeagueJoinedEmailParams {
 }
 
 export function leagueJoinedEmail({ displayName, leagueName, seasonName, memberCount, maxPlayers, leagueId }: LeagueJoinedEmailParams): string {
-  return emailWrapper(`
-    <h1>You're In! 🎊</h1>
-    <p>Hey ${displayName},</p>
-    <p>You've joined <span class="highlight">${leagueName}</span> for ${seasonName}!</p>
+  const content = `
+    ${heading("You're In!")}
+    
+    ${paragraph(`Hey ${displayName},`)}
+    
+    ${paragraph(`You've joined ${highlight(leagueName)} for ${seasonName}.`)}
 
-    <div class="card">
-      <p><strong>Current Members:</strong> ${memberCount}/${maxPlayers}</p>
-      <p>The draft will begin once all players have joined and the commissioner starts it.</p>
-    </div>
+    ${card(`
+      ${centeredText(`
+        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #8A7654; margin: 0 0 8px 0;">Current Members</p>
+        <p style="font-family: Georgia, 'Times New Roman', serif; font-size: 36px; font-weight: 700; color: #A52A2A; margin: 0;">${memberCount}<span style="color: #8A7654; font-size: 20px;">/${maxPlayers}</span></p>
+        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #8A7654; margin: 12px 0 0 0;">The draft will begin once all players have joined.</p>
+      `)}
+    `, 'highlight')}
 
-    ${button('View League', `https://rgfl.app/leagues/${leagueId}`)}
+    ${button('View League', `https://survivor.realitygamesfantasyleague.com/leagues/${leagueId}`)}
 
-    <h2>What's Next?</h2>
-    <p>🎯 Wait for the draft to begin</p>
-    <p>🏝️ Draft 2 castaways for your team</p>
-    <p>📊 Make weekly picks and compete!</p>
+    ${heading("What's Next?", 2)}
+    ${featureItem('🎯', 'Wait for the Draft', 'The commissioner will start the draft once the league is ready.')}
+    ${featureItem('🏝️', 'Draft 2 Castaways', 'Build your team in the snake draft.')}
+    ${featureItem('📊', 'Make Weekly Picks', 'Choose your castaway each episode and compete!')}
+  `;
 
-    <p>May the best fan win!</p>
-  `, `You've joined ${leagueName} - get ready to draft!`);
+  return emailWrapper(content, `You've joined ${leagueName}`, 'tribal');
 }

@@ -1,4 +1,4 @@
-import { emailWrapper, button, statBox } from '../base.js';
+import { emailWrapper, heading, paragraph, button, card, highlight, centeredText } from '../base.js';
 
 interface PickConfirmedEmailParams {
   displayName: string;
@@ -10,21 +10,25 @@ interface PickConfirmedEmailParams {
 }
 
 export function pickConfirmedEmail({ displayName, leagueName, castawayName, episodeNumber, picksLockAt, leagueId }: PickConfirmedEmailParams): string {
-  return emailWrapper(`
-    <h1>Pick Confirmed! ✓</h1>
-    <p>Hey ${displayName},</p>
-    <p>You've selected <span class="highlight">${castawayName}</span> for Episode ${episodeNumber} in <span class="highlight">${leagueName}</span>.</p>
+  const content = `
+    ${heading('Pick Confirmed')}
+    
+    ${paragraph(`Hey ${displayName},`)}
+    
+    ${paragraph(`You've selected ${highlight(castawayName)} for Episode ${episodeNumber} in ${highlight(leagueName)}.`)}
 
-    <div class="card" style="text-align: center;">
-      <p style="color: #b8a; margin-bottom: 8px;">Your Pick</p>
-      <div style="font-size: 24px; font-weight: bold; color: #d4a656;">${castawayName}</div>
-      <p style="color: #b8a; font-size: 12px; margin-top: 8px;">Episode ${episodeNumber}</p>
-    </div>
+    ${card(`
+      ${centeredText(`
+        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #8A7654; margin: 0 0 12px 0;">Your Pick</p>
+        <p style="font-family: Georgia, 'Times New Roman', serif; font-size: 32px; font-weight: 700; color: #A52A2A; margin: 0;">${castawayName}</p>
+        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #8A7654; margin: 12px 0 0 0;">Episode ${episodeNumber}</p>
+      `)}
+    `, 'highlight')}
 
-    <p>Picks lock at <strong>${picksLockAt}</strong>. You can change your pick until then.</p>
+    ${paragraph(`Picks lock at <strong style="color: #A52A2A;">${picksLockAt}</strong>. You can change your pick until then.`)}
 
-    ${button('View Pick', `https://rgfl.app/leagues/${leagueId}/pick`)}
+    ${button('View Pick', `https://survivor.realitygamesfantasyleague.com/leagues/${leagueId}/pick`)}
+  `;
 
-    <p>Good luck!</p>
-  `, `Your pick is confirmed: ${castawayName} for Episode ${episodeNumber}`);
+  return emailWrapper(content, `Pick confirmed: ${castawayName} for Episode ${episodeNumber}`, 'tribal');
 }

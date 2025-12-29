@@ -24,9 +24,9 @@ interface ScoringRule {
   description: string | null;
   points: number;
   category: string | null;
-  is_negative: boolean;
-  is_active: boolean;
-  sort_order: number;
+  is_negative: boolean | null;
+  is_active: boolean | null;
+  sort_order: number | null;
 }
 
 const DEFAULT_CATEGORIES = [
@@ -141,8 +141,8 @@ export function AdminScoringRules() {
       description: rule.description || '',
       points: rule.points,
       category: rule.category || DEFAULT_CATEGORIES[0],
-      is_negative: rule.is_negative,
-      is_active: rule.is_active,
+      is_negative: !!rule.is_negative,
+      is_active: !!rule.is_active,
     });
     setIsAdding(false);
   };
@@ -203,9 +203,9 @@ export function AdminScoringRules() {
 
   const stats = {
     total: rules?.length || 0,
-    active: rules?.filter((r: ScoringRule) => r.is_active).length || 0,
+    active: rules?.filter((r: ScoringRule) => !!r.is_active).length || 0,
     positive: rules?.filter((r: ScoringRule) => !r.is_negative).length || 0,
-    negative: rules?.filter((r: ScoringRule) => r.is_negative).length || 0,
+    negative: rules?.filter((r: ScoringRule) => !!r.is_negative).length || 0,
   };
 
   if (isLoading) {

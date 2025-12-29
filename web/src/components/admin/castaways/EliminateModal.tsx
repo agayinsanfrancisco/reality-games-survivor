@@ -4,11 +4,7 @@
  * Modal for eliminating a castaway.
  */
 
-interface Episode {
-  id: string;
-  number: number;
-  title: string | null;
-}
+import type { Episode } from '@/types';
 
 interface EliminateModalProps {
   castawayName: string;

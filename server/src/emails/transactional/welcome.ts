@@ -1,27 +1,28 @@
-import { emailWrapper, button } from '../base.js';
+import { emailWrapper, heading, paragraph, button, card, featureItem, spacer } from '../base.js';
 
 interface WelcomeEmailParams {
   displayName: string;
 }
 
 export function welcomeEmail({ displayName }: WelcomeEmailParams): string {
-  return emailWrapper(`
-    <h1>Welcome to RGFL Survivor! 🎉</h1>
-    <p>Hey ${displayName},</p>
-    <p>You're now part of the most strategic Survivor fantasy league ever created. With 100+ scoring rules that reward real gameplay strategy, every episode is an opportunity to prove your Survivor knowledge.</p>
+  const content = `
+    ${heading(`Welcome, ${displayName}!`)}
+    
+    ${paragraph(`Welcome to <strong>Reality Games Fantasy League</strong> — the ultimate Survivor fantasy experience. With 100+ scoring rules that reward real gameplay strategy, every episode is an opportunity to prove your Survivor knowledge.`)}
 
-    <div class="card">
-      <h2>Getting Started</h2>
-      <p><strong>1. Create or join a league</strong> - Play with friends or join the global rankings</p>
-      <p><strong>2. Draft your castaways</strong> - Pick 2 castaways in the snake draft</p>
-      <p><strong>3. Make weekly picks</strong> - Choose who to play each episode</p>
-      <p><strong>4. Dominate!</strong> - Climb the leaderboard and prove you're the ultimate fan</p>
-    </div>
+    ${card(`
+      ${heading('Getting Started', 2)}
+      ${featureItem('🏝️', 'Create or Join a League', 'Play with friends in a private league or compete in the global rankings.')}
+      ${featureItem('🎯', 'Draft Your Castaways', 'Pick 2 castaways in the snake draft to build your team.')}
+      ${featureItem('📊', 'Make Weekly Picks', 'Choose which castaway to play each episode for maximum points.')}
+      ${featureItem('🏆', 'Dominate the Leaderboard', 'Climb the rankings and prove you\'re the ultimate Survivor fan.')}
+    `)}
 
-    ${button('Go to Dashboard', 'https://rgfl.app/dashboard')}
+    ${button('Go to Dashboard', 'https://survivor.realitygamesfantasyleague.com/dashboard')}
 
-    <p>Questions? Reply to this email or check out our <a href="https://rgfl.app/how-to-play" style="color:#d4a656;">How to Play</a> guide.</p>
+    ${spacer()}
+    ${paragraph(`Questions? Reply to this email for support.`, true)}
+  `;
 
-    <p>The tribe has spoken. Let's play!</p>
-  `, 'Welcome to RGFL Survivor - your fantasy league adventure begins!');
+  return emailWrapper(content, 'Welcome to Reality Games: Survivor');
 }

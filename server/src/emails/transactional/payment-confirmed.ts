@@ -1,4 +1,4 @@
-import { emailWrapper, button } from '../base.js';
+import { emailWrapper, heading, paragraph, button, card } from '../base.js';
 
 interface PaymentConfirmedEmailParams {
   displayName: string;
@@ -15,31 +15,35 @@ export function paymentConfirmedEmail({ displayName, leagueName, amount, currenc
     currency: currency.toUpperCase(),
   }).format(amount);
 
-  return emailWrapper(`
-    <h1>Payment Confirmed! 💳</h1>
-    <p>Hey ${displayName},</p>
-    <p>Your payment for <span class="highlight">${leagueName}</span> has been processed successfully.</p>
+  const content = `
+    ${heading('Payment Confirmed')}
+    
+    ${paragraph(`Hey ${displayName},`)}
+    
+    ${paragraph(`Your payment for <strong style="color: #A52A2A;">${leagueName}</strong> has been processed.`)}
 
-    <div class="card">
-      <h2>Receipt</h2>
-      <table style="width: 100%; color: #e8d0df;">
-        <tr>
-          <td>League</td>
-          <td style="text-align: right; color: #fff;">${leagueName}</td>
+    ${card(`
+      ${heading('Receipt', 2)}
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="color: #4A3728;">
+        <tr style="border-bottom: 1px solid #EDE5D5;">
+          <td style="padding: 12px 0; color: #8A7654;">League</td>
+          <td style="padding: 12px 0; text-align: right; font-weight: 500;">${leagueName}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #EDE5D5;">
+          <td style="padding: 12px 0; color: #8A7654;">Amount</td>
+          <td style="padding: 12px 0; text-align: right; color: #A52A2A; font-weight: 700; font-size: 18px;">${formattedAmount}</td>
         </tr>
         <tr>
-          <td>Amount</td>
-          <td style="text-align: right; color: #d4a656; font-weight: bold;">${formattedAmount}</td>
-        </tr>
-        <tr>
-          <td>Date</td>
-          <td style="text-align: right; color: #fff;">${transactionDate}</td>
+          <td style="padding: 12px 0; color: #8A7654;">Date</td>
+          <td style="padding: 12px 0; text-align: right; font-weight: 500;">${transactionDate}</td>
         </tr>
       </table>
-    </div>
+    `)}
 
-    ${button('Go to League', `https://rgfl.app/leagues/${leagueId}`)}
+    ${button('Go to League', `https://survivor.realitygamesfantasyleague.com/leagues/${leagueId}`)}
 
-    <p style="color: #b8a; font-size: 12px;">This is your official receipt. Keep it for your records.</p>
-  `, `Payment receipt for ${leagueName}: ${formattedAmount}`);
+    <p style="color: #8A7654; font-size: 12px; text-align: center; margin: 24px 0 0 0;">This is your official receipt. Keep it for your records.</p>
+  `;
+
+  return emailWrapper(content, `Payment receipt for ${leagueName}: ${formattedAmount}`);
 }

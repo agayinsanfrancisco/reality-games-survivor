@@ -73,7 +73,7 @@ export function useEpisodeScores(episodeId: string | undefined) {
           castaways (
             id,
             name,
-            tribe,
+            tribe_original,
             status
           ),
           scoring_rules (
@@ -87,8 +87,8 @@ export function useEpisodeScores(episodeId: string | undefined) {
         .eq('episode_id', episodeId);
 
       if (error) throw error;
-      return data as (EpisodeScore & {
-        castaways: { id: string; name: string; tribe: string; status: string };
+      return data as unknown as (EpisodeScore & {
+        castaways: { id: string; name: string; tribe_original: string; status: string };
         scoring_rules: { id: string; name: string; points: number; category: string };
       })[];
     },
@@ -113,11 +113,11 @@ export function useEpisodeCastawayScores(episodeId: string | undefined) {
           scores: [],
         };
       }
-      const points = score.scoring_rules.points * (score.count || 1);
+      const points = score.scoring_rules.points * (score.quantity || 1);
       acc[castawayId].totalPoints += points;
       acc[castawayId].scores.push({
         rule: score.scoring_rules,
-        count: score.count || 1,
+        count: score.quantity || 1,
         points,
       });
       return acc;
@@ -125,7 +125,7 @@ export function useEpisodeCastawayScores(episodeId: string | undefined) {
     {} as Record<
       string,
       {
-        castaway: { id: string; name: string; tribe: string; status: string };
+        castaway: { id: string; name: string; tribe_original: string; status: string };
         totalPoints: number;
         scores: { rule: { id: string; name: string; points: number; category: string }; count: number; points: number }[];
       }

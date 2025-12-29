@@ -1,4 +1,4 @@
-import { emailWrapper, button } from '../base.js';
+import { emailWrapper, heading, paragraph, button, card, highlight, listItem, centeredText } from '../base.js';
 
 interface LeagueCreatedEmailParams {
   displayName: string;
@@ -9,29 +9,34 @@ interface LeagueCreatedEmailParams {
 }
 
 export function leagueCreatedEmail({ displayName, leagueName, leagueCode, seasonName, inviteUrl }: LeagueCreatedEmailParams): string {
-  return emailWrapper(`
-    <h1>Your League is Ready! 🏆</h1>
-    <p>Hey ${displayName},</p>
-    <p>You've successfully created <span class="highlight">${leagueName}</span> for ${seasonName}. As commissioner, you're in charge of inviting players and managing the league.</p>
+  const content = `
+    ${heading('Your League is Ready!')}
+    
+    ${paragraph(`Hey ${displayName},`)}
+    
+    ${paragraph(`You've created ${highlight(leagueName)} for ${seasonName}. As commissioner, you're in charge of inviting players and managing the league.`)}
 
-    <div class="card" style="text-align: center;">
-      <p style="color: #b8a; margin-bottom: 8px;">League Code</p>
-      <div style="font-size: 36px; font-weight: bold; color: #d4a656; letter-spacing: 4px;">${leagueCode}</div>
-    </div>
+    ${card(`
+      ${centeredText(`
+        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #8A7654; margin: 0 0 12px 0;">League Code</p>
+        <p style="font-family: Georgia, 'Times New Roman', serif; font-size: 42px; font-weight: 700; color: #A52A2A; letter-spacing: 6px; margin: 0;">${leagueCode}</p>
+      `)}
+    `, 'highlight')}
 
-    <h2>Share Your League</h2>
-    <p>Send this invite link to your friends:</p>
-    <div style="background: #4a1d3c; padding: 12px; border-radius: 8px; word-break: break-all; font-family: monospace; color: #d4a656;">
-      ${inviteUrl}
-    </div>
+    ${heading('Share Your League', 2)}
+    ${paragraph('Send this invite link to your friends:')}
+    
+    ${card(`
+      <p style="font-family: 'SF Mono', Monaco, 'Courier New', monospace; font-size: 13px; color: #5C1717; word-break: break-all; margin: 0; line-height: 1.6;">${inviteUrl}</p>
+    `)}
 
-    ${button('Manage Your League', `https://rgfl.app/leagues/${leagueCode}`)}
+    ${button('Manage Your League', `https://survivor.realitygamesfantasyleague.com/leagues/${leagueCode}`)}
 
-    <h2>Next Steps</h2>
-    <p>✅ Invite 2-12 players to join</p>
-    <p>✅ Set the draft order (or randomize)</p>
-    <p>✅ Wait for all players, then start the draft</p>
+    ${heading('Next Steps', 2)}
+    ${listItem('Invite 2-12 players to join your league', '✅')}
+    ${listItem('Set the draft order (or randomize it)', '✅')}
+    ${listItem('Wait for all players, then start the draft', '✅')}
+  `;
 
-    <p>Good luck, Commissioner!</p>
-  `, `Your league "${leagueName}" is ready - invite your friends!`);
+  return emailWrapper(content, `Your league "${leagueName}" is ready`, 'tribal');
 }

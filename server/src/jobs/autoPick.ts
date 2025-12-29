@@ -181,7 +181,7 @@ async function handleEliminatedUser(
       try {
         await sendSMS({
           to: user.phone,
-          text: `[RGFL] The tribe has spoken. Both your castaways have been eliminated from ${leagueName}. Your torch has been snuffed. You can still follow the leaderboard! Reply STOP to opt out.`,
+          text: `[RG:S] The tribe has spoken. Both your castaways have been eliminated from ${leagueName}. Your torch has been snuffed. You can still follow the leaderboard! Reply STOP to opt out.`,
           isTransactional: false,
         });
         console.log(`[AutoPick] Torch snuffed SMS sent to ${user.phone}`);

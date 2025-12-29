@@ -11,14 +11,17 @@ export type Database = {
       castaways: {
         Row: {
           age: number | null;
+          best_placement: number | null;
           created_at: string | null;
           eliminated_episode_id: string | null;
+          fun_fact: string | null;
           hometown: string | null;
           id: string;
           name: string;
           occupation: string | null;
           photo_url: string | null;
           placement: number | null;
+          previous_seasons: string[] | null;
           season_id: string;
           status: Database['public']['Enums']['castaway_status'] | null;
           tribe_original: string | null;
@@ -26,14 +29,17 @@ export type Database = {
         };
         Insert: {
           age?: number | null;
+          best_placement?: number | null;
           created_at?: string | null;
           eliminated_episode_id?: string | null;
+          fun_fact?: string | null;
           hometown?: string | null;
           id?: string;
           name: string;
           occupation?: string | null;
           photo_url?: string | null;
           placement?: number | null;
+          previous_seasons?: string[] | null;
           season_id: string;
           status?: Database['public']['Enums']['castaway_status'] | null;
           tribe_original?: string | null;
@@ -41,14 +47,17 @@ export type Database = {
         };
         Update: {
           age?: number | null;
+          best_placement?: number | null;
           created_at?: string | null;
           eliminated_episode_id?: string | null;
+          fun_fact?: string | null;
           hometown?: string | null;
           id?: string;
           name?: string;
           occupation?: string | null;
           photo_url?: string | null;
           placement?: number | null;
+          previous_seasons?: string[] | null;
           season_id?: string;
           status?: Database['public']['Enums']['castaway_status'] | null;
           tribe_original?: string | null;

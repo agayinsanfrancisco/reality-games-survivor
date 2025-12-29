@@ -172,7 +172,7 @@ async function handleTorchSnuffed(
     try {
       await sendSMS({
         to: user.phone,
-        text: `[RGFL] Both your castaways have been eliminated in ${league.name}. Your torch has been snuffed and you can no longer compete this season. Check your email for details.`,
+        text: `[RG:S] Both your castaways have been eliminated in ${league.name}. Your torch has been snuffed and you can no longer compete this season. Check your email for details.`,
       });
       console.log(`[Elimination] Sent torch snuffed SMS to ${user.phone}`);
     } catch (err) {
@@ -212,7 +212,7 @@ async function handleEliminationAlert(
     try {
       await sendSMS({
         to: user.phone,
-        text: `[RGFL] ${castawayName} has been eliminated. You have 1 castaway remaining in ${league.name}. Choose wisely!`,
+        text: `[RG:S] ${castawayName} has been eliminated. You have 1 castaway remaining in ${league.name}. Choose wisely!`,
       });
       console.log(`[Elimination] Sent elimination SMS to ${user.phone}`);
     } catch (err) {

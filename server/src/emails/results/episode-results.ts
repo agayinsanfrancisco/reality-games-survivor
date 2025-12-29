@@ -1,4 +1,4 @@
-import { emailWrapper, button, statBox } from '../base.js';
+import { emailWrapper, heading, paragraph, button, card, statsRow, divider, centeredText } from '../base.js';
 
 interface EpisodeResultsEmailParams {
   displayName: string;
@@ -10,7 +10,7 @@ interface EpisodeResultsEmailParams {
   totalPoints: number;
   rank: number;
   totalPlayers: number;
-  rankChange: number; // positive = moved up, negative = moved down
+  rankChange: number;
   leagueId: string;
   episodeId: string;
 }
@@ -33,37 +33,41 @@ export function episodeResultsEmail({
   const rankChangeText = rankChange > 0
     ? `<span style="color: #22c55e;">↑${rankChange}</span>`
     : rankChange < 0
-    ? `<span style="color: #ef4444;">↓${Math.abs(rankChange)}</span>`
-    : '<span style="color: #b8a;">—</span>';
+    ? `<span style="color: #DC2626;">↓${Math.abs(rankChange)}</span>`
+    : '<span style="color: #8A7654;">—</span>';
 
-  return emailWrapper(`
-    <h1>📊 Episode ${episodeNumber} Results</h1>
-    <p>Hey ${displayName},</p>
-    <p>The scores are in for ${episodeTitle ? `"${episodeTitle}"` : `Episode ${episodeNumber}`}!</p>
+  const content = `
+    ${heading(`Episode ${episodeNumber} Results`, 1, 'gold')}
+    
+    ${paragraph(`Hey ${displayName},`)}
+    
+    ${paragraph(`The scores are in for ${episodeTitle ? `"${episodeTitle}"` : `Episode ${episodeNumber}`}.`)}
 
-    <div class="card" style="text-align: center;">
-      <p style="color: #b8a; margin: 0;">Your Pick</p>
-      <div style="font-size: 24px; font-weight: bold; color: #fff; margin: 8px 0;">${castawayName}</div>
-      <div style="font-size: 48px; font-weight: bold; color: ${pointsEarned >= 0 ? '#22c55e' : '#ef4444'};">
-        ${pointsEarned >= 0 ? '+' : ''}${pointsEarned}
-      </div>
-      <p style="color: #b8a; margin: 0;">Points This Episode</p>
-    </div>
+    ${card(`
+      ${centeredText(`
+        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #8A7654; margin: 0 0 8px 0;">Your Pick</p>
+        <p style="font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: 700; color: #5C1717; margin: 0 0 12px 0;">${castawayName}</p>
+        <p style="font-family: Georgia, 'Times New Roman', serif; font-size: 48px; font-weight: 700; color: ${pointsEarned >= 0 ? '#8B6914' : '#DC2626'}; margin: 0;">
+          ${pointsEarned >= 0 ? '+' : ''}${pointsEarned}
+        </p>
+        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #8A7654; margin: 8px 0 0 0;">Points This Episode</p>
+      `)}
+    `, 'immunity')}
 
-    <div style="display: flex; gap: 16px; flex-wrap: wrap; margin: 24px 0;">
-      ${statBox(totalPoints, 'Total Points')}
-      ${statBox(`${rankEmoji} #${rank}`, 'League Rank')}
-    </div>
+    ${statsRow([
+      { value: totalPoints, label: 'Total Points', color: 'burgundy' },
+      { value: `${rankEmoji} #${rank}`, label: 'League Rank', color: 'gold' },
+    ])}
 
-    <div class="card">
-      <p style="margin: 0;">
+    ${card(`
+      <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #4A3728; margin: 0; text-align: center;">
         <strong>Movement:</strong> ${rankChangeText} &nbsp;|&nbsp;
         <strong>Standing:</strong> ${rank} of ${totalPlayers} in ${leagueName}
       </p>
-    </div>
+    `)}
 
-    ${button('View Full Breakdown', `https://rgfl.app/leagues/${leagueId}/episodes/${episodeId}`)}
+    ${button('View Full Breakdown', `https://survivor.realitygamesfantasyleague.com/leagues/${leagueId}/episodes/${episodeId}`, 'gold')}
+  `;
 
-    <p>Good luck next week!</p>
-  `, `Episode ${episodeNumber}: You earned ${pointsEarned} points with ${castawayName}`);
+  return emailWrapper(content, `Episode ${episodeNumber}: You earned ${pointsEarned} points with ${castawayName}`, 'immunity');
 }

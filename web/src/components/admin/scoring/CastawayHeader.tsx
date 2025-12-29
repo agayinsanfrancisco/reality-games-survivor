@@ -1,37 +1,32 @@
 /**
- * Castaway Header Component
- *
- * Header showing selected castaway info and live scoring total.
+ * Castaway Header Component for Scoring
  */
-
-import { Loader2, Save } from 'lucide-react';
+import { getAvatarUrl } from '@/lib/avatar';
+import { Loader2, CheckCircle } from 'lucide-react';
 
 interface Castaway {
   id: string;
   name: string;
   photo_url: string | null;
-}
-
-interface Episode {
-  number: number;
+  status: string;
 }
 
 interface CastawayHeaderProps {
-  castaway: Castaway | undefined;
-  episode: Episode | undefined;
-  liveTotal: number;
+  castaway: Castaway;
+  totalPoints: number;
+  episodeNumber: number;
   isSaving: boolean;
   isDirty: boolean;
   lastSavedAt: Date | null;
 }
 
-export function CastawayHeader({
-  castaway,
-  episode,
-  liveTotal,
-  isSaving,
-  isDirty,
-  lastSavedAt,
+export function CastawayHeader({ 
+  castaway, 
+  totalPoints,
+  episodeNumber,
+  isSaving, 
+  isDirty, 
+  lastSavedAt 
 }: CastawayHeaderProps) {
   return (
     <div className="bg-gradient-to-r from-burgundy-500 to-burgundy-600 rounded-2xl p-6 text-white shadow-elevated">
@@ -40,17 +35,19 @@ export function CastawayHeader({
           <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
             {castaway?.photo_url ? (
               <img
-                src={castaway.photo_url}
+                src={getAvatarUrl(castaway.name, castaway.photo_url)}
                 alt={castaway.name}
                 className="w-16 h-16 rounded-xl object-cover"
               />
             ) : (
-              <span className="text-2xl font-bold">{castaway?.name.charAt(0)}</span>
+              <span className="text-2xl font-bold">
+                {castaway?.name.charAt(0)}
+              </span>
             )}
           </div>
           <div>
             <h2 className="text-2xl font-display">{castaway?.name}</h2>
-            <p className="text-burgundy-100">Episode {episode?.number}</p>
+            <p className="text-burgundy-100">Episode {episodeNumber}</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -58,10 +55,10 @@ export function CastawayHeader({
           <div className="text-center">
             <p className="text-burgundy-200 text-sm">Episode Total</p>
             <p
-              className={`text-4xl font-display font-bold ${liveTotal >= 0 ? 'text-white' : 'text-red-200'}`}
+              className={`text-4xl font-display font-bold ${totalPoints >= 0 ? 'text-white' : 'text-red-200'}`}
             >
-              {liveTotal >= 0 ? '+' : ''}
-              {liveTotal}
+              {totalPoints >= 0 ? '+' : ''}
+              {totalPoints}
             </p>
           </div>
           <div className="flex flex-col items-end gap-1">
@@ -77,7 +74,7 @@ export function CastawayHeader({
               )}
               {lastSavedAt && !isDirty && !isSaving && (
                 <span className="text-xs text-green-200 flex items-center gap-1">
-                  <Save className="h-3 w-3" />
+                  <CheckCircle className="h-3 w-3" />
                   Saved
                 </span>
               )}

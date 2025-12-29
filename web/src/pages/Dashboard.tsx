@@ -49,10 +49,18 @@ export function Dashboard() {
     queryKey: ['profile', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from('users').select('*').eq('id', user!.id).single();
-      if (error) throw error;
+      if (error) {
+        // If profile doesn't exist yet, return null instead of throwing
+        if (error.code === 'PGRST116') {
+          return null;
+        }
+        throw error;
+      }
       return data as UserProfile;
     },
     enabled: !!user?.id,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000),
   });
 
   const { data: activeSeason } = useQuery({

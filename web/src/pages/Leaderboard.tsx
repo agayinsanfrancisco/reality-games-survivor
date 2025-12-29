@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowUp, ArrowDown, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 
@@ -12,7 +12,6 @@ interface LeagueMember {
   user_id: string;
   total_points: number;
   rank: number | null;
-  previous_rank: number | null;
   users: {
     id: string;
     display_name: string;
@@ -72,7 +71,7 @@ export function Leaderboard() {
       if (!leagueId) throw new Error('No league ID');
       const { data, error } = await supabase
         .from('league_members')
-        .select('id, user_id, total_points, rank, previous_rank, users(id, display_name)')
+        .select('id, user_id, total_points, rank, users(id, display_name)')
         .eq('league_id', leagueId)
         .order('total_points', { ascending: false });
       if (error) throw error;
@@ -81,7 +80,7 @@ export function Leaderboard() {
     enabled: !!leagueId,
   });
 
-  const getMovement = (currentRank: number, previousRank: number | null) => {
+  const _getMovement = (currentRank: number, previousRank: number | null) => {
     if (previousRank === null) return { type: 'new', change: 0 };
     const change = previousRank - currentRank; // Positive = moved up, negative = moved down
     if (change > 0) return { type: 'up', change };
@@ -158,7 +157,6 @@ export function Leaderboard() {
                 const rankStyle = getRankDisplay(globalIndex);
                 const isCurrentUser = member.user_id === user?.id;
                 const currentRank = globalIndex + 1;
-                const movement = getMovement(currentRank, member.previous_rank);
 
                 return (
                   <div
@@ -172,26 +170,6 @@ export function Leaderboard() {
                       className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${rankStyle.bg} ${rankStyle.text}`}
                     >
                       {rankStyle.emoji || currentRank}
-                    </div>
-
-                    {/* Movement Indicator */}
-                    <div className="w-8 flex justify-center">
-                      {movement.type === 'up' && (
-                        <div className="flex items-center gap-0.5 text-green-600">
-                          <ArrowUp className="h-4 w-4" />
-                          <span className="text-xs font-semibold">{movement.change}</span>
-                        </div>
-                      )}
-                      {movement.type === 'down' && (
-                        <div className="flex items-center gap-0.5 text-red-500">
-                          <ArrowDown className="h-4 w-4" />
-                          <span className="text-xs font-semibold">{movement.change}</span>
-                        </div>
-                      )}
-                      {movement.type === 'same' && <Minus className="h-4 w-4 text-neutral-300" />}
-                      {movement.type === 'new' && (
-                        <span className="text-xs font-medium text-blue-500">NEW</span>
-                      )}
                     </div>
 
                     {/* Player Info */}

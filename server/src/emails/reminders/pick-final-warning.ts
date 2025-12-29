@@ -1,4 +1,4 @@
-import { emailWrapper, button } from '../base.js';
+import { emailWrapper, heading, paragraph, button, card, centeredText } from '../base.js';
 
 interface PickFinalWarningEmailParams {
   displayName: string;
@@ -8,18 +8,24 @@ interface PickFinalWarningEmailParams {
 }
 
 export function pickFinalWarningEmail({ displayName, episodeNumber, minutesLeft, leagueId }: PickFinalWarningEmailParams): string {
-  return emailWrapper(`
-    <h1>🚨 PICKS LOCK SOON!</h1>
-    <p>Hey ${displayName},</p>
-    <p>You have <span style="color: #ef4444; font-weight: bold;">${minutesLeft} minutes</span> to submit your pick for Episode ${episodeNumber}!</p>
+  const content = `
+    ${heading('Picks Lock Soon', 1, 'error')}
+    
+    ${paragraph(`Hey ${displayName},`)}
+    
+    ${paragraph(`You have <strong style="color: #DC2626;">${minutesLeft} minutes</strong> to submit your pick for Episode ${episodeNumber}.`)}
 
-    <div class="card" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); text-align: center;">
-      <div style="font-size: 48px; font-weight: bold; color: #ef4444;">${minutesLeft}m</div>
-      <div style="color: #fbbf24; text-transform: uppercase; font-size: 12px;">UNTIL PICKS LOCK</div>
-    </div>
+    ${card(`
+      ${centeredText(`
+        <p style="font-family: Georgia, 'Times New Roman', serif; font-size: 56px; font-weight: 700; color: #DC2626; margin: 0;">${minutesLeft}m</p>
+        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #991B1B; margin: 8px 0 0 0;">Until Picks Lock</p>
+      `)}
+    `, 'error')}
 
-    ${button('PICK NOW', `https://rgfl.app/leagues/${leagueId}/pick`)}
+    ${button('Pick Now', `https://survivor.realitygamesfantasyleague.com/leagues/${leagueId}/pick`, 'urgent')}
 
-    <p style="color: #ef4444;">⚠️ After lockout, your highest-ranked castaway will be auto-selected!</p>
-  `, `⚠️ ${minutesLeft} MINUTES: Make your Episode ${episodeNumber} pick NOW!`);
+    ${paragraph(`<span style="color: #DC2626; font-size: 14px;">After lockout, your highest-ranked castaway will be auto-selected.</span>`)}
+  `;
+
+  return emailWrapper(content, `${minutesLeft} minutes to make your Episode ${episodeNumber} pick`, 'tribal_council');
 }
