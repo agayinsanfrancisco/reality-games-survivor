@@ -49,7 +49,6 @@ const app = express();
 // Sentry request handler must be the first middleware
 if (Sentry) {
   app.use(Sentry.Handlers.requestHandler());
-  app.use(Sentry.Handlers.tracingHandler());
 }
 const PORT = process.env.PORT || 3001;
 
