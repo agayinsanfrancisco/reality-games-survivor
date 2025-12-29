@@ -11,7 +11,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User, Loader2, Bell, MapPin, Star, FileText } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-import { Loader2 } from 'lucide-react';
 
 const ALL_SURVIVOR_SEASONS = [
   { value: '', label: 'Select a season (optional)' },
@@ -142,7 +141,14 @@ export default function ProfileSetup() {
         updateData.season_50_winner_prediction = data.season_50_winner_prediction;
 
       console.log('Updating profile with data:', updateData);
-      const { error } = await supabase.from('users').update(updateData).eq('id', user!.id);
+
+      // Use upsert to handle cases where the user record might not exist yet
+      const { error } = await supabase.from('users').upsert({
+        id: user!.id,
+        email: user!.email,
+        ...updateData,
+        updated_at: new Date().toISOString(),
+      });
 
       if (error) {
         console.error('Profile update error:', error);
@@ -160,14 +166,14 @@ export default function ProfileSetup() {
         ) {
           console.warn('Retrying profile update with core fields only...');
           const retryData = {
+            id: user!.id,
+            email: user!.email,
             display_name: data.display_name,
             notification_email: data.notification_email,
+            updated_at: new Date().toISOString(),
           };
 
-          const { error: retryError } = await supabase
-            .from('users')
-            .update(retryData)
-            .eq('id', user!.id);
+          const { error: retryError } = await supabase.from('users').upsert(retryData);
 
           if (retryError) {
             console.error('Profile update retry error:', retryError);
