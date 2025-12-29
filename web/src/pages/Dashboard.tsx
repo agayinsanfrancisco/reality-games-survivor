@@ -11,7 +11,6 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { Users, ChevronRight } from 'lucide-react';
 import { Footer } from '@/components/Footer';
-import { ErrorButton } from '@/components/ErrorButton';
 
 // Dashboard components
 import {
@@ -24,6 +23,8 @@ import {
   SeasonInfoCard,
   WeeklyTimelineCard,
   QuickLinksCard,
+  TriviaCalloutCard,
+  AnnouncementsCard,
 } from '@/components/dashboard';
 
 // Types and utilities
@@ -343,14 +344,15 @@ export function Dashboard() {
 
         {/* Right Sidebar */}
         <div className="space-y-6">
+          {/* Announcements - show at top of sidebar */}
+          <AnnouncementsCard />
+          
+          {/* Trivia Callout - show when season hasn't started */}
+          <TriviaCalloutCard seasonStarted={gamePhase === 'active' || gamePhase === 'finale'} />
+          
           {activeSeason && <SeasonInfoCard season={activeSeason} />}
           <WeeklyTimelineCard />
           <QuickLinksCard />
-          {/* Sentry Test Button */}
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-            <p className="text-red-600 text-sm font-semibold mb-2">Sentry Test</p>
-            <ErrorButton />
-          </div>
         </div>
       </div>
 

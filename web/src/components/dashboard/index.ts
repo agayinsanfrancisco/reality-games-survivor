@@ -13,3 +13,5 @@ export { LeagueCard } from './LeagueCard';
 export { SeasonInfoCard } from './SeasonInfoCard';
 export { WeeklyTimelineCard } from './WeeklyTimelineCard';
 export { QuickLinksCard } from './QuickLinksCard';
+export { TriviaCalloutCard } from './TriviaCalloutCard';
+export { AnnouncementsCard } from './AnnouncementsCard';
