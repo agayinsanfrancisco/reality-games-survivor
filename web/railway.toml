@@ -1,8 +1,0 @@
-[build]
-builder = "nixpacks"
-nixpacksConfigPath = "nixpacks.toml"
-
-[deploy]
-startCommand = "node_modules/.bin/serve dist -s -l ${PORT:-3000}"
-restartPolicyType = "on-failure"
-restartPolicyMaxRetries = 10
