@@ -7,7 +7,10 @@
 import * as Sentry from '@sentry/react';
 
 export function initSentry() {
-  const dsn = import.meta.env.VITE_SENTRY_DSN;
+  // Use provided DSN or fall back to environment variable
+  const dsn =
+    import.meta.env.VITE_SENTRY_DSN ||
+    'https://60ede8b927dfe100fbda00b199b28307@o4510618335903744.ingest.us.sentry.io/4510618379091968';
 
   if (!dsn) {
     console.warn('Sentry DSN not configured. Error tracking disabled.');
@@ -16,6 +19,9 @@ export function initSentry() {
 
   Sentry.init({
     dsn,
+    // Setting this option to true will send default PII data to Sentry.
+    // For example, automatic IP address collection on events
+    sendDefaultPii: true,
     environment: import.meta.env.MODE || 'development',
     integrations: [
       Sentry.browserTracingIntegration(),
