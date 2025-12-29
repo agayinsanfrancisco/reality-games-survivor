@@ -15,38 +15,6 @@ router.get('/next', authenticate, async (req: AuthenticatedRequest, res: Respons
   try {
     const userId = req.user!.id;
 
-    // Check if this is the user's first trivia attempt and send welcome email
-    const { data: existingAnswers } = await supabaseAdmin
-      .from('daily_trivia_answers')
-      .select('id')
-      .eq('user_id', userId)
-      .limit(1);
-
-    if (!existingAnswers || existingAnswers.length === 0) {
-      // First time playing trivia - send welcome email
-      const { data: user } = await supabaseAdmin
-        .from('users')
-        .select('email, display_name, welcome_email_sent')
-        .eq('id', userId)
-        .single();
-
-      if (user && !user.welcome_email_sent) {
-        try {
-          await EmailService.sendWelcome({
-            displayName: user.display_name || 'Survivor Fan',
-            email: user.email,
-          });
-          // Mark welcome email as sent
-          await supabaseAdmin
-            .from('users')
-            .update({ welcome_email_sent: true })
-            .eq('id', userId);
-        } catch (emailErr) {
-          console.error('Failed to send welcome email:', emailErr);
-        }
-      }
-    }
-
     // Check if user is locked out
     const { data: lockoutCheck, error: lockoutError } = await supabaseAdmin.rpc('is_user_trivia_locked', {
       p_user_id: userId,

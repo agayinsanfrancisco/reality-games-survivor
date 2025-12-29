@@ -11,7 +11,7 @@ const phoneSchema = z.string().regex(phoneRegex, 'Invalid phone number format');
 export const createLeagueSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(50, 'Name must be at most 50 characters'),
   password: z.string().max(100).optional().nullable(),
-  donation_amount: z.number().min(0).max(10000).optional().nullable(),
+  donation_amount: z.union([z.number().min(0).max(10000), z.null()]).optional(),
   season_id: z.string().uuid(),
   max_players: z.number().min(2).max(24).optional(),
   is_public: z.boolean().optional(),
@@ -50,11 +50,12 @@ export function validate<T extends z.ZodSchema>(
   return (req: Request, res: Response, next: NextFunction) => {
     const result = schema.safeParse(req[source]);
     if (!result.success) {
-      const errors = result.error.errors.map(e => ({
-        field: e.path.join('.'),
-        message: e.message,
-      }));
-      return res.status(400).json({ error: 'Validation failed', details: errors });
+      // Format error message for frontend
+      const firstError = result.error.errors[0];
+      const errorMessage = firstError 
+        ? `${firstError.path.join('.')}: ${firstError.message}`
+        : 'Validation failed';
+      return res.status(400).json({ error: errorMessage });
     }
     req[source] = result.data;
     next();

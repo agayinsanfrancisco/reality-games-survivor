@@ -61,8 +61,33 @@ export default function ProfileSetup() {
       favorite_season?: string;
       notification_email: boolean;
     }) => {
-      const { error } = await supabase.from('users').update(data).eq('id', user!.id);
-      if (error) throw error;
+      // Only include favorite_season if it has a value
+      const updateData: Record<string, unknown> = {
+        display_name: data.display_name,
+        notification_email: data.notification_email,
+      };
+
+      // Only add favorite_season if it exists (column may not exist in DB yet)
+      if (data.favorite_season) {
+        updateData.favorite_season = data.favorite_season;
+      }
+
+      const { error } = await supabase.from('users').update(updateData).eq('id', user!.id);
+      if (error) {
+        // If favorite_season column doesn't exist, try without it
+        if (error.message.includes('favorite_season') || error.code === '42703') {
+          const { error: retryError } = await supabase
+            .from('users')
+            .update({
+              display_name: data.display_name,
+              notification_email: data.notification_email,
+            })
+            .eq('id', user!.id);
+          if (retryError) throw retryError;
+        } else {
+          throw error;
+        }
+      }
     },
     onSuccess: async () => {
       await refreshProfile();

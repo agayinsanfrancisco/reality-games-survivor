@@ -54,24 +54,32 @@ router.post('/', authenticate, validate(createLeagueSchema), async (req: Authent
       hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     }
 
+    // Validate donation_amount if provided
+    if (donation_amount !== null && donation_amount !== undefined) {
+      if (typeof donation_amount !== 'number' || donation_amount < 0 || donation_amount > 10000) {
+        return res.status(400).json({ error: 'Donation amount must be between 0 and 10000' });
+      }
+    }
+
     // Create league
     const { data: league, error } = await supabaseAdmin
       .from('leagues')
       .insert({
-        name,
+        name: name.trim(),
         season_id,
         commissioner_id: userId,
         password_hash: hashedPassword,
         require_donation: !!donation_amount,
         donation_amount: donation_amount || null,
         max_players: max_players || 12,
-        is_public: is_public !== false,
+        is_public: is_public !== false, // Default to true unless explicitly false
       })
       .select()
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      console.error('League creation error:', error);
+      return res.status(400).json({ error: error.message || 'Failed to create league' });
     }
 
     // SECURITY: Only add commissioner to free leagues immediately
@@ -161,11 +169,15 @@ router.post('/', authenticate, validate(createLeagueSchema), async (req: Authent
         invite_code: league.code,
         requires_payment: true,
         checkout_url: session.url,
-        session_id: session.id
+        session_id: session.id,
       });
     }
 
-    res.status(201).json({ league, invite_code: league.code });
+    res.status(201).json({
+      league,
+      invite_code: league.code,
+      requires_payment: false,
+    });
   } catch (err) {
     console.error('POST /api/leagues error:', err);
     res.status(500).json({ error: 'Failed to create league' });
@@ -313,7 +325,13 @@ router.post('/:id/join', authenticate, joinLimiter, validate(joinLeagueSchema), 
 // GET /api/leagues/code/:code - Get league by invite code (public)
 router.get('/code/:code', async (req, res: Response) => {
   try {
-    const code = req.params.code.toUpperCase();
+    // Normalize code: trim whitespace, convert to uppercase, remove special chars
+    const rawCode = req.params.code || '';
+    const code = rawCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+    if (!code || code.length < 3) {
+      return res.status(400).json({ error: 'Invalid league code' });
+    }
 
     // Get league - use admin to bypass RLS (anyone with code can view basic info)
     const { data: league, error } = await supabaseAdmin
@@ -334,7 +352,15 @@ router.get('/code/:code', async (req, res: Response) => {
       .eq('code', code)
       .single();
 
-    if (error || !league) {
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'League not found' });
+      }
+      console.error('League lookup error:', error);
+      return res.status(500).json({ error: 'Failed to fetch league' });
+    }
+
+    if (!league) {
       return res.status(404).json({ error: 'League not found' });
     }
 
