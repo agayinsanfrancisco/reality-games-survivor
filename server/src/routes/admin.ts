@@ -11,6 +11,7 @@
  * - /payments/* - Payment management
  * - /users/* - User management
  * - /leagues/* - League overview
+ * - /announcements/* - Announcement management
  * - /email-queue/* & /failed-emails/* - Email management
  * - /alerting/* & /test-alert - Alert configuration
  * - /notification-preferences/* - Notification stats
@@ -28,6 +29,7 @@ import jobsRouter from './admin/jobs.js';
 import usersRouter from './admin/users.js';
 import paymentsRouter from './admin/payments.js';
 import leaguesRouter from './admin/leagues.js';
+import announcementsRouter from './admin/announcements.js';
 import emailsRouter from './admin/emails.js';
 import alertingRouter from './admin/alerting.js';
 
@@ -46,6 +48,7 @@ router.use('/jobs', jobsRouter);
 router.use('/users', usersRouter);
 router.use('/payments', paymentsRouter);
 router.use('/leagues', leaguesRouter);
+router.use('/announcements', announcementsRouter);
 router.use('/', emailsRouter);      // Handles /email-queue/* and /failed-emails/*
 router.use('/', alertingRouter);    // Handles /test-alert, /alerting/*, /notification-preferences/*
 

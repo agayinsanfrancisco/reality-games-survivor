@@ -1,0 +1,36 @@
+{
+  "name": "rgfl-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for Reality Games Fantasy League - Survivor",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "rgfl-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "survivor",
+    "fantasy-league",
+    "ai"
+  ],
+  "author": "Reality Games Fantasy League",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@sentry/node": "^8.0.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

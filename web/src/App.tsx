@@ -58,6 +58,7 @@ import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminPayments } from './pages/admin/AdminPayments';
 import { AdminJobs } from './pages/admin/AdminJobs';
 import { AdminGlobal } from './pages/admin/AdminGlobal';
+import { AdminAnnouncements } from './pages/admin/AdminAnnouncements';
 import { AdminScoringRules } from './pages/admin/AdminScoringRules';
 import { AdminScoringGrid } from './pages/admin/AdminScoringGrid';
 import { AdminErrorBoundary } from './components/AdminErrorBoundary';
@@ -153,6 +154,7 @@ export default function App() {
               <Route path="/admin/payments" element={withAdminErrorBoundary(AdminPayments)} />
               <Route path="/admin/jobs" element={withAdminErrorBoundary(AdminJobs)} />
               <Route path="/admin/global" element={withAdminErrorBoundary(AdminGlobal)} />
+              <Route path="/admin/announcements" element={withAdminErrorBoundary(AdminAnnouncements)} />
               <Route
                 path="/admin/scoring-rules"
                 element={withAdminErrorBoundary(AdminScoringRules)}

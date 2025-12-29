@@ -166,6 +166,13 @@ export function AdminDashboard() {
       icon: '📧',
       color: 'bg-pink-500',
     },
+    {
+      title: 'Announcements',
+      description: 'Manage dashboard announcements',
+      href: '/admin/announcements',
+      icon: '📢',
+      color: 'bg-amber-500',
+    },
   ];
 
   // Check if user is admin
