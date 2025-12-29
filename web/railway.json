@@ -1,10 +1,11 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
+  "$comment": "Railway service must have Root Directory set to 'web' in dashboard settings",
   "build": {
     "builder": "RAILPACK",
     "buildCommand": "npm install && npm run build"
   },
   "deploy": {
-    "startCommand": "npx serve dist -s -l $PORT"
+    "startCommand": "./start.sh"
   }
 }
