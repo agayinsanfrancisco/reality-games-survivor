@@ -9,10 +9,10 @@ interface CastawayStatsCardsProps {
 export function CastawayStatsCards({
   totalCount,
   activeCount,
-  eliminatedCount
+  eliminatedCount,
 }: CastawayStatsCardsProps) {
   return (
-    <div className="grid grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
       <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
         <div className="w-10 h-10 bg-cream-100 rounded-full mx-auto mb-2 flex items-center justify-center">
           <Users className="h-5 w-5 text-burgundy-500" />

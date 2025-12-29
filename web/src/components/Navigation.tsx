@@ -2,8 +2,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { useState, useEffect } from 'react';
-import { Shield, UserCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Shield, UserCircle, Menu, X } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -14,6 +14,8 @@ interface UserProfile {
 export function Navigation() {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   // View mode toggle for admins - persisted in localStorage
   const [viewMode, setViewMode] = useState<'admin' | 'player'>(() => {
@@ -27,6 +29,31 @@ export function Navigation() {
   useEffect(() => {
     localStorage.setItem('adminViewMode', viewMode);
   }, [viewMode]);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+    if (mobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [mobileMenuOpen]);
+
+  // Handle sign out with localStorage cleanup
+  const handleSignOut = () => {
+    localStorage.removeItem('adminViewMode');
+    setMobileMenuOpen(false);
+    signOut();
+  };
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -113,18 +140,60 @@ export function Navigation() {
               </div>
 
               <div className="flex items-center gap-3">
+                {/* Mobile menu button */}
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="md:hidden p-2 text-neutral-600 hover:text-orange-600"
+                  aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                  aria-expanded={mobileMenuOpen}
+                >
+                  {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                </button>
                 <div className="text-right hidden sm:block">
                   <p className="text-neutral-800 text-sm font-medium">{profile?.display_name}</p>
                   <p className="text-orange-600 text-xs font-semibold">Administrator</p>
                 </div>
                 <button
-                  onClick={() => signOut()}
-                  className="text-neutral-500 hover:text-neutral-800 text-sm"
+                  onClick={handleSignOut}
+                  className="text-neutral-500 hover:text-neutral-800 text-sm hidden sm:block"
                 >
                   Sign out
                 </button>
               </div>
             </div>
+
+            {/* Mobile Admin Menu */}
+            {mobileMenuOpen && (
+              <div ref={mobileMenuRef} className="md:hidden border-t border-orange-200 py-2">
+                {[
+                  { path: '/admin/seasons', label: 'Seasons' },
+                  { path: '/admin/leagues', label: 'Leagues' },
+                  { path: '/admin/users', label: 'Users' },
+                  { path: '/admin/payments', label: 'Payments' },
+                  { path: '/admin/scoring-rules', label: 'Scoring' },
+                  { path: '/admin/jobs', label: 'Jobs' },
+                ].map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`block px-4 py-3 text-sm font-medium ${
+                      isActive(item.path)
+                        ? 'bg-orange-500 text-white'
+                        : 'text-neutral-600 hover:bg-orange-50'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+                <hr className="my-2 border-orange-200" />
+                <button
+                  onClick={handleSignOut}
+                  className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
         </nav>
       </>
@@ -199,27 +268,43 @@ export function Navigation() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 text-neutral-600 hover:text-burgundy-600"
+                aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={mobileMenuOpen}
+              >
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+
               {/* Admin View Toggle (only for admins) */}
               {isAdmin && (
                 <button
                   onClick={() => setViewMode('admin')}
-                  className="flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors"
+                  className="hidden sm:flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors"
                 >
                   <Shield className="h-3 w-3" />
                   Admin
                 </button>
               )}
 
-              {/* User Menu */}
-              <div className="relative group">
-                <button className="flex items-center gap-2 p-2 text-neutral-600 hover:text-neutral-800 hover:bg-burgundy-50 rounded-xl transition-all">
+              {/* User Menu - Desktop */}
+              <div className="relative group hidden md:block">
+                <button
+                  className="flex items-center gap-2 p-2 text-neutral-600 hover:text-neutral-800 hover:bg-burgundy-50 rounded-xl transition-all"
+                  aria-haspopup="true"
+                >
                   <div className="w-8 h-8 bg-burgundy-100 rounded-full flex items-center justify-center">
                     <span className="text-burgundy-600 font-semibold text-sm">
                       {profile?.display_name?.charAt(0).toUpperCase() || 'U'}
                     </span>
                   </div>
                 </button>
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-float border border-cream-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                <div
+                  className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-float border border-cream-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all"
+                  role="menu"
+                >
                   <div className="p-4 border-b border-cream-100">
                     <p className="font-semibold text-neutral-800">
                       {profile?.display_name || 'Survivor'}
@@ -229,26 +314,30 @@ export function Navigation() {
                   <div className="p-2">
                     <Link
                       to="/profile"
-                      className="block px-3 py-2 text-sm text-neutral-600 hover:bg-burgundy-50 rounded-lg"
+                      className="block px-3 py-2 text-sm text-neutral-600 hover:bg-burgundy-50 rounded-lg focus:bg-burgundy-50 focus:outline-none"
+                      role="menuitem"
                     >
                       Profile Settings
                     </Link>
                     <Link
                       to="/profile/notifications"
-                      className="block px-3 py-2 text-sm text-neutral-600 hover:bg-burgundy-50 rounded-lg"
+                      className="block px-3 py-2 text-sm text-neutral-600 hover:bg-burgundy-50 rounded-lg focus:bg-burgundy-50 focus:outline-none"
+                      role="menuitem"
                     >
                       Notifications
                     </Link>
                     <Link
                       to="/profile/payments"
-                      className="block px-3 py-2 text-sm text-neutral-600 hover:bg-burgundy-50 rounded-lg"
+                      className="block px-3 py-2 text-sm text-neutral-600 hover:bg-burgundy-50 rounded-lg focus:bg-burgundy-50 focus:outline-none"
+                      role="menuitem"
                     >
                       Payment History
                     </Link>
                     <hr className="my-2 border-cream-100" />
                     <button
-                      onClick={() => signOut()}
-                      className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+                      onClick={handleSignOut}
+                      className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg focus:bg-red-50 focus:outline-none"
+                      role="menuitem"
                     >
                       Sign out
                     </button>
@@ -257,6 +346,89 @@ export function Navigation() {
               </div>
             </div>
           </div>
+
+          {/* Mobile Menu - Player */}
+          {mobileMenuOpen && (
+            <div
+              ref={mobileMenuRef}
+              className="md:hidden border-t border-burgundy-100 py-2 bg-white"
+            >
+              <div className="px-4 py-3 border-b border-cream-100">
+                <p className="font-semibold text-neutral-800">
+                  {profile?.display_name || 'Survivor'}
+                </p>
+                <p className="text-sm text-neutral-400">Fantasy Player</p>
+              </div>
+              <Link
+                to="/dashboard"
+                className={`block px-4 py-3 text-sm font-semibold ${
+                  isActive('/dashboard') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
+                }`}
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/leagues"
+                className={`block px-4 py-3 text-sm font-semibold ${
+                  isActive('/leagues') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
+                }`}
+              >
+                Leagues
+              </Link>
+              <Link
+                to="/leaderboard"
+                className={`block px-4 py-3 text-sm font-semibold ${
+                  isActive('/leaderboard') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
+                }`}
+              >
+                Leaderboard
+              </Link>
+              <Link
+                to="/castaways"
+                className={`block px-4 py-3 text-sm font-semibold ${
+                  isActive('/castaways') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
+                }`}
+              >
+                Castaways
+              </Link>
+              <Link
+                to="/how-to-play"
+                className={`block px-4 py-3 text-sm font-semibold ${
+                  isActive('/how-to-play') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
+                }`}
+              >
+                How to Play
+              </Link>
+              <hr className="my-2 border-cream-100" />
+              <Link to="/profile" className="block px-4 py-3 text-sm text-neutral-600">
+                Profile Settings
+              </Link>
+              <Link
+                to="/profile/notifications"
+                className="block px-4 py-3 text-sm text-neutral-600"
+              >
+                Notifications
+              </Link>
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    setViewMode('admin');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-sm text-orange-600 font-semibold"
+                >
+                  Switch to Admin View
+                </button>
+              )}
+              <hr className="my-2 border-cream-100" />
+              <button
+                onClick={handleSignOut}
+                className="w-full text-left px-4 py-3 text-sm text-red-600"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
       </nav>
     );
@@ -307,9 +479,18 @@ export function Navigation() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-neutral-600 hover:text-burgundy-600"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
             <Link
               to="/login"
-              className="text-neutral-600 hover:text-burgundy-600 font-semibold text-sm uppercase tracking-wide"
+              className="hidden sm:block text-neutral-600 hover:text-burgundy-600 font-semibold text-sm uppercase tracking-wide"
             >
               Login
             </Link>
@@ -318,6 +499,40 @@ export function Navigation() {
             </Link>
           </div>
         </div>
+
+        {/* Mobile Menu - Public */}
+        {mobileMenuOpen && (
+          <div ref={mobileMenuRef} className="md:hidden border-t border-burgundy-100 py-2 bg-white">
+            <Link
+              to="/"
+              className={`block px-4 py-3 text-sm font-semibold ${
+                location.pathname === '/' ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
+              }`}
+            >
+              Home
+            </Link>
+            <Link
+              to="/how-to-play"
+              className={`block px-4 py-3 text-sm font-semibold ${
+                isActive('/how-to-play') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
+              }`}
+            >
+              How to Play
+            </Link>
+            <Link
+              to="/castaways"
+              className={`block px-4 py-3 text-sm font-semibold ${
+                isActive('/castaways') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
+              }`}
+            >
+              Castaways
+            </Link>
+            <hr className="my-2 border-cream-100" />
+            <Link to="/login" className="block px-4 py-3 text-sm font-semibold text-neutral-600">
+              Login
+            </Link>
+          </div>
+        )}
       </div>
     </nav>
   );

@@ -68,7 +68,10 @@ export function Draft() {
     } else if (castaways && castaways.length > 0 && rankings.length === 0) {
       setRankings(castaways.map((c) => c.id));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingRankings, castaways]);
+  // Note: rankings is intentionally excluded from deps to prevent infinite loop
+  // We only want to initialize once when data loads
 
   // Save rankings mutation
   const saveRankings = useMutation({
@@ -157,23 +160,23 @@ export function Draft() {
     );
   }
 
-      // Success view after save
-      if (saveSuccess) {
-        return (
-          <DraftSuccessView
-            leagueId={leagueId!}
-            league={league || undefined}
-            rankings={rankings}
-            castawayMap={castawayMap}
-            onEditRankings={() => setSaveSuccess(false)}
-          />
-        );
-      }
+  // Success view after save
+  if (saveSuccess) {
+    return (
+      <DraftSuccessView
+        leagueId={leagueId!}
+        league={league || undefined}
+        rankings={rankings}
+        castawayMap={castawayMap}
+        onEditRankings={() => setSaveSuccess(false)}
+      />
+    );
+  }
 
-      // Draft results view
-      if (draftProcessed && myRoster && myRoster.length > 0) {
-        return <DraftResultsView leagueId={leagueId!} league={league || undefined} roster={myRoster} />;
-      }
+  // Draft results view
+  if (draftProcessed && myRoster && myRoster.length > 0) {
+    return <DraftResultsView leagueId={leagueId!} league={league || undefined} roster={myRoster} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">

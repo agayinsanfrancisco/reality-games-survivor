@@ -2,7 +2,7 @@
  * Admin Castaways Page
  *
  * Manage castaways - edit details, eliminate, reactivate.
- * Refactored from 676 lines to use extracted sub-components.
+ * Refactored to use extracted sub-components.
  */
 
 import { useState } from 'react';
@@ -10,21 +10,16 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
+import { apiWithAuth } from '@/lib/api';
 import { Navigation } from '@/components/Navigation';
-import { Star } from 'lucide-react';
-import { CastawayCard, EliminateModal, EditCastawayModal } from '@/components/admin/castaways';
+import {
+  CastawayGrid,
+  EliminateModal,
+  EditCastawayModal,
+  BulkActions,
+  type EditFormData,
+} from '@/components/admin/castaways';
 import type { Castaway, UserProfile, Episode } from '@/types';
-
-interface EditFormData {
-  name: string;
-  age: string;
-  hometown: string;
-  occupation: string;
-  photo_url: string;
-  previous_seasons: string;
-  best_placement: string;
-  fun_fact: string;
-}
 
 export function AdminCastaways() {
   const { user } = useAuth();
@@ -100,6 +95,7 @@ export function AdminCastaways() {
     enabled: !!activeSeason?.id,
   });
 
+  // Eliminate castaway - uses backend API for proper authorization and notifications
   const eliminateMutation = useMutation({
     mutationFn: async ({
       castawayId,
@@ -110,15 +106,21 @@ export function AdminCastaways() {
       episodeId: string;
       placement?: number;
     }) => {
-      const { error } = await supabase
-        .from('castaways')
-        .update({
-          status: 'eliminated',
-          eliminated_episode_id: episodeId,
-          placement: placement || null,
-        })
-        .eq('id', castawayId);
-      if (error) throw error;
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const response = await apiWithAuth<{ castaway: Castaway }>(
+        `/admin/castaways/${castawayId}/eliminate`,
+        session.access_token,
+        {
+          method: 'POST',
+          body: JSON.stringify({ episode_id: episodeId, placement }),
+        }
+      );
+      if (response.error) throw new Error(response.error);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['castaways'] });
@@ -127,27 +129,52 @@ export function AdminCastaways() {
     },
   });
 
+  // Reactivate castaway - uses backend API for proper authorization
   const reactivateMutation = useMutation({
     mutationFn: async (castawayId: string) => {
-      const { error } = await supabase
-        .from('castaways')
-        .update({
-          status: 'active',
-          eliminated_episode_id: null,
-          placement: null,
-        })
-        .eq('id', castawayId);
-      if (error) throw error;
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const response = await apiWithAuth<{ castaway: Castaway }>(
+        `/admin/castaways/${castawayId}`,
+        session.access_token,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({
+            status: 'active',
+            eliminated_episode_id: null,
+            placement: null,
+          }),
+        }
+      );
+      if (response.error) throw new Error(response.error);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['castaways'] });
     },
   });
 
+  // Update castaway - uses backend API for proper authorization
   const updateMutation = useMutation({
     mutationFn: async ({ castawayId, data }: { castawayId: string; data: Partial<Castaway> }) => {
-      const { error } = await supabase.from('castaways').update(data).eq('id', castawayId);
-      if (error) throw error;
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const response = await apiWithAuth<{ castaway: Castaway }>(
+        `/admin/castaways/${castawayId}`,
+        session.access_token,
+        {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        }
+      );
+      if (response.error) throw new Error(response.error);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['castaways'] });
@@ -177,16 +204,34 @@ export function AdminCastaways() {
           .map((s) => s.trim())
           .filter((s) => s)
       : null;
+
+    // Validate age (must be positive integer or empty)
+    const age = editForm.age ? parseInt(editForm.age) : null;
+    if (age !== null && (isNaN(age) || age < 1 || age > 120)) {
+      alert('Age must be a valid number between 1 and 120');
+      return;
+    }
+
+    // Validate best_placement (must be positive integer 1-24 or empty)
+    const bestPlacement = editForm.best_placement ? parseInt(editForm.best_placement) : null;
+    if (
+      bestPlacement !== null &&
+      (isNaN(bestPlacement) || bestPlacement < 1 || bestPlacement > 24)
+    ) {
+      alert('Best placement must be between 1 and 24');
+      return;
+    }
+
     updateMutation.mutate({
       castawayId: editingId,
       data: {
         name: editForm.name,
-        age: editForm.age ? parseInt(editForm.age) : null,
+        age,
         hometown: editForm.hometown || null,
         occupation: editForm.occupation || null,
         photo_url: editForm.photo_url || null,
         previous_seasons: previousSeasons,
-        best_placement: editForm.best_placement ? parseInt(editForm.best_placement) : null,
+        best_placement: bestPlacement,
         fun_fact: editForm.fun_fact || null,
       },
     });
@@ -198,10 +243,14 @@ export function AdminCastaways() {
     return `https://api.dicebear.com/7.x/initials/svg?seed=${encodedName}&backgroundColor=8B0000&textColor=ffffff&fontSize=40`;
   };
 
-  // Bulk update all castaways with auto-generated photo URLs
+  // Bulk update all castaways with auto-generated photo URLs - uses backend API
   const autoPopulatePhotosMutation = useMutation({
     mutationFn: async () => {
       if (!castaways) return { updated: 0 };
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
 
       const updates = castaways
         .filter((c) => !c.photo_url)
@@ -211,11 +260,15 @@ export function AdminCastaways() {
         }));
 
       for (const update of updates) {
-        const { error } = await supabase
-          .from('castaways')
-          .update({ photo_url: update.photo_url })
-          .eq('id', update.id);
-        if (error) throw error;
+        const response = await apiWithAuth<{ castaway: Castaway }>(
+          `/admin/castaways/${update.id}`,
+          session.access_token,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({ photo_url: update.photo_url }),
+          }
+        );
+        if (response.error) throw new Error(response.error);
       }
 
       return { updated: updates.length };
@@ -273,79 +326,34 @@ export function AdminCastaways() {
               {activeCastaways.length} active, {eliminatedCastaways.length} eliminated
             </p>
           </div>
-          {missingPhotosCount > 0 && (
-            <button
-              onClick={() => autoPopulatePhotosMutation.mutate()}
-              disabled={autoPopulatePhotosMutation.isPending}
-              className="btn bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
-            >
-              {autoPopulatePhotosMutation.isPending ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Populating...
-                </>
-              ) : (
-                <>
-                  <Star className="h-4 w-4" />
-                  Auto-Populate {missingPhotosCount} Photos
-                </>
-              )}
-            </button>
-          )}
+          <BulkActions
+            missingPhotosCount={missingPhotosCount}
+            onAutoPopulatePhotos={() => autoPopulatePhotosMutation.mutate()}
+            isPending={autoPopulatePhotosMutation.isPending}
+          />
         </div>
 
-        {/* Active Castaways */}
-        <div className="bg-white rounded-2xl shadow-elevated overflow-hidden mb-8 animate-slide-up">
-          <div className="p-6 border-b border-cream-100 bg-green-50">
-            <h2 className="font-semibold text-green-800">
-              Active Castaways ({activeCastaways.length})
-            </h2>
-          </div>
-
-          {isLoading ? (
-            <div className="p-12 text-center">
-              <div className="w-8 h-8 mx-auto border-2 border-burgundy-500 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
-              {activeCastaways.map((castaway) => (
-                <CastawayCard
-                  key={castaway.id}
-                  castaway={castaway}
-                  onEdit={() => startEditing(castaway)}
-                  onEliminate={() => setShowEliminateModal(castaway.id)}
-                />
-              ))}
-            </div>
-          )}
+        {/* Active Castaways Grid */}
+        <div className="mb-8">
+          <CastawayGrid
+            castaways={activeCastaways}
+            isLoading={isLoading}
+            variant="active"
+            onEdit={startEditing}
+            onEliminate={(id) => setShowEliminateModal(id)}
+          />
         </div>
 
-        {/* Eliminated Castaways */}
-        {eliminatedCastaways.length > 0 && (
-          <div
-            className="bg-white rounded-2xl shadow-elevated overflow-hidden animate-slide-up"
-            style={{ animationDelay: '0.1s' }}
-          >
-            <div className="p-6 border-b border-cream-100 bg-neutral-50">
-              <h2 className="font-semibold text-neutral-600">
-                Eliminated ({eliminatedCastaways.length})
-              </h2>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
-              {eliminatedCastaways.map((castaway) => (
-                <CastawayCard
-                  key={castaway.id}
-                  castaway={castaway}
-                  isEliminated
-                  onEdit={() => startEditing(castaway)}
-                  onReactivate={() => reactivateMutation.mutate(castaway.id)}
-                  isReactivating={reactivateMutation.isPending}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Eliminated Castaways Grid */}
+        <div style={{ animationDelay: '0.1s' }}>
+          <CastawayGrid
+            castaways={eliminatedCastaways}
+            variant="eliminated"
+            onEdit={startEditing}
+            onReactivate={(id) => reactivateMutation.mutate(id)}
+            isReactivating={reactivateMutation.isPending}
+          />
+        </div>
 
         {/* Eliminate Modal */}
         {showEliminateModal && (

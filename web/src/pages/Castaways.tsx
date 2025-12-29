@@ -1,19 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import {
-  Users,
-  Flame,
-  Loader2,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-} from 'lucide-react';
-import { 
-  CastawayStatsCards, 
-  CastawayFilterBar, 
-  CastawayGridItem 
-} from '@/components/castaways';
+import { Users, Flame, Loader2 } from 'lucide-react';
+import { CastawayStatsCards, CastawayFilterBar, CastawayGridItem } from '@/components/castaways';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 // import type { Castaway } from '@/types';
@@ -28,6 +17,20 @@ interface EpisodeScoreData {
   };
 }
 
+interface CastawayWithEpisode {
+  id: string;
+  name: string;
+  occupation?: string | null;
+  hometown?: string | null;
+  status: 'active' | 'eliminated' | 'winner';
+  tribe_original?: string | null;
+  tribe_current?: string | null;
+  photo_url?: string | null;
+  age?: number | null;
+  bio?: string | null;
+  episodes?: { number: number } | null;
+}
+
 export default function Castaways() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'eliminated'>('all');
@@ -35,14 +38,18 @@ export default function Castaways() {
   const [sortBy, setSortBy] = useState<'name' | 'points' | 'status'>('name');
 
   // Fetch active season
-  const { data: season, isLoading: seasonLoading } = useQuery({
+  const {
+    data: season,
+    isLoading: seasonLoading,
+    error: seasonError,
+  } = useQuery({
     queryKey: ['active-season'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('seasons')
         .select('*')
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -60,52 +67,55 @@ export default function Castaways() {
         .order('tribe_original', { ascending: true, nullsFirst: false })
         .order('name', { ascending: true });
       if (error) throw error;
-      return (data || []) as any[];
+      return (data || []) as CastawayWithEpisode[];
     },
     enabled: !!season?.id,
   });
 
   // Tribe configuration
-  const tribeConfig: Record<string, { name: string; color: string; bgColor: string; borderColor: string }> = {
-    'Vatu': { 
-      name: 'Vatu Tribe', 
+  const tribeConfig: Record<
+    string,
+    { name: string; color: string; bgColor: string; borderColor: string }
+  > = {
+    Vatu: {
+      name: 'Vatu Tribe',
       color: '#7C3AED', // Purple
-      bgColor: '#EDE9FE', 
-      borderColor: '#A78BFA' 
+      bgColor: '#EDE9FE',
+      borderColor: '#A78BFA',
     },
-    'Kalo': { 
-      name: 'Kalo Tribe', 
+    Kalo: {
+      name: 'Kalo Tribe',
       color: '#0D9488', // Teal
-      bgColor: '#CCFBF1', 
-      borderColor: '#5EEAD4' 
+      bgColor: '#CCFBF1',
+      borderColor: '#5EEAD4',
     },
-    'Cila': { 
-      name: 'Cila Tribe', 
+    Cila: {
+      name: 'Cila Tribe',
       color: '#EA580C', // Orange
-      bgColor: '#FFEDD5', 
-      borderColor: '#FB923C' 
+      bgColor: '#FFEDD5',
+      borderColor: '#FB923C',
     },
   };
 
   // Group castaways by tribe
   const castawaysByTribe = useMemo(() => {
     if (!castaways) return {};
-    
+
     const grouped: Record<string, typeof castaways> = {};
-    
-    castaways.forEach(castaway => {
+
+    castaways.forEach((castaway) => {
       const tribe = castaway.tribe_original || 'Unknown';
       if (!grouped[tribe]) {
         grouped[tribe] = [];
       }
       grouped[tribe].push(castaway);
     });
-    
+
     // Sort each tribe's castaways by name
-    Object.keys(grouped).forEach(tribe => {
+    Object.keys(grouped).forEach((tribe) => {
       grouped[tribe].sort((a, b) => a.name.localeCompare(b.name));
     });
-    
+
     return grouped;
   }, [castaways]);
 
@@ -196,7 +206,7 @@ export default function Castaways() {
 
   // Check if any tribe has filtered results
   const hasFilteredResults = useMemo(() => {
-    return Object.values(castawaysByTribe).some(tribeCastaways => {
+    return Object.values(castawaysByTribe).some((tribeCastaways) => {
       return tribeCastaways.some((c) => {
         const matchesSearch =
           c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -214,18 +224,6 @@ export default function Castaways() {
   const activeCount = castaways?.filter((c) => c.status === 'active').length || 0;
   const eliminatedCount = castaways?.filter((c) => c.status === 'eliminated').length || 0;
 
-  const _getTrendIcon = (trend: 'up' | 'down' | 'neutral') => {
-    if (trend === 'up') return <TrendingUp className="h-4 w-4 text-green-500" />;
-    if (trend === 'down') return <TrendingDown className="h-4 w-4 text-red-500" />;
-    return <Minus className="h-4 w-4 text-neutral-400" />;
-  };
-
-  const _getOrdinal = (n: number): string => {
-    const s = ['th', 'st', 'nd', 'rd'];
-    const v = n % 100;
-    return n + (s[(v - 20) % 10] || s[v] || s[0]);
-  };
-
   if (seasonLoading || castawaysLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex flex-col">
@@ -238,164 +236,194 @@ export default function Castaways() {
     );
   }
 
+  // Error state
+  if (seasonError || !season) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex flex-col">
+        <Navigation />
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Users className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-neutral-700 mb-2">No Active Season</h2>
+            <p className="text-neutral-500">Check back when a new season begins!</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex flex-col">
       <Navigation />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         <div className="pb-12">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-2">
-          <Flame className="h-8 w-8 text-orange-500" />
-          <h1 className="text-3xl font-display font-bold text-neutral-800">Castaways</h1>
-        </div>
-        <h2 className="text-2xl font-display font-bold text-burgundy-600 mb-2">
-          Season 50: In the Hands of the Fans
-        </h2>
-        <p className="text-neutral-500">{castaways?.length || 0} castaways competing this season</p>
-      </div>
+          {/* Header */}
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <Flame className="h-8 w-8 text-orange-500" />
+              <h1 className="text-3xl font-display font-bold text-neutral-800">Castaways</h1>
+            </div>
+            <h2 className="text-2xl font-display font-bold text-burgundy-600 mb-2">
+              {season?.name || `Season ${season?.number || ''}`}
+            </h2>
+            <p className="text-neutral-500">
+              {castaways?.length || 0} castaways competing this season
+            </p>
+          </div>
 
-      {/* Stats Cards */}
-      <CastawayStatsCards 
-        totalCount={castaways?.length || 0}
-        activeCount={activeCount}
-        eliminatedCount={eliminatedCount}
-      />
+          {/* Stats Cards */}
+          <CastawayStatsCards
+            totalCount={castaways?.length || 0}
+            activeCount={activeCount}
+            eliminatedCount={eliminatedCount}
+          />
 
-      {/* Search, Filter & Sort */}
-      <CastawayFilterBar 
-        search={search}
-        onSearchChange={setSearch}
-        filter={filter}
-        onFilterChange={setFilter}
-        sortBy={sortBy}
-        onSortByChange={setSortBy}
-      />
+          {/* Search, Filter & Sort */}
+          <CastawayFilterBar
+            search={search}
+            onSearchChange={setSearch}
+            filter={filter}
+            onFilterChange={setFilter}
+            sortBy={sortBy}
+            onSortByChange={setSortBy}
+          />
 
-      {/* Castaways by Tribe - Separated Groups */}
-      <div className="space-y-12">
-        {Object.entries(castawaysByTribe)
-          .sort(([a], [b]) => {
-            // Sort tribes: Vatu, Kalo, Cila, then Unknown
-            const order: Record<string, number> = { 'Vatu': 1, 'Kalo': 2, 'Cila': 3, 'Unknown': 99 };
-            return (order[a] || 99) - (order[b] || 99);
-          })
-          .map(([tribe, tribeCastaways]) => {
-            const config = tribeConfig[tribe] || {
-              name: tribe,
-              color: '#6B7280',
-              bgColor: '#F3F4F6',
-              borderColor: '#9CA3AF'
-            };
-            
-            // Filter tribe castaways based on search/filter
-            const filteredTribeCastaways = tribeCastaways.filter((c) => {
-              const matchesSearch =
-                c.name.toLowerCase().includes(search.toLowerCase()) ||
-                c.occupation?.toLowerCase().includes(search.toLowerCase()) ||
-                c.hometown?.toLowerCase().includes(search.toLowerCase());
-              const matchesFilter =
-                filter === 'all' ||
-                (filter === 'active' && c.status === 'active') ||
-                (filter === 'eliminated' && c.status === 'eliminated');
-              return matchesSearch && matchesFilter;
-            });
+          {/* Castaways by Tribe - Separated Groups */}
+          <div className="space-y-12">
+            {Object.entries(castawaysByTribe)
+              .sort(([a], [b]) => {
+                // Sort tribes: Vatu, Kalo, Cila, then Unknown
+                const order: Record<string, number> = { Vatu: 1, Kalo: 2, Cila: 3, Unknown: 99 };
+                return (order[a] || 99) - (order[b] || 99);
+              })
+              .map(([tribe, tribeCastaways]) => {
+                const config = tribeConfig[tribe] || {
+                  name: tribe,
+                  color: '#6B7280',
+                  bgColor: '#F3F4F6',
+                  borderColor: '#9CA3AF',
+                };
 
-            // Sort tribe castaways
-            const sortedTribeCastaways = filteredTribeCastaways.sort((a, b) => {
-              if (sortBy === 'points') {
-                return (castawayStats[b.id]?.total || 0) - (castawayStats[a.id]?.total || 0);
-              }
-              if (sortBy === 'status') {
-                const statusOrder: Record<string, number> = { winner: 0, active: 1, eliminated: 2 };
-                return (statusOrder[a.status] || 3) - (statusOrder[b.status] || 3);
-              }
-              return a.name.localeCompare(b.name);
-            });
+                // Filter tribe castaways based on search/filter
+                const filteredTribeCastaways = tribeCastaways.filter((c) => {
+                  const matchesSearch =
+                    c.name.toLowerCase().includes(search.toLowerCase()) ||
+                    c.occupation?.toLowerCase().includes(search.toLowerCase()) ||
+                    c.hometown?.toLowerCase().includes(search.toLowerCase());
+                  const matchesFilter =
+                    filter === 'all' ||
+                    (filter === 'active' && c.status === 'active') ||
+                    (filter === 'eliminated' && c.status === 'eliminated');
+                  return matchesSearch && matchesFilter;
+                });
 
-            if (sortedTribeCastaways.length === 0) return null;
+                // Sort tribe castaways
+                const sortedTribeCastaways = filteredTribeCastaways.sort((a, b) => {
+                  if (sortBy === 'points') {
+                    return (castawayStats[b.id]?.total || 0) - (castawayStats[a.id]?.total || 0);
+                  }
+                  if (sortBy === 'status') {
+                    const statusOrder: Record<string, number> = {
+                      winner: 0,
+                      active: 1,
+                      eliminated: 2,
+                    };
+                    return (statusOrder[a.status] || 3) - (statusOrder[b.status] || 3);
+                  }
+                  return a.name.localeCompare(b.name);
+                });
 
-            return (
-              <div 
-                key={tribe} 
-                className="mb-16"
-              >
-                {/* Tribe Section Container */}
-                <div 
-                  className="bg-white rounded-2xl shadow-lg border-2 overflow-hidden"
-                  style={{
-                    borderColor: config.borderColor,
-                  }}
-                >
-                  {/* Tribe Header Section */}
-                  <div 
-                    className="px-6 py-6 border-b-2"
-                    style={{
-                      backgroundColor: config.bgColor,
-                      borderColor: config.borderColor,
-                    }}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div 
-                        className="w-8 h-8 rounded-full shadow-md flex items-center justify-center"
-                        style={{ backgroundColor: config.color }}
+                if (sortedTribeCastaways.length === 0) return null;
+
+                return (
+                  <div key={tribe} className="mb-16">
+                    {/* Tribe Section Container */}
+                    <div
+                      className="bg-white rounded-2xl shadow-lg border-2 overflow-hidden"
+                      style={{
+                        borderColor: config.borderColor,
+                      }}
+                    >
+                      {/* Tribe Header Section */}
+                      <div
+                        className="px-6 py-6 border-b-2"
+                        style={{
+                          backgroundColor: config.bgColor,
+                          borderColor: config.borderColor,
+                        }}
                       >
-                        <div 
-                          className="w-4 h-4 rounded-full"
-                          style={{ backgroundColor: 'white', opacity: 0.3 }}
-                        />
+                        <div className="flex items-center gap-4">
+                          <div
+                            className="w-8 h-8 rounded-full shadow-md flex items-center justify-center"
+                            style={{ backgroundColor: config.color }}
+                          >
+                            <div
+                              className="w-4 h-4 rounded-full"
+                              style={{ backgroundColor: 'white', opacity: 0.3 }}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <h2
+                              className="text-3xl font-display font-bold mb-1"
+                              style={{ color: config.color }}
+                            >
+                              {config.name}
+                            </h2>
+                            <p className="text-neutral-600 text-sm font-medium">
+                              {sortedTribeCastaways.length} castaway
+                              {sortedTribeCastaways.length !== 1 ? 's' : ''}
+                              {sortedTribeCastaways.filter((c) => c.status === 'active').length >
+                                0 && (
+                                <span className="ml-2">
+                                  •{' '}
+                                  {sortedTribeCastaways.filter((c) => c.status === 'active').length}{' '}
+                                  active
+                                </span>
+                              )}
+                              {sortedTribeCastaways.filter((c) => c.status === 'eliminated')
+                                .length > 0 && (
+                                <span className="ml-2">
+                                  •{' '}
+                                  {
+                                    sortedTribeCastaways.filter((c) => c.status === 'eliminated')
+                                      .length
+                                  }{' '}
+                                  eliminated
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <h2 
-                          className="text-3xl font-display font-bold mb-1"
-                          style={{ color: config.color }}
-                        >
-                          {config.name}
-                        </h2>
-                        <p className="text-neutral-600 text-sm font-medium">
-                          {sortedTribeCastaways.length} castaway{sortedTribeCastaways.length !== 1 ? 's' : ''} 
-                          {sortedTribeCastaways.filter(c => c.status === 'active').length > 0 && (
-                            <span className="ml-2">
-                              • {sortedTribeCastaways.filter(c => c.status === 'active').length} active
-                            </span>
-                          )}
-                          {sortedTribeCastaways.filter(c => c.status === 'eliminated').length > 0 && (
-                            <span className="ml-2">
-                              • {sortedTribeCastaways.filter(c => c.status === 'eliminated').length} eliminated
-                            </span>
-                          )}
-                        </p>
+
+                      {/* Castaways Grid Section */}
+                      <div className="p-6">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                          {sortedTribeCastaways.map((castaway) => (
+                            <CastawayGridItem
+                              key={castaway.id}
+                              castaway={castaway}
+                              stats={castawayStats[castaway.id]}
+                              isExpanded={expandedCastaway === castaway.id}
+                              onToggleExpand={setExpandedCastaway}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
+                );
+              })}
+          </div>
 
-                {/* Castaways Grid Section */}
-                <div className="p-6">
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {sortedTribeCastaways.map((castaway) => (
-                      <CastawayGridItem
-                        key={castaway.id}
-                        castaway={castaway}
-                        stats={castawayStats[castaway.id]}
-                        isExpanded={expandedCastaway === castaway.id}
-                        onToggleExpand={setExpandedCastaway}
-                      />
-                    ))}
-                  </div>
-                </div>
-                </div>
-              </div>
-            );
-          })}
-      </div>
-
-      {!hasFilteredResults && (
-        <div className="bg-white rounded-2xl shadow-card p-12 border border-cream-200 text-center">
-          <Users className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-neutral-800 mb-2">No castaways found</h3>
-          <p className="text-neutral-500">Try adjusting your search or filter criteria</p>
-        </div>
-      )}
+          {!hasFilteredResults && (
+            <div className="bg-white rounded-2xl shadow-card p-12 border border-cream-200 text-center">
+              <Users className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-neutral-800 mb-2">No castaways found</h3>
+              <p className="text-neutral-500">Try adjusting your search or filter criteria</p>
+            </div>
+          )}
         </div>
       </main>
       <Footer />

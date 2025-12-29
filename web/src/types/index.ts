@@ -20,6 +20,7 @@ export interface UserProfile {
   notification_email?: boolean;
   notification_sms?: boolean;
   notification_push?: boolean;
+  timezone?: string;
   created_at?: string;
 }
 
@@ -111,6 +112,9 @@ export interface League {
   draft_completed_at?: string | null;
   password_hash?: string | null;
   created_at?: string;
+  updated_at?: string;
+  description?: string | null;
+  photo_url?: string | null;
   // Join properties
   commissioner?: {
     id: string;
@@ -221,11 +225,7 @@ export type GamePhase =
   | 'active'
   | 'post_season';
 
-export type WeeklyPhase =
-  | 'make_pick'
-  | 'picks_locked'
-  | 'awaiting_results'
-  | 'results_posted';
+export type WeeklyPhase = 'make_pick' | 'picks_locked' | 'awaiting_results' | 'results_posted';
 
 export interface WeeklyPhaseInfo {
   phase: WeeklyPhase;

@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { apiWithAuth } from '../lib/api';
 import { useNavigate } from 'react-router-dom';
@@ -39,7 +39,13 @@ export default function Profile() {
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
 
   // Fetch user profile
-  const { data: user, isLoading } = useQuery({
+  const {
+    data: user,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['user-profile'],
     queryFn: async () => {
       const {
@@ -222,6 +228,31 @@ export default function Profile() {
     );
   }
 
+  if (isError) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-display font-bold text-red-800 mb-2">
+            Failed to Load Profile
+          </h2>
+          <p className="text-red-600 mb-4">
+            {error instanceof Error
+              ? error.message
+              : 'An unexpected error occurred. Please try again.'}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-burgundy-600 text-white rounded-lg hover:bg-burgundy-700 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       {/* Header */}
@@ -233,37 +264,37 @@ export default function Profile() {
       {/* Phone Verification Prompt */}
       {!user?.phone_verified && <PhoneVerificationPrompt />}
 
-          {/* Profile Info */}
-          <ProfileHeader
-            displayName={user?.display_name || ''}
-            email={user?.email || ''}
-            onUpdateName={(name) => updateProfile.mutate({ display_name: name })}
-            isUpdating={updateProfile.isPending}
-            error={nameError}
-            success={profileSuccess}
-          />
+      {/* Profile Info */}
+      <ProfileHeader
+        displayName={user?.display_name || ''}
+        email={user?.email || ''}
+        onUpdateName={(name) => updateProfile.mutate({ display_name: name })}
+        isUpdating={updateProfile.isPending}
+        error={nameError}
+        success={profileSuccess}
+      />
 
-          {/* Timezone */}
-          <TimezoneSection
-            currentTimezone={user?.timezone || 'America/Los_Angeles'}
-            onTimezoneChange={(tz) => updateProfile.mutate({ timezone: tz })}
-          />
+      {/* Timezone */}
+      <TimezoneSection
+        currentTimezone={user?.timezone || 'America/Los_Angeles'}
+        onTimezoneChange={(tz) => updateProfile.mutate({ timezone: tz })}
+      />
 
-          {/* Phone Number */}
-          <PhoneSection
-            currentPhone={user?.phone || null}
-            isPhoneVerified={user?.phone_verified ?? false}
-            onUpdatePhone={(phone) => updatePhone.mutate(phone)}
-            onVerifyCode={(code) => verifyPhone.mutate(code)}
-            onResendCode={() => resendCode.mutate()}
-            isUpdating={updatePhone.isPending}
-            isVerifying={verifyPhone.isPending}
-            isResending={resendCode.isPending}
-            error={phoneError}
-            success={phoneSuccess}
-            showVerification={showVerification}
-            onShowVerification={setShowVerification}
-          />
+      {/* Phone Number */}
+      <PhoneSection
+        currentPhone={user?.phone || null}
+        isPhoneVerified={user?.phone_verified ?? false}
+        onUpdatePhone={(phone) => updatePhone.mutate(phone)}
+        onVerifyCode={(code) => verifyPhone.mutate(code)}
+        onResendCode={() => resendCode.mutate()}
+        isUpdating={updatePhone.isPending}
+        isVerifying={verifyPhone.isPending}
+        isResending={resendCode.isPending}
+        error={phoneError}
+        success={phoneSuccess}
+        showVerification={showVerification}
+        onShowVerification={setShowVerification}
+      />
 
       {/* Notification Preferences */}
       <NotificationsSection

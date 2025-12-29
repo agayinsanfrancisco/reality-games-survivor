@@ -21,6 +21,7 @@ import {
   DraftIncompleteCard,
   NoEpisodeCard,
   LockedPickCard,
+  type PreviousPickData,
 } from '@/components/picks';
 import { useLeague, useRoster } from '@/lib/hooks';
 
@@ -321,7 +322,7 @@ export function WeeklyPick() {
             />
 
             {previousPicks && previousPicks.length > 0 && (
-              <PreviousPicksCard picks={previousPicks as any} />
+              <PreviousPicksCard picks={previousPicks as PreviousPickData[]} />
             )}
           </div>
         )}

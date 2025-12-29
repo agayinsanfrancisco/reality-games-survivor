@@ -20,7 +20,7 @@ export function triviaNurtureEmailTemplate(data: TriviaNurtureEmailData): string
 
   return emailWrapper(
     `
-    ${heading(isPerfect ? '👑 Perfect Score!' : isGood ? '🔥 Great Job!' : '📺 Nice Try!', 1, 'immunity')}
+    ${heading(isPerfect ? '👑 Perfect Score!' : isGood ? '🔥 Great Job!' : '📺 Nice Try!', 1, 'gold')}
     ${paragraph(`Hey ${data.displayName},`)}
     ${paragraph(
       isPerfect
@@ -58,7 +58,7 @@ export function triviaNurtureEmailTemplate(data: TriviaNurtureEmailData): string
       </div>
     `, 'immunity')}
     
-    ${button(data.dashboardUrl, 'Join Season 50', 'immunity')}
+    ${button('Join Season 50', data.dashboardUrl, 'gold')}
     
     <div style="text-align: center; margin-top: 32px;">
       <p style="color: #8A7654; font-size: 14px; margin: 0 0 8px 0;">Quick Links:</p>

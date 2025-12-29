@@ -1,25 +1,42 @@
-import { 
-  Trophy, 
-  Skull, 
-  Flame, 
-  MapPin, 
-  Briefcase, 
-  Calendar, 
-  TrendingUp, 
-  TrendingDown, 
-  Minus, 
-  Star, 
-  History, 
-  Award, 
+import {
+  Trophy,
+  Skull,
+  Flame,
+  MapPin,
+  Briefcase,
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Star,
+  History,
+  Award,
   Sparkles,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
 } from 'lucide-react';
 import { getAvatarUrl } from '@/lib/avatar';
-import type { Castaway } from '@/types';
+// Minimal castaway interface for grid display
+interface CastawayForGrid {
+  id: string;
+  name: string;
+  occupation?: string | null;
+  hometown?: string | null;
+  status: 'active' | 'eliminated' | 'winner';
+  tribe_original?: string | null;
+  tribe_current?: string | null;
+  photo_url?: string | null;
+  age?: number | null;
+  bio?: string | null;
+  fun_fact?: string | null;
+  previous_seasons?: string[] | null;
+  best_placement?: number | null;
+  placement?: number | null;
+  episodes?: { number: number } | null;
+}
 
 interface CastawayGridItemProps {
-  castaway: Castaway & { episodes?: { number: number } };
+  castaway: CastawayForGrid;
   stats: {
     total: number;
     byEpisode: Record<number, number>;
@@ -34,7 +51,7 @@ export function CastawayGridItem({
   castaway,
   stats,
   isExpanded,
-  onToggleExpand
+  onToggleExpand,
 }: CastawayGridItemProps) {
   const getTrendIcon = (trend: 'up' | 'down' | 'neutral') => {
     if (trend === 'up') return <TrendingUp className="h-4 w-4 text-green-500" />;
@@ -43,9 +60,17 @@ export function CastawayGridItem({
   };
 
   const getOrdinal = (n: number): string => {
-    const s = ['th', 'st', 'nd', 'rd'];
-    const v = n % 100;
-    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    // Handle special cases: 11th, 12th, 13th (and 111th, 112th, 113th, etc.)
+    const lastTwo = n % 100;
+    if (lastTwo >= 11 && lastTwo <= 13) {
+      return n + 'th';
+    }
+    // Standard ordinal suffixes based on last digit
+    const lastOne = n % 10;
+    if (lastOne === 1) return n + 'st';
+    if (lastOne === 2) return n + 'nd';
+    if (lastOne === 3) return n + 'rd';
+    return n + 'th';
   };
 
   return (
@@ -59,9 +84,7 @@ export function CastawayGridItem({
       }`}
     >
       {/* Header */}
-      <div
-        className={`p-4 ${castaway.status === 'eliminated' ? 'bg-neutral-50' : 'bg-white'}`}
-      >
+      <div className={`p-4 ${castaway.status === 'eliminated' ? 'bg-neutral-50' : 'bg-white'}`}>
         <div className="flex items-start gap-4">
           {/* Photo */}
           <div className="relative flex-shrink-0">
@@ -114,18 +137,33 @@ export function CastawayGridItem({
                 {castaway.name}
               </h3>
               {castaway.tribe_original && (
-                <span 
+                <span
                   className="text-xs font-medium px-2 py-0.5 rounded-full border"
                   style={{
-                    backgroundColor: castaway.tribe_original === 'Vatu' ? '#EDE9FE' : 
-                                    castaway.tribe_original === 'Kalo' ? '#CCFBF1' : 
-                                    castaway.tribe_original === 'Cila' ? '#FFEDD5' : '#F3F4F6',
-                    borderColor: castaway.tribe_original === 'Vatu' ? '#A78BFA' : 
-                                castaway.tribe_original === 'Kalo' ? '#5EEAD4' : 
-                                castaway.tribe_original === 'Cila' ? '#FB923C' : '#9CA3AF',
-                    color: castaway.tribe_original === 'Vatu' ? '#7C3AED' : 
-                           castaway.tribe_original === 'Kalo' ? '#0D9488' : 
-                           castaway.tribe_original === 'Cila' ? '#EA580C' : '#6B7280',
+                    backgroundColor:
+                      castaway.tribe_original === 'Vatu'
+                        ? '#EDE9FE'
+                        : castaway.tribe_original === 'Kalo'
+                          ? '#CCFBF1'
+                          : castaway.tribe_original === 'Cila'
+                            ? '#FFEDD5'
+                            : '#F3F4F6',
+                    borderColor:
+                      castaway.tribe_original === 'Vatu'
+                        ? '#A78BFA'
+                        : castaway.tribe_original === 'Kalo'
+                          ? '#5EEAD4'
+                          : castaway.tribe_original === 'Cila'
+                            ? '#FB923C'
+                            : '#9CA3AF',
+                    color:
+                      castaway.tribe_original === 'Vatu'
+                        ? '#7C3AED'
+                        : castaway.tribe_original === 'Kalo'
+                          ? '#0D9488'
+                          : castaway.tribe_original === 'Cila'
+                            ? '#EA580C'
+                            : '#6B7280',
                   }}
                 >
                   {castaway.tribe_original}
@@ -166,9 +204,7 @@ export function CastawayGridItem({
                   (stats?.total || 0) >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}
               >
-                {stats?.total !== undefined
-                  ? (stats.total >= 0 ? '+' : '') + stats.total
-                  : '-'}
+                {stats?.total !== undefined ? (stats.total >= 0 ? '+' : '') + stats.total : '-'}
               </span>
             </div>
             <p className="text-xs text-neutral-400">points</p>
@@ -219,43 +255,43 @@ export function CastawayGridItem({
           <div className="space-y-3">
             {/* Previous Seasons */}
             {castaway.previous_seasons && castaway.previous_seasons.length > 0 && (
-                <div className="bg-white rounded-lg border border-cream-200 p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <History className="h-4 w-4 text-burgundy-500" />
-                    <span className="text-sm font-semibold text-neutral-700">
-                      {castaway.previous_seasons.length} Previous Season
-                      {castaway.previous_seasons.length > 1 ? 's' : ''}
-                    </span>
-                    {castaway.best_placement && (
-                      <span className="ml-auto flex items-center gap-1 text-xs">
-                        <Award className="h-3 w-3 text-yellow-500" />
-                        <span
-                          className={
-                            castaway.best_placement === 1
-                              ? 'text-yellow-600 font-semibold'
-                              : 'text-neutral-500'
-                          }
-                        >
-                          Best:{' '}
-                          {castaway.best_placement === 1
-                            ? 'Winner'
-                            : `${getOrdinal(castaway.best_placement)} place`}
-                        </span>
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {castaway.previous_seasons.map((season: string, idx: number) => (
+              <div className="bg-white rounded-lg border border-cream-200 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <History className="h-4 w-4 text-burgundy-500" />
+                  <span className="text-sm font-semibold text-neutral-700">
+                    {castaway.previous_seasons.length} Previous Season
+                    {castaway.previous_seasons.length > 1 ? 's' : ''}
+                  </span>
+                  {castaway.best_placement && (
+                    <span className="ml-auto flex items-center gap-1 text-xs">
+                      <Award className="h-3 w-3 text-yellow-500" />
                       <span
-                        key={idx}
-                        className="text-xs bg-cream-100 text-neutral-600 px-2 py-1 rounded-full"
+                        className={
+                          castaway.best_placement === 1
+                            ? 'text-yellow-600 font-semibold'
+                            : 'text-neutral-500'
+                        }
                       >
-                        {season}
+                        Best:{' '}
+                        {castaway.best_placement === 1
+                          ? 'Winner'
+                          : `${getOrdinal(castaway.best_placement)} place`}
                       </span>
-                    ))}
-                  </div>
+                    </span>
+                  )}
                 </div>
-              )}
+                <div className="flex flex-wrap gap-1">
+                  {castaway.previous_seasons.map((season: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className="text-xs bg-cream-100 text-neutral-600 px-2 py-1 rounded-full"
+                    >
+                      {season}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Fun Fact */}
             {castaway.fun_fact && (
@@ -268,7 +304,7 @@ export function CastawayGridItem({
             )}
 
             {/* Show message if no trivia data */}
-            {(!castaway.previous_seasons?.length && !castaway.fun_fact) && (
+            {!castaway.previous_seasons?.length && !castaway.fun_fact && (
               <div className="bg-white rounded-lg border border-cream-200 p-3 text-center">
                 <p className="text-sm text-neutral-500">No additional information available</p>
               </div>
@@ -284,37 +320,45 @@ export function CastawayGridItem({
 
             {stats?.byEpisode && Object.keys(stats.byEpisode).length > 0 ? (
               <div className="space-y-2">
-                {Object.entries(stats.byEpisode)
-                  .sort(([a], [b]) => Number(a) - Number(b))
-                  .map(([epNum, pts]) => (
-                    <div
-                      key={epNum}
-                      className="flex items-center gap-3 p-2 bg-white rounded-lg border border-cream-200"
-                    >
-                      <div className="w-16 text-center">
-                        <p className="text-xs text-neutral-500">Episode</p>
-                        <p className="font-bold text-neutral-800">{epNum}</p>
-                      </div>
-                      <div className="flex-1 h-2 bg-cream-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${
-                            Number(pts) >= 0 ? 'bg-green-500' : 'bg-red-500'
-                          }`}
-                          style={{
-                            width: `${Math.min((Math.abs(Number(pts)) / 50) * 100, 100)}%`,
-                          }}
-                        />
-                      </div>
+                {(() => {
+                  // Calculate max points for scaling the progress bar
+                  const episodePoints = Object.values(stats.byEpisode).map((pts) =>
+                    Math.abs(Number(pts))
+                  );
+                  const maxPoints = Math.max(...episodePoints, 1); // Minimum 1 to avoid division by zero
+
+                  return Object.entries(stats.byEpisode)
+                    .sort(([a], [b]) => Number(a) - Number(b))
+                    .map(([epNum, pts]) => (
                       <div
-                        className={`w-16 text-right font-bold ${
-                          Number(pts) >= 0 ? 'text-green-600' : 'text-red-600'
-                        }`}
+                        key={epNum}
+                        className="flex items-center gap-3 p-2 bg-white rounded-lg border border-cream-200"
                       >
-                        {Number(pts) >= 0 ? '+' : ''}
-                        {pts}
+                        <div className="w-16 text-center">
+                          <p className="text-xs text-neutral-500">Episode</p>
+                          <p className="font-bold text-neutral-800">{epNum}</p>
+                        </div>
+                        <div className="flex-1 h-2 bg-cream-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              Number(pts) >= 0 ? 'bg-green-500' : 'bg-red-500'
+                            }`}
+                            style={{
+                              width: `${Math.min((Math.abs(Number(pts)) / maxPoints) * 100, 100)}%`,
+                            }}
+                          />
+                        </div>
+                        <div
+                          className={`w-16 text-right font-bold ${
+                            Number(pts) >= 0 ? 'text-green-600' : 'text-red-600'
+                          }`}
+                        >
+                          {Number(pts) >= 0 ? '+' : ''}
+                          {pts}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ));
+                })()}
 
                 {/* Total Summary */}
                 <div className="mt-4 pt-4 border-t border-cream-200 flex justify-between items-center">

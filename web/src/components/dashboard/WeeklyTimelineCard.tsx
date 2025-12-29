@@ -33,7 +33,7 @@ export function WeeklyTimelineCard() {
         <div className="flex items-start gap-3">
           <div className="w-2 h-2 rounded-full bg-green-500 mt-2 flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-neutral-800">Friday 12pm PST</p>
+            <p className="text-sm font-medium text-neutral-800">Friday 2pm PST</p>
             <p className="text-xs text-neutral-500">Official results posted</p>
           </div>
         </div>

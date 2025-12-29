@@ -196,7 +196,12 @@ export default function SeasonCastaways() {
           </div>
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as any)}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === 'all' || value === 'active' || value === 'eliminated') {
+                setFilter(value);
+              }
+            }}
             className="input px-3 py-2 w-32"
           >
             <option value="all">All</option>

@@ -1,21 +1,36 @@
+/**
+ * Admin Scoring Grid Page
+ *
+ * Grid view for scoring all castaways at once.
+ * Refactored to use shared hooks.
+ */
+
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
+import { apiWithAuth } from '@/lib/api';
 import { Navigation } from '@/components/Navigation';
-import { Loader2, Save, Grid3X3, List, CheckCircle, AlertTriangle } from 'lucide-react';
-
-import type { Episode, Castaway, ScoringRule, EpisodeScore, UserProfile } from '@/types';
-
-interface ScoringStatus {
-  is_complete: boolean;
-  total_castaways: number;
-  scored_castaways: number;
-  unscored_castaway_ids: string[];
-  unscored_castaway_names: string[];
-  is_finalized: boolean;
-}
+import {
+  Loader2,
+  Save,
+  Grid3X3,
+  List,
+  CheckCircle,
+  AlertTriangle,
+  AlertCircle,
+  X,
+} from 'lucide-react';
+import {
+  useAdminProfile,
+  useActiveSeasonForScoring,
+  useEpisodesForScoring,
+  useCastawaysForScoring,
+  useScoringRulesForScoring,
+  useExistingScores,
+  useScoringStatus,
+} from '@/lib/hooks';
 
 // Grid scores map: { [castawayId]: { [ruleId]: quantity } }
 type GridScores = Record<string, Record<string, number>>;
@@ -26,130 +41,24 @@ export function AdminScoringGrid() {
   const [searchParams] = useSearchParams();
   const episodeIdParam = searchParams.get('episode');
 
+  // State
   const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | null>(episodeIdParam);
   const [gridScores, setGridScores] = useState<GridScores>({});
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { data: profile } = useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, display_name, role')
-        .eq('id', user!.id)
-        .single();
-      if (error) throw error;
-      return data as UserProfile;
-    },
-    enabled: !!user?.id,
-  });
-
-  const { data: activeSeason } = useQuery({
-    queryKey: ['activeSeason'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('seasons')
-        .select('*')
-        .eq('is_active', true)
-        .single();
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
-    },
-  });
-
-  const { data: episodes } = useQuery({
-    queryKey: ['episodes', activeSeason?.id],
-    queryFn: async () => {
-      if (!activeSeason?.id) return [];
-      const { data, error } = await supabase
-        .from('episodes')
-        .select('*')
-        .eq('season_id', activeSeason.id)
-        .order('number', { ascending: true });
-      if (error) throw error;
-      return data as Episode[];
-    },
-    enabled: !!activeSeason?.id,
-  });
-
-  const { data: castaways } = useQuery({
-    queryKey: ['castaways', activeSeason?.id],
-    queryFn: async () => {
-      if (!activeSeason?.id) return [];
-      const { data, error } = await supabase
-        .from('castaways')
-        .select('*')
-        .eq('season_id', activeSeason.id)
-        .eq('status', 'active') // Only show active castaways
-        .order('name');
-      if (error) throw error;
-      return data as Castaway[];
-    },
-    enabled: !!activeSeason?.id,
-  });
-
-  const { data: scoringRules } = useQuery({
-    queryKey: ['scoringRules', activeSeason?.id],
-    queryFn: async () => {
-      if (!activeSeason?.id) return [];
-      const { data, error } = await supabase
-        .from('scoring_rules')
-        .select('*')
-        .eq('season_id', activeSeason.id)
-        .eq('is_active', true)
-        .order('sort_order');
-      if (error) throw error;
-      return data as ScoringRule[];
-    },
-    enabled: !!activeSeason?.id,
-  });
-
-  const { data: existingScores, refetch: _refetchScores } = useQuery({
-    queryKey: ['episodeScores', selectedEpisodeId],
-    queryFn: async () => {
-      if (!selectedEpisodeId) return [];
-      const { data, error } = await supabase
-        .from('episode_scores')
-        .select('*')
-        .eq('episode_id', selectedEpisodeId);
-      if (error) throw error;
-      return data as EpisodeScore[];
-    },
-    enabled: !!selectedEpisodeId,
-  });
-
-  // Get scoring status (completeness)
-  const { data: scoringStatus } = useQuery({
-    queryKey: ['scoringStatus', selectedEpisodeId],
-    queryFn: async () => {
-      if (!selectedEpisodeId) return null;
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Not authenticated');
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app'}/api/episodes/${selectedEpisodeId}/scoring/status`,
-        {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch scoring status');
-      }
-
-      return (await response.json()) as ScoringStatus;
-    },
-    enabled: !!selectedEpisodeId,
-    refetchInterval: 5000, // Refetch every 5 seconds
-  });
+  // Queries using shared hooks
+  const { data: profile } = useAdminProfile(user?.id);
+  const { data: activeSeason } = useActiveSeasonForScoring();
+  const { data: episodes } = useEpisodesForScoring(activeSeason?.id);
+  const { data: castaways } = useCastawaysForScoring(activeSeason?.id);
+  const { data: scoringRules } = useScoringRulesForScoring(activeSeason?.id);
+  const { data: existingScores } = useExistingScores(selectedEpisodeId);
+  const { data: scoringStatus } = useScoringStatus(selectedEpisodeId);
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -163,62 +72,66 @@ export function AdminScoringGrid() {
     return scoringRules?.filter((r) => (r.category || 'Other') === selectedCategory) || [];
   }, [scoringRules, selectedCategory]);
 
+  // Filter to only active castaways
+  const activeCastaways = useMemo(() => {
+    return castaways?.filter((c) => c.status === 'active') || [];
+  }, [castaways]);
+
   // Initialize grid scores from existing data
   useEffect(() => {
-    if (isSaving) return; // Don't reset while saving
+    if (isSaving) return;
 
-    if (existingScores && castaways) {
+    if (existingScores && activeCastaways.length > 0) {
       const newGridScores: GridScores = {};
-      castaways.forEach((c) => {
+      activeCastaways.forEach((c) => {
         newGridScores[c.id] = {};
       });
       existingScores.forEach((score) => {
-        if (!newGridScores[score.castaway_id]) {
-          newGridScores[score.castaway_id] = {};
+        if (newGridScores[score.castaway_id]) {
+          newGridScores[score.castaway_id][score.scoring_rule_id] = score.quantity;
         }
-        newGridScores[score.castaway_id][score.scoring_rule_id] = score.quantity;
       });
       setGridScores(newGridScores);
       setIsDirty(false);
     }
-  }, [existingScores, castaways, isSaving]);
+  }, [existingScores, activeCastaways, isSaving]);
 
   // Save all scores
   const saveAllScores = useCallback(async () => {
     if (!selectedEpisodeId || !user?.id || !scoringRules) return;
 
     setIsSaving(true);
+    setSaveError(null);
     try {
-      // Delete all existing scores for this episode
-      await supabase.from('episode_scores').delete().eq('episode_id', selectedEpisodeId);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
 
-      // Insert all new scores
-      const scoresToInsert: any[] = [];
+      const scoresArray: Array<{ castaway_id: string; scoring_rule_id: string; quantity: number }> =
+        [];
       Object.entries(gridScores).forEach(([castawayId, castawayScores]) => {
         Object.entries(castawayScores).forEach(([ruleId, quantity]) => {
           if (quantity > 0) {
-            const rule = scoringRules.find((r) => r.id === ruleId);
-            scoresToInsert.push({
-              episode_id: selectedEpisodeId,
-              castaway_id: castawayId,
-              scoring_rule_id: ruleId,
-              quantity,
-              points: (rule?.points || 0) * quantity,
-              entered_by: user.id,
-            });
+            scoresArray.push({ castaway_id: castawayId, scoring_rule_id: ruleId, quantity });
           }
         });
       });
 
-      if (scoresToInsert.length > 0) {
-        const { error } = await supabase.from('episode_scores').insert(scoresToInsert);
-        if (error) throw error;
-      }
+      const result = await apiWithAuth<{ saved: number }>(
+        `/episodes/${selectedEpisodeId}/scoring/save`,
+        session.access_token,
+        { method: 'POST', body: JSON.stringify({ scores: scoresArray }) }
+      );
+
+      if (result.error) throw new Error(result.error);
 
       setLastSavedAt(new Date());
       setIsDirty(false);
       queryClient.invalidateQueries({ queryKey: ['episodeScores', selectedEpisodeId] });
       queryClient.invalidateQueries({ queryKey: ['scoringStatus', selectedEpisodeId] });
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save scores');
     } finally {
       setIsSaving(false);
     }
@@ -234,7 +147,7 @@ export function AdminScoringGrid() {
 
     autoSaveTimeoutRef.current = setTimeout(() => {
       saveAllScores();
-    }, 3000); // 3 second delay for grid (more changes at once)
+    }, 3000);
 
     return () => {
       if (autoSaveTimeoutRef.current) {
@@ -246,15 +159,11 @@ export function AdminScoringGrid() {
   const updateGridScore = (castawayId: string, ruleId: string, value: number) => {
     setGridScores((prev) => ({
       ...prev,
-      [castawayId]: {
-        ...prev[castawayId],
-        [ruleId]: Math.max(0, value),
-      },
+      [castawayId]: { ...prev[castawayId], [ruleId]: Math.max(0, value) },
     }));
     setIsDirty(true);
   };
 
-  // Calculate totals
   const getCastawayTotal = (castawayId: string) => {
     const castawayScores = gridScores[castawayId] || {};
     return Object.entries(castawayScores).reduce((sum, [ruleId, qty]) => {
@@ -263,8 +172,7 @@ export function AdminScoringGrid() {
     }, 0);
   };
 
-  const _selectedEpisode = episodes?.find((e) => e.id === selectedEpisodeId);
-
+  // Access denied for non-admins
   if (profile && profile.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
@@ -290,7 +198,11 @@ export function AdminScoringGrid() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
-            <Link to="/admin" className="text-neutral-400 hover:text-neutral-600 transition-colors">
+            <Link
+              to="/admin"
+              className="text-neutral-400 hover:text-neutral-600 transition-colors"
+              aria-label="Back to admin"
+            >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -351,7 +263,21 @@ export function AdminScoringGrid() {
           </div>
         </div>
 
-        {/* Episode Selector */}
+        {/* Error Display */}
+        {saveError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-red-800 font-medium">Save Error</p>
+              <p className="text-red-600 text-sm">{saveError}</p>
+            </div>
+            <button onClick={() => setSaveError(null)} className="text-red-400 hover:text-red-600">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        )}
+
+        {/* Controls */}
         <div className="bg-white rounded-2xl shadow-elevated p-5 mb-6">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
@@ -417,7 +343,7 @@ export function AdminScoringGrid() {
                     <th className="sticky left-0 bg-cream-50 z-10 p-3 text-left font-semibold text-neutral-700 border-b border-r border-cream-200 min-w-[200px]">
                       Rule ({filteredRules.length})
                     </th>
-                    {castaways?.map((castaway) => (
+                    {activeCastaways.map((castaway) => (
                       <th
                         key={castaway.id}
                         className="p-2 text-center border-b border-cream-200 min-w-[80px]"
@@ -462,7 +388,7 @@ export function AdminScoringGrid() {
                           <span className="text-sm font-medium text-neutral-800">{rule.name}</span>
                         </div>
                       </td>
-                      {castaways?.map((castaway) => {
+                      {activeCastaways.map((castaway) => {
                         const value = gridScores[castaway.id]?.[rule.id] || 0;
                         return (
                           <td key={castaway.id} className="p-1 text-center">
@@ -490,7 +416,7 @@ export function AdminScoringGrid() {
                     <td className="sticky left-0 bg-burgundy-50 z-10 p-3 font-bold text-burgundy-700 border-r border-burgundy-200">
                       TOTAL
                     </td>
-                    {castaways?.map((castaway) => {
+                    {activeCastaways.map((castaway) => {
                       const total = getCastawayTotal(castaway.id);
                       return (
                         <td key={castaway.id} className="p-2 text-center">

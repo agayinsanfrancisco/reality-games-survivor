@@ -54,11 +54,11 @@ export function PlayersTab({
                 {/* Player Info */}
                 <div className="flex-1">
                   <p className="font-semibold text-neutral-800">
-                    {(member as any).users?.display_name}
+                    {member.user?.display_name || 'Unknown Player'}
                     {isYou && <span className="ml-2 text-xs text-burgundy-500">(You)</span>}
                     {member.user_id === commissionerId && (
                       <span className="ml-2 text-xs bg-burgundy-100 text-burgundy-600 px-2 py-0.5 rounded-full">
-                        Creator
+                        Commissioner
                       </span>
                     )}
                   </p>

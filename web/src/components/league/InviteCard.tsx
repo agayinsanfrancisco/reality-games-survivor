@@ -40,7 +40,10 @@ export function InviteCard({ league, canManageLeague, copied, onCopyInvite }: In
           </button>
         </div>
         <p className="text-neutral-400 text-xs mt-2">
-          Share this link: {window.location.origin}/join/{league.code}
+          Share this link:{' '}
+          <code className="select-all bg-cream-50 px-1 py-0.5 rounded text-neutral-600">
+            {window.location.origin}/join/{league.code}
+          </code>
         </p>
       </div>
     );

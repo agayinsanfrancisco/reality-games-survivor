@@ -5,26 +5,7 @@
  */
 
 import { Trophy, History } from 'lucide-react';
-
-interface Castaway {
-  id: string;
-  name: string;
-  occupation: string | null;
-  photo_url: string | null;
-  status: 'active' | 'eliminated' | 'winner';
-  placement: number | null;
-  previous_seasons: string[] | null;
-  best_placement: number | null;
-}
-
-interface CastawayCardProps {
-  castaway: Castaway;
-  isEliminated?: boolean;
-  onEdit: () => void;
-  onEliminate?: () => void;
-  onReactivate?: () => void;
-  isReactivating?: boolean;
-}
+import type { CastawayCardProps } from './types';
 
 export function CastawayCard({
   castaway,

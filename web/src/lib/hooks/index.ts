@@ -6,18 +6,10 @@
  */
 
 // User hooks
-export {
-  useCurrentUser,
-  useUserProfile,
-  useNotificationPreferences,
-} from './useUser';
+export { useCurrentUser, useUserProfile, useNotificationPreferences } from './useUser';
 
 // Season hooks
-export {
-  useActiveSeason,
-  useSeasons,
-  useSeason,
-} from './useSeasons';
+export { useActiveSeason, useSeasons, useSeason } from './useSeasons';
 
 // Episode hooks
 export {
@@ -46,12 +38,7 @@ export {
 } from './useLeagues';
 
 // Roster hooks
-export {
-  useRoster,
-  useLeagueRosters,
-  useMyRosters,
-  useRosterComplete,
-} from './useRosters';
+export { useRoster, useLeagueRosters, useMyRosters, useRosterComplete } from './useRosters';
 
 // Scoring hooks
 export {
@@ -70,3 +57,18 @@ export {
   usePicksLocked,
   useCurrentPickStatus,
 } from './usePicks';
+
+// Admin scoring hooks
+export {
+  useAdminProfile,
+  useActiveSeasonForScoring,
+  useEpisodesForScoring,
+  useCastawaysForScoring,
+  useScoringRulesForScoring,
+  useExistingScores,
+  useScoringStatus,
+  groupRulesByCategory,
+  getMostCommonRules,
+  MOST_COMMON_CODES,
+  type ScoringStatus,
+} from './useAdminScoring';

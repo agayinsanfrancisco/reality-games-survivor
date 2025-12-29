@@ -47,9 +47,7 @@ if (!envValidation.valid) {
 const app = express();
 
 // Sentry request handler must be the first middleware
-if (Sentry) {
-  app.use(Sentry.Handlers.requestHandler());
-}
+// Note: In Sentry SDK v8+, setupExpressErrorHandler is used instead of Handlers
 const PORT = process.env.PORT || 3001;
 
 // Middleware
@@ -89,9 +87,9 @@ app.use('/api/results', resultsRoutes);
 app.use('/api/trivia', triviaRoutes);
 app.use('/webhooks', webhookRoutes);
 
-// Sentry error handler must be before other error handlers
-if (Sentry) {
-  app.use(Sentry.Handlers.errorHandler());
+// Sentry error handler - In Sentry SDK v8+, use setupExpressErrorHandler
+if (Sentry && typeof Sentry.setupExpressErrorHandler === 'function') {
+  Sentry.setupExpressErrorHandler(app);
 }
 
 // Error handler

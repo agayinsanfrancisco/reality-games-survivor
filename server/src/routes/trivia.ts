@@ -189,15 +189,23 @@ router.post('/answer', authenticate, async (req: AuthenticatedRequest, res: Resp
       return sendInternalError(res, 'Failed to save answer');
     }
 
-    // If wrong answer, lock user out for 24 hours
+    // If wrong answer, lock user out for 24 hours and increment attempts
     if (!isCorrect) {
       const lockoutUntil = new Date();
       lockoutUntil.setHours(lockoutUntil.getHours() + 24);
+
+      // Get current attempts count
+      const { data: userData } = await supabaseAdmin
+        .from('users')
+        .select('trivia_attempts')
+        .eq('id', userId)
+        .single();
 
       await supabaseAdmin
         .from('users')
         .update({
           trivia_locked_until: lockoutUntil.toISOString(),
+          trivia_attempts: (userData?.trivia_attempts || 0) + 1,
         })
         .eq('id', userId);
     }
@@ -243,12 +251,15 @@ router.post('/answer', authenticate, async (req: AuthenticatedRequest, res: Resp
         const endDate = new Date(lastAnswer.answered_at);
         const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-        // Get user display name
+        // Get user display name and attempts count
         const { data: userProfile } = await supabaseAdmin
           .from('users')
-          .select('display_name')
+          .select('display_name, trivia_attempts')
           .eq('id', userId)
           .single();
+
+        // Attempts = lockouts + 1 (the successful run)
+        const attempts = (userProfile?.trivia_attempts || 0) + 1;
 
         // Update or insert leaderboard entry
         await supabaseAdmin
@@ -258,6 +269,7 @@ router.post('/answer', authenticate, async (req: AuthenticatedRequest, res: Resp
             display_name: userProfile?.display_name || 'Anonymous',
             days_to_complete: daysDiff,
             completed_at: lastAnswer.answered_at,
+            attempts: attempts,
           }, {
             onConflict: 'user_id',
           });
@@ -318,6 +330,39 @@ router.get('/progress', authenticate, async (req: AuthenticatedRequest, res: Res
   } catch (error) {
     console.error('Trivia progress error:', error);
     return sendInternalError(res, 'Failed to fetch progress');
+  }
+});
+
+// GET /api/trivia/leaderboard - Get trivia leaderboard (public, but requires auth)
+router.get('/leaderboard', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { data: leaderboard, error } = await supabaseAdmin
+      .from('daily_trivia_leaderboard')
+      .select('user_id, display_name, days_to_complete, attempts, completed_at')
+      .order('days_to_complete', { ascending: true })
+      .order('attempts', { ascending: true })
+      .order('completed_at', { ascending: true })
+      .limit(50);
+
+    if (error) {
+      console.error('Leaderboard error:', error);
+      return sendInternalError(res, 'Failed to fetch leaderboard');
+    }
+
+    // Add rank to each entry
+    const rankedLeaderboard = (leaderboard || []).map((entry, index) => ({
+      rank: index + 1,
+      displayName: entry.display_name,
+      daysToComplete: entry.days_to_complete,
+      attempts: entry.attempts || 1,
+      completedAt: entry.completed_at,
+      userId: entry.user_id,
+    }));
+
+    return sendSuccess(res, { leaderboard: rankedLeaderboard });
+  } catch (error) {
+    console.error('Trivia leaderboard error:', error);
+    return sendInternalError(res, 'Failed to fetch leaderboard');
   }
 });
 

@@ -38,7 +38,9 @@ export function QuickActionsGrid({
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-xl">Set Your Draft Rankings</h3>
-              <p className="text-burgundy-100 text-sm mt-1">Rank all 24 castaways before the draft</p>
+              <p className="text-burgundy-100 text-sm mt-1">
+                Rank {castawayCount > 0 ? `all ${castawayCount}` : 'the'} castaways before the draft
+              </p>
             </div>
             <ChevronRight className="h-6 w-6 text-white/60 group-hover:translate-x-1 transition-transform" />
           </div>
@@ -115,7 +117,9 @@ export function QuickActionsGrid({
         <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-orange-500 transition-colors">
           <Flame className="h-6 w-6 text-orange-500 group-hover:text-white transition-colors" />
         </div>
-        <h3 className="font-bold text-neutral-800">{castawayCount || 24} Castaways</h3>
+        <h3 className="font-bold text-neutral-800">
+          {castawayCount > 0 ? castawayCount : 'View'} Castaways
+        </h3>
         <p className="text-neutral-500 text-sm mt-1">Meet the players</p>
       </Link>
     </div>

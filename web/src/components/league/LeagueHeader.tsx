@@ -31,10 +31,14 @@ export function LeagueHeader({
         <div>
           <h1 className="text-2xl font-display font-bold text-neutral-800">{league.name}</h1>
           <div className="flex items-center gap-2 mt-1 text-neutral-500">
-            <Crown className="h-4 w-4 text-burgundy-400" />
-            <span className="text-sm">{league.commissioner?.display_name}</span>
-            <span className="text-neutral-300">·</span>
-            <span className="text-sm">Season {league.seasons?.number}</span>
+            <Crown className="h-4 w-4 text-burgundy-400" aria-hidden="true" />
+            <span className="text-sm">
+              {league.commissioner?.display_name || 'Unknown Commissioner'}
+            </span>
+            <span className="text-neutral-300" aria-hidden="true">
+              ·
+            </span>
+            <span className="text-sm">Season {league.seasons?.number || 'N/A'}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -42,11 +46,12 @@ export function LeagueHeader({
             onClick={onCopyInvite}
             className="p-2 bg-cream-50 rounded-xl hover:bg-cream-100 transition-all border border-cream-200"
             title="Copy invite link"
+            aria-label={copied ? 'Invite link copied' : 'Copy invite link'}
           >
             {copied ? (
-              <Check className="h-5 w-5 text-green-500" />
+              <Check className="h-5 w-5 text-green-500" aria-hidden="true" />
             ) : (
-              <Share2 className="h-5 w-5 text-neutral-600" />
+              <Share2 className="h-5 w-5 text-neutral-600" aria-hidden="true" />
             )}
           </button>
           {canManageLeague && (
@@ -54,8 +59,9 @@ export function LeagueHeader({
               to={`/leagues/${league.id}/settings`}
               className="p-2 bg-cream-50 rounded-xl hover:bg-cream-100 transition-all border border-cream-200"
               title="League Settings"
+              aria-label="League Settings"
             >
-              <Settings className="h-5 w-5 text-neutral-600" />
+              <Settings className="h-5 w-5 text-neutral-600" aria-hidden="true" />
             </Link>
           )}
         </div>

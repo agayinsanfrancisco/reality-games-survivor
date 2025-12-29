@@ -31,14 +31,18 @@ export function TransferOwnershipSection({
 }: TransferOwnershipSectionProps) {
   const [showModal, setShowModal] = useState(false);
   const [targetId, setTargetId] = useState<string | null>(null);
+  const [showConfirmStep, setShowConfirmStep] = useState(false);
 
   if (otherMembers.length === 0) {
     return null;
   }
 
   const handleTransfer = () => {
-    if (targetId && confirm('Are you sure? You will lose creator privileges.')) {
+    if (targetId) {
       onTransfer(targetId);
+      setShowModal(false);
+      setShowConfirmStep(false);
+      setTargetId(null);
     }
   };
 
@@ -107,24 +111,49 @@ export function TransferOwnershipSection({
               ))}
             </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  setTargetId(null);
-                }}
-                className="flex-1 btn btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleTransfer}
-                disabled={!targetId || isPending}
-                className="flex-1 bg-amber-500 hover:bg-amber-600 disabled:bg-cream-200 text-white disabled:text-neutral-400 font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
-              >
-                {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Transfer'}
-              </button>
-            </div>
+            {!showConfirmStep ? (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    setTargetId(null);
+                  }}
+                  className="flex-1 btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setShowConfirmStep(true)}
+                  disabled={!targetId || isPending}
+                  className="flex-1 bg-amber-500 hover:bg-amber-600 disabled:bg-cream-200 text-white disabled:text-neutral-400 font-bold py-3 rounded-xl transition-colors"
+                >
+                  Continue
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-red-700 text-sm font-medium">
+                    ⚠️ You will lose all creator privileges. This cannot be undone.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowConfirmStep(false)}
+                    className="flex-1 btn btn-secondary"
+                  >
+                    Go Back
+                  </button>
+                  <button
+                    onClick={handleTransfer}
+                    disabled={isPending}
+                    className="flex-1 bg-red-500 hover:bg-red-600 disabled:bg-cream-200 text-white disabled:text-neutral-400 font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirm Transfer'}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {isError && (
               <p className="text-red-500 text-sm mt-3 text-center">Failed to transfer ownership</p>

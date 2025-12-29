@@ -1,12 +1,20 @@
-export * from './TriviaData';
-export * from './AnimatedTorch';
-export * from './CountdownTimer';
-export * from './TriviaCard';
-export * from './ProgressTracker';
-export * from './TriviaHeader';
-export * from './TriviaFinalCTA';
+// Original trivia components
+export { TriviaHeader } from './TriviaHeader';
 export { TriviaStatsCard } from './TriviaStatsCard';
-export { TriviaAnswerOption } from './TriviaAnswerOption';
-export { TriviaQuestionCard } from './TriviaQuestionCard';
 export { TriviaConversionCTA } from './TriviaConversionCTA';
+export { TriviaCard } from './TriviaCard';
+export { TriviaAnswerOption } from './TriviaAnswerOption';
 export { TriviaSignupModal } from './TriviaSignupModal';
+export { TriviaFinalCTA } from './TriviaFinalCTA';
+export { AnimatedTorch } from './AnimatedTorch';
+export { CountdownTimer } from './CountdownTimer';
+export { ProgressTracker } from './ProgressTracker';
+
+// Refactored trivia components (for Trivia.tsx page)
+export { TriviaRulesCard } from './TriviaRulesCard';
+export { TriviaProgressBar } from './TriviaProgressBar';
+export { TriviaLockoutCard } from './TriviaLockoutCard';
+export { TriviaCompletionCard } from './TriviaCompletionCard';
+export { TriviaQuestionCard } from './TriviaQuestionCard';
+export { TriviaCTACard } from './TriviaCTACard';
+export { TriviaLeaderboardModal } from './TriviaLeaderboardModal';

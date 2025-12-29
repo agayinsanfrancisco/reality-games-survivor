@@ -8,8 +8,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Settings, Loader2, Crown } from 'lucide-react';
+import { ArrowLeft, Settings, Loader2, Crown, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '@/lib/auth';
+import { apiWithAuth } from '@/lib/api';
 import { Navigation } from '@/components/Navigation';
 import {
   InviteLinkCard,
@@ -37,6 +39,7 @@ export default function LeagueSettings() {
   const { leagueId } = useParams<{ leagueId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   // Form state
   const [name, setName] = useState('');
@@ -47,6 +50,7 @@ export default function LeagueSettings() {
   const [maxPlayers, setMaxPlayers] = useState(12);
   const [requireDonation, setRequireDonation] = useState(false);
   const [donationAmount, setDonationAmount] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -86,7 +90,7 @@ export default function LeagueSettings() {
         .eq('id', leagueId)
         .single();
       if (error) throw error;
-      return data as typeof data & { description?: string; photo_url?: string };
+      return data;
     },
     enabled: !!leagueId,
   });
@@ -111,8 +115,8 @@ export default function LeagueSettings() {
   useEffect(() => {
     if (league) {
       setName(league.name || '');
-      setDescription(league.description || '');
-      setPhotoUrl(league.photo_url || '');
+      setDescription((league as { description?: string }).description || '');
+      setPhotoUrl((league as { photo_url?: string }).photo_url || '');
       setIsPublic(league.is_public || false);
       setMaxPlayers(league.max_players || 12);
       setRequireDonation(league.require_donation || false);
@@ -125,16 +129,15 @@ export default function LeagueSettings() {
   const isAdmin = userProfile?.role === 'admin';
   const canManageLeague = isCommissioner || isAdmin;
 
-  // Update league mutation
+  // Update league mutation - uses backend API for proper password hashing
   const updateLeague = useMutation({
     mutationFn: async () => {
       if (!leagueId) throw new Error('No league ID');
+      if (!session?.access_token) throw new Error('Not authenticated');
 
-      // Creators can only update description and photo after league creation
-      // Admins can update everything
+      // Build updates object - backend handles password hashing
       const updates: Record<string, unknown> = {
         description,
-        photo_url: photoUrl || null,
       };
 
       // Only admins can modify these settings after league is created
@@ -142,66 +145,103 @@ export default function LeagueSettings() {
         updates.name = name;
         updates.is_public = isPublic;
         updates.max_players = maxPlayers;
-        updates.require_donation = requireDonation;
         updates.donation_amount = requireDonation ? parseFloat(donationAmount) : null;
 
+        // Send raw password - backend will hash it securely
         if (password) {
-          updates.password_hash = password;
+          updates.password = password;
         }
       }
 
-      const { error } = await supabase.from('leagues').update(updates).eq('id', leagueId);
+      const response = await apiWithAuth<{ league: unknown }>(
+        `/leagues/${leagueId}/settings`,
+        session.access_token,
+        {
+          method: 'PATCH',
+          body: JSON.stringify(updates),
+        }
+      );
 
-      if (error) throw error;
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      // Photo URL update still uses Supabase (not sensitive data)
+      // Note: photo_url column may not exist in DB - this is a known issue
+      if (photoUrl !== (league as { photo_url?: string })?.photo_url) {
+        const { error: photoError } = await supabase
+          .from('leagues')
+          .update({ photo_url: photoUrl || null } as Record<string, unknown>)
+          .eq('id', leagueId);
+        if (photoError) throw photoError;
+      }
+
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['league', leagueId] });
+      setPassword(''); // Clear password field after save
+      setError(null);
+    },
+    onError: (err: Error) => {
+      setError(err.message || 'Failed to update league settings');
     },
   });
 
-  // Remove member mutation
+  // Remove member mutation - uses backend API for proper authorization
   const removeMember = useMutation({
     mutationFn: async (userId: string) => {
       if (!leagueId) throw new Error('No league ID');
+      if (!session?.access_token) throw new Error('Not authenticated');
 
-      // Delete from league_members
-      const { error } = await supabase
-        .from('league_members')
-        .delete()
-        .eq('league_id', leagueId)
-        .eq('user_id', userId);
+      const response = await apiWithAuth<{ success: boolean; refund?: { amount: number } }>(
+        `/leagues/${leagueId}/members/${userId}`,
+        session.access_token,
+        { method: 'DELETE' }
+      );
 
-      if (error) throw error;
+      if (response.error) {
+        throw new Error(response.error);
+      }
 
-      // Also clean up rosters
-      await supabase.from('rosters').delete().eq('league_id', leagueId).eq('user_id', userId);
-
-      // And weekly picks
-      await supabase.from('weekly_picks').delete().eq('league_id', leagueId).eq('user_id', userId);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['league-members', leagueId] });
+      setError(null);
+    },
+    onError: (err: Error) => {
+      setError(err.message || 'Failed to remove member');
     },
   });
 
-  // Transfer ownership mutation
+  // Transfer ownership mutation - uses backend API for proper authorization
   const transferOwnership = useMutation({
     mutationFn: async (newCommissionerId: string) => {
       if (!leagueId) throw new Error('No league ID');
+      if (!session?.access_token) throw new Error('Not authenticated');
 
-      const { error } = await supabase
-        .from('leagues')
-        .update({
-          commissioner_id: newCommissionerId,
-          co_commissioners: [], // Clear co-commissioners on transfer
-        })
-        .eq('id', leagueId);
+      const response = await apiWithAuth<{ league: unknown; message: string }>(
+        `/leagues/${leagueId}/transfer`,
+        session.access_token,
+        {
+          method: 'POST',
+          body: JSON.stringify({ new_commissioner_id: newCommissionerId }),
+        }
+      );
 
-      if (error) throw error;
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['league', leagueId] });
       navigate(`/leagues/${leagueId}`);
+    },
+    onError: (err: Error) => {
+      setError(err.message || 'Failed to transfer ownership');
     },
   });
 
@@ -283,6 +323,20 @@ export default function LeagueSettings() {
         </div>
 
         <div className="max-w-md mx-auto space-y-6">
+          {/* Error Display */}
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-red-800 font-medium">Error</p>
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+              <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
+                ×
+              </button>
+            </div>
+          )}
+
           <InviteLinkCard code={league?.code} />
 
           <LeagueBrandingSection
@@ -302,33 +356,33 @@ export default function LeagueSettings() {
                 onPasswordChange={setPassword}
               />
 
-                  <VisibilitySettings
-                    isPublic={isPublic}
-                    maxPlayers={maxPlayers}
-                    currentMemberCount={members?.length || 0}
-                    draftStatus={league?.draft_status || 'pending'}
-                    onPublicChange={setIsPublic}
-                    onMaxPlayersChange={setMaxPlayers}
-                  />
-
-                  <DonationSettings
-                    requireDonation={requireDonation}
-                    donationAmount={donationAmount}
-                    draftStatus={league?.draft_status || 'pending'}
-                    onRequireDonationChange={setRequireDonation}
-                    onDonationAmountChange={setDonationAmount}
-                  />
-                </>
-              )}
-
-              <MembersList
-                members={members}
-                currentUserId={currentUser?.id}
+              <VisibilitySettings
+                isPublic={isPublic}
+                maxPlayers={maxPlayers}
+                currentMemberCount={members?.length || 0}
                 draftStatus={league?.draft_status || 'pending'}
-                onRemoveMember={handleRemoveMember}
-                isRemoving={removeMember.isPending}
-                removeError={removeMember.isError}
+                onPublicChange={setIsPublic}
+                onMaxPlayersChange={setMaxPlayers}
               />
+
+              <DonationSettings
+                requireDonation={requireDonation}
+                donationAmount={donationAmount}
+                draftStatus={league?.draft_status || 'pending'}
+                onRequireDonationChange={setRequireDonation}
+                onDonationAmountChange={setDonationAmount}
+              />
+            </>
+          )}
+
+          <MembersList
+            members={members}
+            currentUserId={currentUser?.id}
+            draftStatus={league?.draft_status || 'pending'}
+            onRemoveMember={handleRemoveMember}
+            isRemoving={removeMember.isPending}
+            removeError={removeMember.isError}
+          />
 
           {/* Save Button */}
           <button

@@ -4,11 +4,51 @@
  * Fantasy Survivor landing with Season 50 signup CTAs and trivia email signup.
  */
 
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
+import { CheckCircle, Loader2 } from 'lucide-react';
 
 export function Home() {
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // Store email in localStorage for now (could be sent to backend later)
+      const existingEmails = JSON.parse(localStorage.getItem('triviaEmails') || '[]');
+      if (!existingEmails.includes(email)) {
+        existingEmails.push(email);
+        localStorage.setItem('triviaEmails', JSON.stringify(existingEmails));
+      }
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      setIsSubscribed(true);
+      setEmail('');
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col"
@@ -73,16 +113,46 @@ export function Home() {
           <p className="text-gray-600 text-lg mb-4">
             Not ready yet? Get weekly trivia featuring the Season 50 cast.
           </p>
-          <div className="flex gap-3 max-w-lg mx-auto">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-5 py-3 rounded-xl text-base border border-gray-300 focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/20 transition-all"
-            />
-            <button className="bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-xl font-semibold text-base transition-all shadow-md hover:shadow-lg whitespace-nowrap">
-              Get Trivia
-            </button>
-          </div>
+          {isSubscribed ? (
+            <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 px-6 py-4 rounded-xl max-w-lg mx-auto">
+              <CheckCircle className="h-5 w-5" />
+              <span className="font-medium">You're subscribed! Check your inbox soon.</span>
+            </div>
+          ) : (
+            <form onSubmit={handleEmailSubmit} className="max-w-lg mx-auto">
+              <div className="flex gap-3">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError(null);
+                  }}
+                  placeholder="Enter your email"
+                  className={`flex-1 px-5 py-3 rounded-xl text-base border ${
+                    error ? 'border-red-400' : 'border-gray-300'
+                  } focus:border-red-800 focus:outline-none focus:ring-2 focus:ring-red-800/20 transition-all`}
+                  disabled={isSubmitting}
+                  aria-label="Email address for trivia newsletter"
+                />
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !email}
+                  className="bg-gray-800 hover:bg-gray-900 disabled:bg-gray-400 text-white px-6 py-3 rounded-xl font-semibold text-base transition-all shadow-md hover:shadow-lg whitespace-nowrap flex items-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Signing up...</span>
+                    </>
+                  ) : (
+                    'Get Trivia'
+                  )}
+                </button>
+              </div>
+              {error && <p className="text-red-500 text-sm mt-2 text-left">{error}</p>}
+            </form>
+          )}
         </div>
       </main>
 

@@ -8,8 +8,11 @@ import {
   Shield,
   ShieldCheck,
   ShieldAlert,
+  AlertCircle,
 } from 'lucide-react';
+import { apiWithAuth } from '@/lib/api';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
 import { UserStats, UserFilters, UserCard } from '@/components/admin/users';
 
@@ -26,11 +29,13 @@ interface EditForm {
 
 export function AdminUsers() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({
     display_name: '',
     email: '',
@@ -40,20 +45,31 @@ export function AdminUsers() {
     timezone: '',
   });
 
-  // Fetch all users
-  const { data: users, isLoading } = useQuery({
+  // Fetch all users via admin API endpoint (properly authorized)
+  const {
+    data: users,
+    isLoading,
+    error: fetchError,
+  } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const response = await apiWithAuth<{ users: any[]; total: number }>(
+        '/admin/users?limit=1000',
+        session.access_token
+      );
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      return response.data?.users || [];
     },
+    enabled: !!session?.access_token,
   });
 
-  // Fetch league counts per user
+  // Fetch league counts per user (read-only, safe to use Supabase directly)
   const { data: leagueCounts } = useQuery({
     queryKey: ['admin-user-league-counts'],
     queryFn: async () => {
@@ -68,27 +84,61 @@ export function AdminUsers() {
     },
   });
 
-  // Update user role mutation
+  // Update user role mutation - uses backend API with admin authorization
   const updateRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: UserRole }) => {
-      const { error } = await supabase.from('users').update({ role }).eq('id', userId);
-      if (error) throw error;
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+      const response = await apiWithAuth<{ user: unknown }>(
+        `/admin/users/${userId}`,
+        session.access_token,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ role }),
+        }
+      );
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       setSelectedUser(null);
+      setError(null);
+    },
+    onError: (err: Error) => {
+      setError(err.message || 'Failed to update user role');
     },
   });
 
-  // Update user details mutation
+  // Update user details mutation - uses backend API with admin authorization
   const updateUser = useMutation({
     mutationFn: async ({ userId, data }: { userId: string; data: Partial<EditForm> }) => {
-      const { error } = await supabase.from('users').update(data).eq('id', userId);
-      if (error) throw error;
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+      const response = await apiWithAuth<{ user: unknown }>(
+        `/admin/users/${userId}`,
+        session.access_token,
+        {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        }
+      );
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       setEditingUser(null);
+      setError(null);
+    },
+    onError: (err: Error) => {
+      setError(err.message || 'Failed to update user');
     },
   });
 
@@ -152,6 +202,32 @@ export function AdminUsers() {
     }
   };
 
+  // Show error state
+  if (fetchError) {
+    return (
+      <>
+        <Navigation />
+        <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-card p-8 border border-red-200 text-center max-w-md">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-neutral-800 mb-2">Access Denied</h2>
+            <p className="text-neutral-600 mb-4">
+              {fetchError instanceof Error
+                ? fetchError.message
+                : 'You do not have permission to view this page.'}
+            </p>
+            <Link
+              to="/admin"
+              className="inline-block px-4 py-2 bg-burgundy-500 text-white rounded-lg hover:bg-burgundy-600 transition-colors"
+            >
+              Back to Admin
+            </Link>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   if (isLoading) {
     return (
       <>
@@ -184,11 +260,25 @@ export function AdminUsers() {
           </div>
         </div>
 
+        {/* Error Banner */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+            <p className="text-red-700">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-500 hover:text-red-700"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Stats */}
         <UserStats stats={stats} />
 
         {/* Search & Filter */}
-        <UserFilters 
+        <UserFilters
           search={search}
           onSearchChange={setSearch}
           roleFilter={roleFilter}

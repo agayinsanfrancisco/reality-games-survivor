@@ -6,8 +6,8 @@
  */
 
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { useParams, Link, Navigate } from 'react-router-dom';
+import { Loader2, Lock, AlertCircle } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { LeagueChat } from '@/components/LeagueChat';
 import { useAuth } from '@/lib/auth';
@@ -34,27 +34,52 @@ import {
 
 export default function LeagueHome() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<LeagueTab>('overview');
   const [copied, setCopied] = useState(false);
 
   // Data fetching with shared hooks
-  const { data: league, isLoading: leagueLoading } = useLeague(id);
-  const { data: members } = useLeagueMembers(id);
+  const { data: league, isLoading: leagueLoading, error: leagueError } = useLeague(id);
+  const { data: members, isLoading: membersLoading } = useLeagueMembers(id);
   const { data: allRosters } = useLeagueRosters(id);
   const { data: myRoster } = useRoster(id, user?.id);
   const { data: userProfile } = useUserProfile(user?.id);
   const { data: nextEpisode } = useNextEpisode(league?.season_id);
 
-  const copyInviteCode = () => {
-    if (league?.code) {
-      navigator.clipboard.writeText(`${window.location.origin}/join/${league.code}`);
+  // Clipboard API with fallback for older browsers/HTTP
+  const copyInviteCode = async () => {
+    if (!league?.code) return;
+    const url = `${window.location.origin}/join/${league.code}`;
+
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback for HTTP or older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      // Show the URL in an alert as last resort
+      alert(`Copy this link: ${url}`);
     }
   };
 
-  if (leagueLoading) {
+  // Redirect unauthenticated users to login
+  if (!authLoading && !user) {
+    return <Navigate to={`/login?redirect=/leagues/${id}`} replace />;
+  }
+
+  if (leagueLoading || authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
         <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
@@ -62,10 +87,43 @@ export default function LeagueHome() {
     );
   }
 
+  // Handle league fetch error
+  if (leagueError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
+        <Navigation />
+        <div className="max-w-md mx-auto p-4 pt-16">
+          <div className="bg-white rounded-2xl shadow-card p-8 text-center border border-red-200">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-neutral-800 mb-2">Error Loading League</h2>
+            <p className="text-neutral-600 mb-4">
+              {leagueError instanceof Error ? leagueError.message : 'Failed to load league data'}
+            </p>
+            <Link to="/dashboard" className="btn btn-primary">
+              Back to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!league) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
-        <p className="text-neutral-800">League not found</p>
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
+        <Navigation />
+        <div className="max-w-md mx-auto p-4 pt-16">
+          <div className="bg-white rounded-2xl shadow-card p-8 text-center">
+            <AlertCircle className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-neutral-800 mb-2">League Not Found</h2>
+            <p className="text-neutral-600 mb-4">
+              This league may have been deleted or the link is incorrect.
+            </p>
+            <Link to="/dashboard" className="btn btn-primary">
+              Back to Dashboard
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -74,6 +132,85 @@ export default function LeagueHome() {
   const isCommissioner = league?.commissioner_id === user?.id;
   const isAdmin = userProfile?.role === 'admin';
   const canManageLeague = isCommissioner || isAdmin;
+
+  // Access control: Only members, commissioner, or admins can view private league data
+  const isGlobalLeague = league?.is_global === true;
+  const canViewLeague = isGlobalLeague || myMembership || isCommissioner || isAdmin;
+
+  if (!canViewLeague && !membersLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
+        <Navigation />
+        <div className="max-w-md mx-auto p-4 pt-16">
+          <div className="bg-white rounded-2xl shadow-card p-8 text-center border border-amber-200">
+            <Lock className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-neutral-800 mb-2">Private League</h2>
+            <p className="text-neutral-600 mb-4">
+              You need to be a member of this league to view its contents.
+            </p>
+            {league.code && (
+              <Link to={`/join/${league.code}`} className="btn btn-primary mb-3 inline-block">
+                Join This League
+              </Link>
+            )}
+            <div>
+              <Link to="/dashboard" className="text-burgundy-500 hover:text-burgundy-600">
+                Back to Dashboard
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Security: Check if user has access to this league
+  // - Public leagues: anyone can view
+  // - Private leagues: only members, commissioner, or admins can view
+  const isMember = !!myMembership;
+  const hasAccess = league.is_public || isMember || isCommissioner || isAdmin;
+
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
+        <Navigation />
+        <div className="max-w-md mx-auto p-4 pt-16">
+          <div className="bg-white rounded-2xl shadow-card p-8 border border-cream-200 text-center">
+            <div className="w-16 h-16 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="h-8 w-8 text-burgundy-500" />
+            </div>
+            <h1 className="text-2xl font-display font-bold text-neutral-800 mb-2">
+              Private League
+            </h1>
+            <p className="text-neutral-500 mb-6">
+              This is a private league. You need to be a member to view its content.
+            </p>
+            {league.password_hash ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-sm text-neutral-500 justify-center">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>This league requires a password to join</span>
+                </div>
+                <Link to={`/join/${league.code}`} className="btn btn-primary w-full">
+                  Join with Invite Code
+                </Link>
+              </div>
+            ) : (
+              <Link to={`/join/${league.code}`} className="btn btn-primary w-full">
+                Request to Join
+              </Link>
+            )}
+            <Link
+              to="/dashboard"
+              className="block mt-4 text-burgundy-500 hover:text-burgundy-600 text-sm"
+            >
+              ← Back to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Group rosters by user for the players tab
   const rostersByUser = allRosters?.reduce(
@@ -131,9 +268,7 @@ export default function LeagueHome() {
           />
         )}
 
-        {activeTab === 'standings' && (
-          <StandingsTab members={members} currentUserId={user?.id} />
-        )}
+        {activeTab === 'standings' && <StandingsTab members={members} currentUserId={user?.id} />}
 
         <InviteCard
           league={league}

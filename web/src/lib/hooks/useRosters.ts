@@ -10,6 +10,7 @@ import type { Roster, Castaway } from '@/types';
 
 /**
  * Get a user's roster for a specific league
+ * Only returns active roster entries (not dropped)
  */
 export function useRoster(leagueId: string | undefined, userId: string | undefined) {
   return useQuery({
@@ -34,6 +35,7 @@ export function useRoster(leagueId: string | undefined, userId: string | undefin
         )
         .eq('league_id', leagueId)
         .eq('user_id', userId)
+        .is('dropped_at', null)
         .order('draft_pick', { ascending: true });
 
       if (error) throw error;
@@ -46,6 +48,7 @@ export function useRoster(leagueId: string | undefined, userId: string | undefin
 
 /**
  * Get all rosters for a league (all users)
+ * Only returns active roster entries (not dropped)
  */
 export function useLeagueRosters(leagueId: string | undefined) {
   return useQuery({
@@ -73,6 +76,7 @@ export function useLeagueRosters(leagueId: string | undefined) {
         `
         )
         .eq('league_id', leagueId)
+        .is('dropped_at', null)
         .order('user_id', { ascending: true })
         .order('draft_pick', { ascending: true });
 
@@ -89,6 +93,7 @@ export function useLeagueRosters(leagueId: string | undefined) {
 
 /**
  * Get all of a user's rosters across all leagues
+ * Only returns active roster entries (not dropped)
  */
 export function useMyRosters(userId: string | undefined) {
   return useQuery({
@@ -116,6 +121,7 @@ export function useMyRosters(userId: string | undefined) {
         `
         )
         .eq('user_id', userId)
+        .is('dropped_at', null)
         .order('league_id', { ascending: true })
         .order('draft_pick', { ascending: true });
 
@@ -132,6 +138,7 @@ export function useMyRosters(userId: string | undefined) {
 
 /**
  * Check if a user has a complete roster (2 castaways) in a league
+ * Only counts active roster entries (not dropped)
  */
 export function useRosterComplete(leagueId: string | undefined, userId: string | undefined) {
   return useQuery({
@@ -143,7 +150,8 @@ export function useRosterComplete(leagueId: string | undefined, userId: string |
         .from('rosters')
         .select('*', { count: 'exact', head: true })
         .eq('league_id', leagueId)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .is('dropped_at', null);
 
       if (error) throw error;
       return count === 2;

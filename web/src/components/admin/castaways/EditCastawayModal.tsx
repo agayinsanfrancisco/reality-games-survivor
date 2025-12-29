@@ -5,25 +5,7 @@
  */
 
 import { History, Trophy } from 'lucide-react';
-
-interface EditFormData {
-  name: string;
-  age: string;
-  hometown: string;
-  occupation: string;
-  photo_url: string;
-  previous_seasons: string;
-  best_placement: string;
-  fun_fact: string;
-}
-
-interface EditCastawayModalProps {
-  formData: EditFormData;
-  onFormChange: (data: EditFormData) => void;
-  onSave: () => void;
-  onCancel: () => void;
-  isPending: boolean;
-}
+import type { EditCastawayModalProps } from './types';
 
 export function EditCastawayModal({
   formData,

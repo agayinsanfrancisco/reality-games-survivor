@@ -4,7 +4,7 @@
  * Shows history of user's previous picks in a league.
  */
 
-interface WeeklyPick {
+export interface PreviousPickData {
   id: string;
   episode_id: string;
   castaway_id: string | null;
@@ -13,17 +13,17 @@ interface WeeklyPick {
   episodes: {
     number: number;
     title: string | null;
-  };
+  } | null;
   castaways: {
     id: string;
     name: string;
-    photo_url?: string;
+    photo_url?: string | null;
     status: string;
   } | null;
 }
 
 interface PreviousPicksCardProps {
-  picks: WeeklyPick[];
+  picks: PreviousPickData[];
 }
 
 export function PreviousPicksCard({ picks }: PreviousPicksCardProps) {

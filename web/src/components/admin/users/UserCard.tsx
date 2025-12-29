@@ -1,38 +1,84 @@
-import { 
-  Users, 
-  Shield, 
-  ShieldCheck, 
-  ShieldAlert, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  MoreVertical, 
-  MapPin, 
-  Heart, 
-  ChevronDown, 
-  ChevronUp, 
-  Edit2, 
-  X, 
+import {
+  Users,
+  Shield,
+  ShieldCheck,
+  ShieldAlert,
+  Mail,
+  Phone,
+  Calendar,
+  MoreVertical,
+  MapPin,
+  Heart,
+  ChevronDown,
+  ChevronUp,
+  Edit2,
+  X,
   Check,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 
+type UserRole = 'player' | 'commissioner' | 'admin';
+
+interface User {
+  id: string;
+  display_name: string;
+  email: string;
+  phone?: string | null;
+  phone_verified?: boolean;
+  role: UserRole;
+  avatar_url?: string | null;
+  hometown?: string | null;
+  favorite_castaway?: string | null;
+  timezone?: string | null;
+  notification_email?: boolean;
+  notification_sms?: boolean;
+  notification_push?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface EditForm {
+  display_name: string;
+  email: string;
+  phone: string;
+  hometown: string;
+  favorite_castaway: string;
+  timezone: string;
+}
+
 interface UserCardProps {
-  user: any;
+  user: User;
   leagueCount: number;
   isSelected: boolean;
   onSelect: (id: string | null) => void;
   isExpanded: boolean;
   onExpand: (id: string | null) => void;
   isEditing: boolean;
-  onEdit: (user: any) => void;
+  onEdit: (user: User) => void;
   onCancelEdit: () => void;
   onSave: () => void;
-  onUpdateRole: (userId: string, role: any) => void;
-  editForm: any;
-  onEditFormChange: (data: any) => void;
+  onUpdateRole: (userId: string, role: UserRole) => void;
+  editForm: EditForm;
+  onEditFormChange: (data: EditForm) => void;
   isSaving: boolean;
 }
+
+// Validation helpers
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const isValidPhone = (phone: string): boolean => {
+  if (!phone) return true; // Phone is optional
+  // Allow various phone formats: +1234567890, (123) 456-7890, 123-456-7890, etc.
+  const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/;
+  return phoneRegex.test(phone) && phone.replace(/\D/g, '').length >= 10;
+};
+
+const sanitizeInput = (input: string, maxLength: number = 200): string => {
+  return input.slice(0, maxLength).trim();
+};
 
 export function UserCard({
   user,
@@ -48,7 +94,7 @@ export function UserCard({
   onUpdateRole,
   editForm,
   onEditFormChange,
-  isSaving
+  isSaving,
 }: UserCardProps) {
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -77,11 +123,7 @@ export function UserCard({
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           {user.avatar_url ? (
-            <img
-              src={user.avatar_url}
-              alt=""
-              className="w-10 h-10 rounded-full object-cover"
-            />
+            <img src={user.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
           ) : (
             <div className="w-10 h-10 bg-cream-100 rounded-full flex items-center justify-center border border-cream-200">
               <Users className="h-5 w-5 text-neutral-400" />
@@ -151,9 +193,7 @@ export function UserCard({
       </div>
 
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-neutral-400 text-sm">
-          {leagueCount} leagues
-        </span>
+        <span className="text-neutral-400 text-sm">{leagueCount} leagues</span>
         <button
           onClick={() => onExpand(isExpanded ? null : user.id)}
           className="text-burgundy-500 hover:text-burgundy-700 text-sm flex items-center gap-1"
@@ -219,9 +259,14 @@ export function UserCard({
                   type="text"
                   value={editForm.display_name}
                   onChange={(e) =>
-                    onEditFormChange({ ...editForm, display_name: e.target.value })
+                    onEditFormChange({
+                      ...editForm,
+                      display_name: sanitizeInput(e.target.value, 100),
+                    })
                   }
                   className="input text-sm"
+                  maxLength={100}
+                  required
                 />
               </div>
               <div>
@@ -231,9 +276,16 @@ export function UserCard({
                 <input
                   type="email"
                   value={editForm.email}
-                  onChange={(e) => onEditFormChange({ ...editForm, email: e.target.value })}
-                  className="input text-sm"
+                  onChange={(e) =>
+                    onEditFormChange({ ...editForm, email: e.target.value.toLowerCase().trim() })
+                  }
+                  className={`input text-sm ${editForm.email && !isValidEmail(editForm.email) ? 'border-red-300 focus:ring-red-500' : ''}`}
+                  maxLength={254}
+                  required
                 />
+                {editForm.email && !isValidEmail(editForm.email) && (
+                  <p className="text-red-500 text-xs mt-1">Invalid email format</p>
+                )}
               </div>
               <div>
                 <label className="text-neutral-400 text-xs uppercase tracking-wide block mb-1">
@@ -242,10 +294,16 @@ export function UserCard({
                 <input
                   type="tel"
                   value={editForm.phone}
-                  onChange={(e) => onEditFormChange({ ...editForm, phone: e.target.value })}
-                  className="input text-sm"
+                  onChange={(e) =>
+                    onEditFormChange({ ...editForm, phone: e.target.value.slice(0, 20) })
+                  }
+                  className={`input text-sm ${editForm.phone && !isValidPhone(editForm.phone) ? 'border-red-300 focus:ring-red-500' : ''}`}
                   placeholder="+1 555-123-4567"
+                  maxLength={20}
                 />
+                {editForm.phone && !isValidPhone(editForm.phone) && (
+                  <p className="text-red-500 text-xs mt-1">Invalid phone format</p>
+                )}
               </div>
               <div>
                 <label className="text-neutral-400 text-xs uppercase tracking-wide block mb-1">
@@ -254,9 +312,12 @@ export function UserCard({
                 <input
                   type="text"
                   value={editForm.hometown}
-                  onChange={(e) => onEditFormChange({ ...editForm, hometown: e.target.value })}
+                  onChange={(e) =>
+                    onEditFormChange({ ...editForm, hometown: sanitizeInput(e.target.value, 100) })
+                  }
                   className="input text-sm"
                   placeholder="City, State"
+                  maxLength={100}
                 />
               </div>
               <div>
@@ -267,10 +328,14 @@ export function UserCard({
                   type="text"
                   value={editForm.favorite_castaway}
                   onChange={(e) =>
-                    onEditFormChange({ ...editForm, favorite_castaway: e.target.value })
+                    onEditFormChange({
+                      ...editForm,
+                      favorite_castaway: sanitizeInput(e.target.value, 100),
+                    })
                   }
                   className="input text-sm"
                   placeholder="Boston Rob, Parvati..."
+                  maxLength={100}
                 />
               </div>
               <div>
@@ -293,21 +358,15 @@ export function UserCard({
             // View Mode
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <label className="text-neutral-400 text-xs uppercase tracking-wide">
-                  User ID
-                </label>
+                <label className="text-neutral-400 text-xs uppercase tracking-wide">User ID</label>
                 <p className="font-mono text-xs text-neutral-600 break-all">{user.id}</p>
               </div>
               <div>
-                <label className="text-neutral-400 text-xs uppercase tracking-wide">
-                  Email
-                </label>
+                <label className="text-neutral-400 text-xs uppercase tracking-wide">Email</label>
                 <p className="text-neutral-800">{user.email}</p>
               </div>
               <div>
-                <label className="text-neutral-400 text-xs uppercase tracking-wide">
-                  Phone
-                </label>
+                <label className="text-neutral-400 text-xs uppercase tracking-wide">Phone</label>
                 <p className="text-neutral-800 flex items-center gap-1">
                   {user.phone || 'Not provided'}
                   {user.phone_verified && (
@@ -316,9 +375,7 @@ export function UserCard({
                 </p>
               </div>
               <div>
-                <label className="text-neutral-400 text-xs uppercase tracking-wide">
-                  Hometown
-                </label>
+                <label className="text-neutral-400 text-xs uppercase tracking-wide">Hometown</label>
                 <p className="text-neutral-800 flex items-center gap-1">
                   {user.hometown ? (
                     <>
@@ -344,26 +401,18 @@ export function UserCard({
                 </p>
               </div>
               <div>
-                <label className="text-neutral-400 text-xs uppercase tracking-wide">
-                  Timezone
-                </label>
+                <label className="text-neutral-400 text-xs uppercase tracking-wide">Timezone</label>
                 <p className="text-neutral-800">{user.timezone || 'America/Los_Angeles'}</p>
               </div>
               <div>
-                <label className="text-neutral-400 text-xs uppercase tracking-wide">
-                  Created
-                </label>
-                <p className="text-neutral-800">
-                  {new Date(user.created_at).toLocaleString()}
-                </p>
+                <label className="text-neutral-400 text-xs uppercase tracking-wide">Created</label>
+                <p className="text-neutral-800">{new Date(user.created_at).toLocaleString()}</p>
               </div>
               <div>
                 <label className="text-neutral-400 text-xs uppercase tracking-wide">
                   Last Updated
                 </label>
-                <p className="text-neutral-800">
-                  {new Date(user.updated_at).toLocaleString()}
-                </p>
+                <p className="text-neutral-800">{new Date(user.updated_at).toLocaleString()}</p>
               </div>
             </div>
           )}
@@ -373,9 +422,7 @@ export function UserCard({
               className={`p-2 rounded-lg text-center ${user.notification_email ? 'bg-green-50 text-green-700' : 'bg-neutral-100 text-neutral-400'}`}
             >
               <Mail className="h-4 w-4 mx-auto mb-1" />
-              <span className="text-xs">
-                Email {user.notification_email ? 'ON' : 'OFF'}
-              </span>
+              <span className="text-xs">Email {user.notification_email ? 'ON' : 'OFF'}</span>
             </div>
             <div
               className={`p-2 rounded-lg text-center ${user.notification_sms ? 'bg-green-50 text-green-700' : 'bg-neutral-100 text-neutral-400'}`}

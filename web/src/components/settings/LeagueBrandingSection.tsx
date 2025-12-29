@@ -5,8 +5,12 @@
  */
 
 import { useState } from 'react';
-import { ImageIcon, Upload, FileText, Loader2 } from 'lucide-react';
+import { ImageIcon, Upload, FileText, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+
+// Allowed image types and max size (5MB)
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 interface LeagueBrandingSectionProps {
   leagueId: string;
@@ -24,15 +28,38 @@ export function LeagueBrandingSection({
   onDescriptionChange,
 }: LeagueBrandingSectionProps) {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const validateFile = (file: File): string | null => {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return 'Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.';
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return 'File too large. Maximum size is 5MB.';
+    }
+    return null;
+  };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !leagueId) return;
 
+    // Validate file type and size
+    const validationError = validateFile(file);
+    if (validationError) {
+      setUploadError(validationError);
+      return;
+    }
+
+    setUploadError(null);
     setUploadingPhoto(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${leagueId}.${fileExt}`;
+      // Sanitize file extension
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+      const safeExt = allowedExtensions.includes(fileExt || '') ? fileExt : 'jpg';
+
+      const fileName = `${leagueId}.${safeExt}`;
       const filePath = `league-photos/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -48,6 +75,7 @@ export function LeagueBrandingSection({
       onPhotoChange(publicUrl);
     } catch (error) {
       console.error('Upload error:', error);
+      setUploadError('Failed to upload image. Please try again.');
     } finally {
       setUploadingPhoto(false);
     }
@@ -78,7 +106,7 @@ export function LeagueBrandingSection({
           <label className="flex-1">
             <input
               type="file"
-              accept="image/*"
+              accept=".jpg,.jpeg,.png,.gif,.webp"
               onChange={handlePhotoUpload}
               className="hidden"
               disabled={uploadingPhoto}
@@ -95,6 +123,15 @@ export function LeagueBrandingSection({
             </div>
           </label>
         </div>
+        {uploadError && (
+          <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span>{uploadError}</span>
+          </div>
+        )}
+        <p className="text-neutral-400 text-xs mt-2">
+          Accepted formats: JPEG, PNG, GIF, WebP. Max size: 5MB.
+        </p>
       </div>
 
       {/* Description */}
