@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
-import { Flame, Trophy, Users, TrendingUp, Medal, ChevronDown } from 'lucide-react';
+import { Flame, Trophy, Users, TrendingUp, Medal, ChevronDown, MessageCircle } from 'lucide-react';
 
 interface PlayerStats {
   userId: string;
@@ -216,23 +216,39 @@ export default function GlobalLeaderboard() {
 
       {/* Full Rankings */}
       <div className="bg-white rounded-2xl shadow-elevated overflow-hidden border border-cream-200">
-        <div className="p-5 border-b border-cream-100 flex items-center justify-between">
-          <div>
-            <h2 className="font-semibold text-neutral-800">All Players</h2>
-            <p className="text-sm text-neutral-500">
-              Ranked by weighted score (more leagues = more accurate ranking)
-            </p>
+        <div className="p-5 border-b border-cream-100">
+          {/* Header Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-neutral-800">All Players</h2>
+              <p className="text-sm text-neutral-500">
+                Ranked by weighted score (more leagues = more accurate ranking)
+              </p>
+            </div>
+            
+            {/* Legend - aligned properly */}
+            <div className="flex items-center gap-4 text-sm text-neutral-500 bg-cream-50 px-3 py-2 rounded-lg">
+              <div className="flex items-center gap-1.5">
+                <TorchIcon lit={true} />
+                <span>Active</span>
+              </div>
+              <div className="w-px h-4 bg-neutral-300" />
+              <div className="flex items-center gap-1.5">
+                <TorchIcon lit={false} />
+                <span>Eliminated</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-neutral-500">
-            <div className="flex items-center gap-1">
-              <TorchIcon lit={true} />
-              <span>= Active</span>
-            </div>
-            <span className="mx-2">|</span>
-            <div className="flex items-center gap-1">
-              <TorchIcon lit={false} />
-              <span>= Eliminated</span>
-            </div>
+          
+          {/* Chat Link */}
+          <div className="mt-4 pt-4 border-t border-cream-100">
+            <Link
+              to="/chat"
+              className="flex items-center gap-2 text-burgundy-600 hover:text-burgundy-700 font-medium text-sm transition-colors"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span>Join the conversation in Global Chat</span>
+            </Link>
           </div>
         </div>
 
