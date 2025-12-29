@@ -13,5 +13,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
+    storageKey: 'rgfl-auth-token', // Unique key to avoid collisions
+    storage: window.localStorage, // Explicitly use localStorage
   },
 });

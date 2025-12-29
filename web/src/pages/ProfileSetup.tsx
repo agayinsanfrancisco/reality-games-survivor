@@ -225,9 +225,30 @@ export default function ProfileSetup() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Check if localStorage is working
+    try {
+      localStorage.setItem('storage-test', 'test');
+      localStorage.removeItem('storage-test');
+    } catch {
+      setError(
+        'Your browser is blocking local storage. Please disable "Incognito" mode or allow cookies/storage for this site.'
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      // 1. Double check session before proceeding
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+
+      if (!currentSession) {
+        throw new Error('Your session has expired. Please log in again.');
+      }
+
       await updateProfile.mutateAsync({
         display_name: displayName.trim(),
         hometown: hometown.trim() || undefined,
@@ -239,7 +260,16 @@ export default function ProfileSetup() {
       });
     } catch (err) {
       console.error('Submit error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update profile');
+      // Show a more descriptive error if possible
+      if (err instanceof Error) {
+        if (err.message.includes('JWT') || err.message.includes('session')) {
+          setError('Session issue detected. Please try refreshing the page or logging in again.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('Failed to update profile. Please check your connection.');
+      }
       setIsSubmitting(false);
     }
   };
