@@ -3,18 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import {
-  Users,
-  Search,
-  Lock,
-  Globe,
-  Heart,
-  Plus,
-  Loader2,
-  Crown,
-  ArrowRight,
-  UserPlus,
-} from 'lucide-react';
+import { Users, Search, Lock, Globe, Plus, Loader2, Crown, ArrowRight } from 'lucide-react';
 
 interface _League {
   id: string;
@@ -252,7 +241,7 @@ export default function Leagues() {
         </div>
       </div>
 
-      {/* Leagues Grid */}
+      {/* Leagues Table - Variation B */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-16">
           <div className="flex items-center justify-center py-12">
@@ -261,191 +250,142 @@ export default function Leagues() {
           <p className="text-neutral-500">Loading leagues...</p>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredLeagues?.map((league) => {
-            const leagueMemberCount = memberCounts?.[league.id] || 0;
-            const isMember = isAlreadyMember(league.id);
-            const isFull = leagueMemberCount >= league.max_players;
-            const isCommissioner = league.commissioner_id === user?.id;
-            const colorGradient = getLeagueColor(league.id);
+        <div className="bg-white rounded-2xl shadow-xl border border-cream-200 overflow-hidden">
+          <div className="bg-cream-50 px-4 sm:px-6 py-4 border-b border-cream-200">
+            <div className="grid grid-cols-12 gap-4 text-sm font-semibold text-neutral-600">
+              <div className="col-span-4">League</div>
+              <div className="col-span-2 text-center">Members</div>
+              <div className="col-span-2 text-center">Role</div>
+              <div className="col-span-2 text-center">Donation</div>
+              <div className="col-span-2 text-right">Status</div>
+            </div>
+          </div>
 
-            return (
-              <div
-                key={league.id}
-                className="bg-white rounded-2xl shadow-lg border border-cream-200 overflow-hidden hover:shadow-xl transition group cursor-pointer"
-                onClick={() => isMember && navigate(`/leagues/${league.id}`)}
-              >
-                {/* Colored Top Bar */}
-                <div className={`h-3 bg-gradient-to-r ${colorGradient}`}></div>
+          <div className="divide-y divide-cream-100">
+            {filteredLeagues?.map((league) => {
+              const leagueMemberCount = memberCounts?.[league.id] || 0;
+              const isMember = isAlreadyMember(league.id);
+              const isFull = leagueMemberCount >= league.max_players;
+              const isCommissioner = league.commissioner_id === user?.id;
+              const colorGradient = getLeagueColor(league.id);
 
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      {/* Role Badge */}
-                      <div className="flex items-center gap-2 mb-1">
-                        {isCommissioner ? (
-                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
-                            <Crown className="h-3 w-3" />
-                            Commissioner
-                          </span>
-                        ) : isMember ? (
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-                            Member
-                          </span>
-                        ) : league.is_public ? (
-                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
-                            <Globe className="h-3 w-3" />
-                            Public
-                          </span>
-                        ) : (
-                          <span className="text-xs bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
-                            <Lock className="h-3 w-3" />
-                            Private
-                          </span>
-                        )}
-
-                        {/* Charity Badge */}
-                        {league.require_donation && (
-                          <span className="text-xs bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
-                            <Heart className="h-3 w-3" />
-                            Charity
-                          </span>
-                        )}
+              return (
+                <div
+                  key={league.id}
+                  className="px-4 sm:px-6 py-4 hover:bg-cream-50 transition cursor-pointer group"
+                  onClick={() => navigate(`/leagues/${league.id}`)}
+                >
+                  <div className="grid grid-cols-12 gap-4 items-center">
+                    <div className="col-span-4 flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-xl bg-gradient-to-br ${colorGradient} flex items-center justify-center text-white font-bold`}
+                      >
+                        {league.name.charAt(0).toUpperCase()}
                       </div>
-
-                      {/* League Name */}
-                      <h3 className="text-xl font-display font-bold text-neutral-800 group-hover:text-burgundy-600 transition">
-                        {league.name}
-                      </h3>
-                      <p className="text-neutral-500 text-sm">Code: {league.code}</p>
+                      <div>
+                        <h3 className="font-semibold text-neutral-800 group-hover:text-burgundy-600">
+                          {league.name}
+                        </h3>
+                        <p className="text-xs text-neutral-400 font-mono">{league.code}</p>
+                        <p className="text-xs text-neutral-500">
+                          {league.commissioner?.display_name || 'Commissioner'}
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Points - Only show for members */}
-                    {isMember && (
-                      <div className="text-right">
-                        <p className="text-2xl font-display font-bold text-burgundy-500">--</p>
-                        <p className="text-xs text-neutral-400">points</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Stats Row */}
-                  <div className="flex items-center gap-4 mb-4 text-sm">
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4 text-neutral-400" />
-                      <span className="text-neutral-600">
-                        {leagueMemberCount}/{league.max_players} players
+                    <div className="col-span-2 text-center">
+                      <span className="text-neutral-700">
+                        {leagueMemberCount}/{league.max_players}
                       </span>
                     </div>
-                    {isMember && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-neutral-400">📍</span>
-                        <span className="text-neutral-600">Rank #--</span>
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Donation Info */}
-                  {league.require_donation && (
-                    <div className="flex items-center gap-2 mb-4 p-3 bg-gradient-to-r from-pink-50 to-rose-50 rounded-xl border border-pink-100">
-                      <Heart className="h-5 w-5 text-pink-500" />
-                      <div>
-                        <p className="text-pink-700 font-medium text-sm">
-                          ${league.donation_amount} Entry
-                        </p>
-                        <p className="text-pink-500 text-xs">All proceeds to charity</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between pt-4 border-t border-cream-100">
-                    {/* Member Avatars */}
-                    <div className="flex -space-x-2">
-                      {[...Array(Math.min(leagueMemberCount, 3))].map((_, i) => (
-                        <div
-                          key={i}
-                          className="w-8 h-8 rounded-full border-2 border-white bg-cream-200 flex items-center justify-center text-xs text-neutral-500"
-                        >
-                          {String.fromCharCode(65 + i)}
-                        </div>
-                      ))}
-                      {leagueMemberCount > 3 && (
-                        <div className="w-8 h-8 rounded-full border-2 border-white bg-cream-100 flex items-center justify-center text-xs text-neutral-500">
-                          +{leagueMemberCount - 3}
-                        </div>
+                    <div className="col-span-2 text-center">
+                      {isCommissioner ? (
+                        <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-100 px-2 py-1 rounded-full text-xs font-semibold">
+                          <Crown className="h-3 w-3" />
+                          Commissioner
+                        </span>
+                      ) : isMember ? (
+                        <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-100 px-2 py-1 rounded-full text-xs font-semibold">
+                          Member
+                        </span>
+                      ) : league.is_public ? (
+                        <span className="inline-flex items-center gap-1 text-green-700 bg-green-100 px-2 py-1 rounded-full text-xs font-semibold">
+                          <Globe className="h-3 w-3" />
+                          Public
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-neutral-700 bg-neutral-100 px-2 py-1 rounded-full text-xs font-semibold">
+                          <Lock className="h-3 w-3" />
+                          Private
+                        </span>
                       )}
                     </div>
 
-                    {/* Action Link */}
-                    {isMember ? (
-                      <Link
-                        to={`/leagues/${league.id}`}
-                        className="text-burgundy-500 font-medium text-sm group-hover:underline flex items-center gap-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        View League <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    ) : league.is_public ? (
-                      <Link
-                        to={`/join/${league.code}`}
-                        className={`text-sm font-medium flex items-center gap-1 ${
-                          isFull
-                            ? 'text-neutral-400 cursor-not-allowed'
-                            : 'text-burgundy-500 hover:underline'
-                        }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isFull) e.preventDefault();
-                        }}
-                      >
-                        <UserPlus className="h-4 w-4" />
-                        {isFull ? 'League Full' : 'Join League'}
-                      </Link>
-                    ) : (
-                      <span className="text-sm text-neutral-400 flex items-center gap-1">
-                        <Lock className="h-4 w-4" />
-                        Invite Only
-                      </span>
-                    )}
+                    <div className="col-span-2 text-center">
+                      {league.require_donation && league.donation_amount ? (
+                        <span className="text-amber-700 bg-amber-50 px-2 py-1 rounded-full text-xs font-semibold border border-amber-100">
+                          ${league.donation_amount.toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="text-neutral-400 text-sm">—</span>
+                      )}
+                    </div>
+
+                    <div className="col-span-2 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <span
+                          className={`inline-flex items-center gap-1 text-sm font-medium ${
+                            league.status === 'active'
+                              ? 'text-green-600'
+                              : league.status === 'drafting'
+                                ? 'text-amber-600'
+                                : 'text-neutral-500'
+                          }`}
+                        >
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              league.status === 'active'
+                                ? 'bg-green-500'
+                                : league.status === 'drafting'
+                                  ? 'bg-amber-400'
+                                  : 'bg-neutral-300'
+                            }`}
+                          />
+                          {league.status || 'unknown'}
+                        </span>
+                        {!isMember && !isFull && (
+                          <Link
+                            to={`/join/${league.code}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-burgundy-600 font-semibold text-sm inline-flex items-center gap-1"
+                          >
+                            Join <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        )}
+                        {isMember && (
+                          <Link
+                            to={`/leagues/${league.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-burgundy-600 font-semibold text-sm inline-flex items-center gap-1"
+                          >
+                            View <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        )}
+                        {isFull && !isMember && (
+                          <span className="text-xs text-red-500 font-semibold">Full</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {/* Empty State / Create New Card */}
-          <div
-            onClick={() => navigate('/leagues/create')}
-            className="bg-cream-50 rounded-2xl border-2 border-dashed border-cream-300 p-6 flex flex-col items-center justify-center text-center hover:border-burgundy-400 hover:bg-cream-100 transition cursor-pointer group min-h-[300px]"
-          >
-            <div className="w-16 h-16 bg-cream-200 rounded-full flex items-center justify-center mb-4 group-hover:bg-burgundy-100 transition">
-              <Plus className="h-8 w-8 text-neutral-500 group-hover:text-burgundy-500" />
-            </div>
-            <h3 className="font-semibold text-neutral-700 mb-1">Create New League</h3>
-            <p className="text-neutral-500 text-sm">Start your own fantasy competition</p>
+            {filteredLeagues?.length === 0 && (
+              <div className="px-6 py-10 text-center text-neutral-500">No leagues found.</div>
+            )}
           </div>
-        </div>
-      )}
-
-      {/* Empty State when no leagues match filter */}
-      {!isLoading && filteredLeagues?.length === 0 && (
-        <div className="bg-white rounded-2xl shadow-card p-12 border border-cream-200 text-center mt-6">
-          <Users className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-neutral-800 mb-2">No leagues found</h3>
-          <p className="text-neutral-500 mb-6">
-            {filter === 'commissioner'
-              ? "You haven't created any leagues yet"
-              : filter === 'member'
-                ? "You haven't joined any leagues yet"
-                : search
-                  ? 'Try a different search term'
-                  : 'Be the first to create a league!'}
-          </p>
-          <Link to="/leagues/create" className="btn btn-primary inline-flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            Create a League
-          </Link>
         </div>
       )}
     </div>
