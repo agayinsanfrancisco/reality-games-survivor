@@ -97,7 +97,10 @@ export async function api<T = unknown>(
   url: string,
   options: FetchOptions = {}
 ): Promise<ApiResponse<T>> {
-  const fullUrl = url.startsWith('/api') ? url : `/api${url}`;
+  // Use VITE_API_URL if set (production), otherwise use relative path (dev proxy)
+  const apiBase = import.meta.env.VITE_API_URL || '';
+  const apiPath = url.startsWith('/api') ? url : `/api${url}`;
+  const fullUrl = apiBase ? `${apiBase}${apiPath}` : apiPath;
   const method = options.method || 'GET';
 
   const startTime = performance.now();
