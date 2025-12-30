@@ -153,6 +153,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Handle browser back/forward navigation - restore auth state
+  useEffect(() => {
+    const handlePopState = async () => {
+      // When navigating back/forward, check session again
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+
+      if (currentSession) {
+        setSession(currentSession);
+        setUser(currentSession.user ?? null);
+        if (currentSession.user) {
+          const profileData = await fetchProfile(currentSession.user.id);
+          setProfile(profileData);
+        }
+      } else {
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const signIn = async (email: string, password: string) => {
     const startTime = performance.now();
     try {

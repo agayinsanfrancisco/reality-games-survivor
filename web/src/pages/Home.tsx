@@ -111,7 +111,7 @@ export function Home() {
             </div>
           ) : (
             <form onSubmit={handleEmailSubmit} className="max-w-lg mx-auto">
-              <div className="flex gap-3">
+              <div className="flex gap-3 items-start">
                 <input
                   type="email"
                   value={email}
@@ -129,7 +129,7 @@ export function Home() {
                 <button
                   type="submit"
                   disabled={isSubmitting || !email}
-                  className="bg-black hover:bg-gray-900 disabled:bg-gray-400 text-white px-6 py-3 rounded-xl font-semibold text-base transition-all shadow-md hover:shadow-lg whitespace-nowrap flex items-center gap-2"
+                  className="bg-black hover:bg-gray-900 disabled:bg-gray-400 text-white px-6 py-3 rounded-xl font-semibold text-base transition-all shadow-md hover:shadow-lg whitespace-nowrap flex items-center gap-2 shrink-0"
                 >
                   {isSubmitting ? (
                     <>

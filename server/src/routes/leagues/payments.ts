@@ -39,7 +39,8 @@ router.post('/:id/join/checkout', authenticate, checkoutLimiter, async (req: Aut
     let frontendUrl = process.env.FRONTEND_URL || process.env.WEB_URL || 'https://survivor.realitygamesfantasyleague.com';
     
     // Safety check: ensure we NEVER redirect to API domain (costs $10 per mistake!)
-    if (frontendUrl.includes('api.rgfl.app') || frontendUrl.includes('api.')) {
+    // Check for api.rgfl.app, rgfl.app (old domain), or any api. subdomain
+    if (frontendUrl.includes('api.rgfl.app') || frontendUrl.includes('rgfl.app') || frontendUrl.includes('api.')) {
       console.error('ERROR: frontendUrl contains API domain! Using hardcoded fallback.');
       frontendUrl = 'https://survivor.realitygamesfantasyleague.com';
     }
