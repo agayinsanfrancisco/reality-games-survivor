@@ -70,7 +70,7 @@ export default function ProfileSetup() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const { user, refreshProfile } = useAuth();
+  const { user, profile: authProfile, refreshProfile, loading: authLoading } = useAuth();
   const [step, setStep] = useState(1);
   const [displayName, setDisplayName] = useState('');
   const [hometown, setHometown] = useState('');
@@ -100,26 +100,7 @@ export default function ProfileSetup() {
       if (error) throw error;
       return data || [];
     },
-  });
-
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from('users')
-        .select('display_name, email, profile_setup_complete')
-        .eq('id', user.id)
-        .single();
-
-      // Handle PGRST116 or 406 as "not found"
-      const isNotFound = error?.code === 'PGRST116' || (error as any)?.status === 406;
-      if (error && !isNotFound) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000),
+    enabled: step >= 3, // only fetch when needed
   });
 
   const updateProfile = useMutation({
@@ -275,8 +256,8 @@ export default function ProfileSetup() {
   };
 
   // Show loading while checking auth and profile
-  // Wait for both auth loading and user to be available
-  if (isLoading || !user) {
+  // Wait for auth loading and user to be available
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-cream-200">
         <div className="flex flex-col items-center justify-center min-h-screen">
@@ -288,7 +269,7 @@ export default function ProfileSetup() {
   }
 
   // Check if user has completed profile setup
-  if (profile?.profile_setup_complete) {
+  if (authProfile?.profile_setup_complete) {
     const redirect = searchParams.get('redirect') || '/dashboard';
     const safeRedirect = redirect === '/profile/setup' ? '/dashboard' : redirect;
     navigate(safeRedirect, { replace: true });
