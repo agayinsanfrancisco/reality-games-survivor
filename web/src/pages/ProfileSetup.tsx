@@ -147,14 +147,14 @@ export default function ProfileSetup() {
 
       console.log('Updating profile with data:', updateData);
 
-      // First, try to check if the user record exists
+      // Fetch existing role if present to avoid losing it
       const { data: existingUser } = await supabase
         .from('users')
         .select('id, role')
         .eq('id', user!.id)
-        .single();
+        .maybeSingle();
 
-      // Build update data - preserve role if user exists
+      // Build upsert payload
       const updateDataWithId: Record<string, unknown> = {
         id: user!.id,
         email: user!.email || '',
@@ -163,77 +163,17 @@ export default function ProfileSetup() {
         ...updateData,
       };
 
-      // If user exists, preserve their role (required by RLS policy)
+      // Preserve role if user exists
       if (existingUser?.role) {
         updateDataWithId.role = existingUser.role;
       }
 
-      let error;
-
-      if (existingUser) {
-        // User exists - use UPDATE (preserves role)
-        // Remove id from update (it's in the WHERE clause)
-        const { id: _id, ...updateFields } = updateDataWithId;
-        const { error: updateError } = await supabase
-          .from('users')
-          .update(updateFields)
-          .eq('id', user!.id);
-        error = updateError;
-      } else {
-        // User doesn't exist - use INSERT
-        const { error: insertError } = await supabase.from('users').insert(updateDataWithId);
-        error = insertError;
-      }
+      // Upsert to avoid duplicate-key issues when the row already exists
+      const { error } = await supabase.from('users').upsert(updateDataWithId, { onConflict: 'id' });
 
       if (error) {
         console.error('Profile update error:', error);
-
-        // If it's a "column does not exist" error (42703) or "invalid input syntax for type uuid" (22P02)
-        // or a generic error that might be related to one of the new columns
-        if (
-          error.code === '42703' ||
-          error.code === '22P02' ||
-          error.message.includes('season_50_winner_prediction') ||
-          error.message.includes('hometown') ||
-          error.message.includes('favorite_castaway') ||
-          error.message.includes('bio') ||
-          error.message.includes('favorite_season')
-        ) {
-          console.warn('Retrying profile update with core fields only...');
-          const retryData: Record<string, unknown> = {
-            id: user!.id,
-            email: user!.email || '',
-            display_name: data.display_name,
-            notification_email: data.notification_email,
-            profile_setup_complete: true,
-          };
-
-          // Preserve role if user exists
-          if (existingUser?.role) {
-            retryData.role = existingUser.role;
-          }
-
-          let retryError;
-          if (existingUser) {
-            // Remove id from update (it's in the WHERE clause)
-            const { id: _id, ...retryFields } = retryData;
-            const { error: updateRetryError } = await supabase
-              .from('users')
-              .update(retryFields)
-              .eq('id', user!.id);
-            retryError = updateRetryError;
-          } else {
-            const { error: insertRetryError } = await supabase.from('users').insert(retryData);
-            retryError = insertRetryError;
-          }
-
-          if (retryError) {
-            console.error('Profile update retry error:', retryError);
-            throw new Error(retryError.message || 'Retry failed');
-          }
-        } else {
-          throw new Error(error.message || 'Update failed');
-        }
+        throw new Error(error.message || 'Update failed');
       }
     },
     onSuccess: async () => {
