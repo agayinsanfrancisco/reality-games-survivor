@@ -82,7 +82,7 @@ export default function ProfileSetup() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: season50Castaways } = useQuery({
+  const { data: season50Castaways, isFetching: isCastawaysLoading } = useQuery({
     queryKey: ['season-50-castaways'],
     queryFn: async () => {
       const { data: season } = await supabase
@@ -123,6 +123,38 @@ export default function ProfileSetup() {
   const effectiveProfile = useMemo(
     () => authProfile ?? fallbackProfile,
     [authProfile, fallbackProfile]
+  );
+
+  const SkeletonBlock = ({ className = '' }: { className?: string }) => (
+    <div className={`animate-pulse bg-cream-200 rounded-lg ${className}`} />
+  );
+
+  const renderSkeleton = () => (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-cream-100 to-cream-200 px-4 py-12">
+      <div className="bg-white rounded-2xl shadow-float max-w-md w-full p-8">
+        <div className="flex justify-center mb-6">
+          <SkeletonBlock className="h-16 w-32 rounded-2xl" />
+        </div>
+        <SkeletonBlock className="h-8 w-40 mx-auto mb-2" />
+        <SkeletonBlock className="h-4 w-56 mx-auto mb-6" />
+        <div className="flex justify-center gap-2 mb-6">
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonBlock key={i} className="h-3 w-3 rounded-full" />
+          ))}
+        </div>
+        <div className="space-y-4">
+          <div>
+            <SkeletonBlock className="h-4 w-24 mb-2" />
+            <SkeletonBlock className="h-11 w-full" />
+          </div>
+          <SkeletonBlock className="h-10 w-full" />
+          <div className="flex gap-3">
+            <SkeletonBlock className="h-10 w-full" />
+            <SkeletonBlock className="h-10 w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 
   const updateProfile = useMutation({
@@ -277,17 +309,9 @@ export default function ProfileSetup() {
     }
   };
 
-  // Show loading while checking auth and profile
-  // Wait for auth loading and user to be available
+  // Show skeleton while auth is initializing
   if (authLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-cream-200">
-        <div className="flex flex-col items-center justify-center min-h-screen">
-          <Loader2 className="h-12 w-12 text-burgundy-500 animate-spin mb-4" />
-          <p className="text-neutral-500">Loading...</p>
-        </div>
-      </div>
-    );
+    return renderSkeleton();
   }
 
   // Check if user has completed profile setup
@@ -486,22 +510,31 @@ export default function ProfileSetup() {
                 >
                   🏆 Who Will Win Season 50? (optional)
                 </label>
-                <select
-                  id="season50Winner"
-                  value={season50WinnerPrediction}
-                  onChange={(e) => setSeason50WinnerPrediction(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all bg-white"
-                >
-                  <option value="">Make your prediction (optional)</option>
-                  {season50Castaways?.map((castaway) => (
-                    <option key={castaway.id} value={castaway.id}>
-                      {castaway.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-neutral-500 mt-1">
-                  Just for fun! Lock in your prediction before the season starts.
-                </p>
+                {isCastawaysLoading ? (
+                  <div className="space-y-2">
+                    <SkeletonBlock className="h-11 w-full" />
+                    <SkeletonBlock className="h-3 w-48" />
+                  </div>
+                ) : (
+                  <>
+                    <select
+                      id="season50Winner"
+                      value={season50WinnerPrediction}
+                      onChange={(e) => setSeason50WinnerPrediction(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all bg-white"
+                    >
+                      <option value="">Make your prediction (optional)</option>
+                      {season50Castaways?.map((castaway) => (
+                        <option key={castaway.id} value={castaway.id}>
+                          {castaway.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Just for fun! Lock in your prediction before the season starts.
+                    </p>
+                  </>
+                )}
               </div>
 
               {error && (
