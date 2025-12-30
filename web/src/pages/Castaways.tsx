@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { Users, Flame, Loader2 } from 'lucide-react';
-import { CastawayStatsCards, CastawayFilterBar, CastawayGridItem } from '@/components/castaways';
+import { Users, Loader2 } from 'lucide-react';
+import { CastawayFilterBar, CastawayGridItem } from '@/components/castaways';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 // import type { Castaway } from '@/types';
