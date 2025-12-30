@@ -6,7 +6,8 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "railway run tsx watch src/server.ts",
+    "dev:local": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js"
   },
