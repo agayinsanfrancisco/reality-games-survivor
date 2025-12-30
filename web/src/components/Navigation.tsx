@@ -588,7 +588,7 @@ export function Navigation() {
             <Link
               to="/how-to-play"
               className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
-                isActive('/how-to-play') || isActive('/scoring')
+                isActive('/how-to-play')
                   ? 'text-burgundy-600'
                   : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
               }`}
@@ -597,14 +597,25 @@ export function Navigation() {
             </Link>
             <span className="text-burgundy-300 mx-1">|</span>
             <Link
-              to="/castaways"
+              to="/scoring-rules"
               className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
-                isActive('/castaways')
+                isActive('/scoring-rules') || isActive('/scoring')
                   ? 'text-burgundy-600'
                   : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
               }`}
             >
-              Castaways
+              Scoring Rules
+            </Link>
+            <span className="text-burgundy-300 mx-1">|</span>
+            <Link
+              to="/contact"
+              className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
+                isActive('/contact')
+                  ? 'text-burgundy-600'
+                  : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
+              }`}
+            >
+              Contact
             </Link>
           </div>
 
@@ -650,12 +661,22 @@ export function Navigation() {
               How to Play
             </Link>
             <Link
-              to="/castaways"
+              to="/scoring-rules"
               className={`block px-4 py-3 text-sm font-semibold ${
-                isActive('/castaways') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
+                isActive('/scoring-rules') || isActive('/scoring')
+                  ? 'text-burgundy-600 bg-burgundy-50'
+                  : 'text-neutral-600'
               }`}
             >
-              Castaways
+              Scoring Rules
+            </Link>
+            <Link
+              to="/contact"
+              className={`block px-4 py-3 text-sm font-semibold ${
+                isActive('/contact') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
+              }`}
+            >
+              Contact
             </Link>
             <hr className="my-2 border-cream-100" />
             <Link to="/login" className="block px-4 py-3 text-sm font-semibold text-neutral-600">

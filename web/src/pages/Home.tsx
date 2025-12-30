@@ -58,10 +58,10 @@ export function Home() {
       <Navigation />
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 max-w-4xl mx-auto px-6 py-16 w-full">
+      <main className="flex-1 max-w-4xl mx-auto px-6 py-8 w-full">
         <div className="text-center">
           <h1
-            className="text-4xl sm:text-5xl md:text-6xl text-gray-900 leading-[0.95] mb-10"
+            className="text-4xl sm:text-5xl md:text-6xl text-gray-900 leading-[0.95] mb-8"
             style={{ fontFamily: 'Georgia, Times New Roman, serif', fontWeight: 400 }}
           >
             Fantasy Survivor
@@ -71,23 +71,23 @@ export function Home() {
             <span className="italic text-red-800">Actually</span> Watch
           </h1>
 
-          <p className="text-xl sm:text-2xl text-gray-600 mb-12 leading-relaxed max-w-2xl mx-auto">
+          <p className="text-xl sm:text-2xl text-gray-600 mb-10 leading-relaxed max-w-2xl mx-auto">
             100+ scoring rules. Real strategy. No luck required.
             <br />
             Draft your castaways and prove you know the game.
           </p>
 
           {/* Dual CTAs - Equal Weight */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-8">
             <Link
               to="/signup"
-              className="bg-red-800 hover:bg-red-900 text-white px-10 py-5 rounded-xl font-semibold text-xl transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+              className="bg-red-800 hover:bg-red-900 text-white px-6 py-3 rounded-xl font-semibold text-base transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
             >
               Join Season 50 <span>→</span>
             </Link>
             <Link
               to="/how-to-play"
-              className="bg-white hover:bg-gray-50 text-gray-800 px-10 py-5 rounded-xl font-semibold text-xl border-2 border-gray-300 hover:border-gray-400 transition-all shadow-sm"
+              className="bg-white hover:bg-gray-50 text-gray-800 px-6 py-3 rounded-xl font-semibold text-base border-2 border-gray-300 hover:border-gray-400 transition-all shadow-sm"
             >
               How It Works
             </Link>
@@ -129,7 +129,7 @@ export function Home() {
                 <button
                   type="submit"
                   disabled={isSubmitting || !email}
-                  className="bg-gray-800 hover:bg-gray-900 disabled:bg-gray-400 text-white px-6 py-3 rounded-xl font-semibold text-base transition-all shadow-md hover:shadow-lg whitespace-nowrap flex items-center gap-2"
+                  className="bg-black hover:bg-gray-900 disabled:bg-gray-400 text-white px-6 py-3 rounded-xl font-semibold text-base transition-all shadow-md hover:shadow-lg whitespace-nowrap flex items-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
