@@ -1,1 +1,1 @@
-web: cd server && node dist/server.js
+web: cd server && npm install && npm run build && node dist/server.js
