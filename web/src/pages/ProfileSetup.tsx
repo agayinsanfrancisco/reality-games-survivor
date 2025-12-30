@@ -5,7 +5,7 @@
  * Collects display name, favorite season, and notification preferences.
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User, Loader2, Bell, MapPin, Star, FileText } from 'lucide-react';
@@ -102,6 +102,28 @@ export default function ProfileSetup() {
     },
     enabled: step >= 3, // only fetch when needed
   });
+
+  // Fallback profile fetch if auth profile hasn't loaded yet
+  const { data: fallbackProfile } = useQuery({
+    queryKey: ['profile-setup-fallback', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('users')
+        .select('display_name, email, profile_setup_complete')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (error && error.code !== 'PGRST116' && (error as any)?.status !== 406) throw error;
+      return data;
+    },
+    enabled: !!user && !authProfile,
+    staleTime: 60_000,
+  });
+
+  const effectiveProfile = useMemo(
+    () => authProfile ?? fallbackProfile,
+    [authProfile, fallbackProfile]
+  );
 
   const updateProfile = useMutation({
     mutationFn: async (data: {
@@ -269,7 +291,7 @@ export default function ProfileSetup() {
   }
 
   // Check if user has completed profile setup
-  if (authProfile?.profile_setup_complete) {
+  if (effectiveProfile?.profile_setup_complete) {
     const redirect = searchParams.get('redirect') || '/dashboard';
     const safeRedirect = redirect === '/profile/setup' ? '/dashboard' : redirect;
     navigate(safeRedirect, { replace: true });
