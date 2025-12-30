@@ -1,10 +1,8 @@
 import { Resend } from 'resend';
 
-if (!process.env.RESEND_API_KEY) {
-  console.warn('Warning: RESEND_API_KEY not set - emails will be logged only');
-}
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-export const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+export const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 export const FROM_EMAIL = 'Reality Games: Survivor <noreply@rgfl.app>';
 export const REPLY_TO = 'support@realitygamesfantasyleague.com';
