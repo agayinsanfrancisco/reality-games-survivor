@@ -17,14 +17,14 @@ import { Footer } from '@/components/Footer';
 
 const TIMELINE_EVENTS = [
   {
-    day: 'Wednesday',
-    time: '3:00 PM PST',
+    day: 'Friday',
+    time: '2:00 PM PST',
     icon: Lock,
     color: 'burgundy',
     title: 'Picks Lock',
     description:
       'All weekly picks are locked in. Make sure you\'ve selected which of your 2 castaways to "play" for this episode before this deadline.',
-    tip: 'Set a reminder! If you forget to pick, the system will randomly select from your available castaways.',
+    tip: 'Likely Wednesday at 10PM Pacific. Set a reminder! If you forget to pick, the system will randomly select from your available castaways.',
   },
   {
     day: 'Wednesday',
@@ -63,7 +63,7 @@ const TIMELINE_EVENTS = [
     color: 'blue',
     title: 'Next Week Opens',
     description:
-      "Picks for the next episode open. You have until Wednesday 3pm PST to decide which of your castaways to play.",
+      'Picks for the next episode open. You have until Wednesday 3pm PST to decide which of your castaways to play.',
     tip: 'The earlier you pick, the less chance you forget!',
   },
 ];
@@ -195,8 +195,8 @@ export default function WeeklyTimeline() {
             <li className="flex items-start gap-3">
               <div className="w-1.5 h-1.5 rounded-full bg-burgundy-500 mt-2 flex-shrink-0" />
               <span>
-                <strong>Forgot to pick?</strong> The system randomly selects from your
-                available castaways.
+                <strong>Forgot to pick?</strong> The system randomly selects from your available
+                castaways.
               </span>
             </li>
             <li className="flex items-start gap-3">

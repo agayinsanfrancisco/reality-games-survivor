@@ -99,7 +99,7 @@ export function QuickActionsGrid({
 
       {/* Scoring Rules */}
       <Link
-        to="/how-to-play#scoring"
+        to="/scoring-rules"
         className="bg-white hover:bg-cream-50 border-2 border-cream-200 hover:border-burgundy-300 rounded-2xl p-5 transition-all group"
       >
         <div className="w-12 h-12 bg-burgundy-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-burgundy-500 transition-colors">

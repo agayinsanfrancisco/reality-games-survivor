@@ -255,7 +255,9 @@ export default function Leagues() {
       {/* Leagues Grid */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-16">
-          <Loader2 className="h-12 w-12 text-burgundy-500 animate-spin mb-4" />
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
+          </div>
           <p className="text-neutral-500">Loading leagues...</p>
         </div>
       ) : (

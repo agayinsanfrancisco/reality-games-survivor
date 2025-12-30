@@ -216,22 +216,22 @@ export function Navigation() {
     return (
       <nav className="bg-white rounded-b-2xl shadow-lg border border-cream-200 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14">
             {/* Logo */}
             <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-burgundy-500 rounded-xl flex items-center justify-center">
-                <img src="/logo.png" alt="RGFL" className="h-6 w-auto" />
+              <div className="w-8 h-8 bg-burgundy-500 rounded-lg flex items-center justify-center">
+                <img src="/logo.png" alt="RGFL" className="h-5 w-auto" />
               </div>
-              <span className="font-display text-2xl text-burgundy-500 hidden sm:inline">
+              <span className="font-display text-xl text-burgundy-500 hidden sm:inline">
                 SURVIVOR FL
               </span>
             </Link>
 
             {/* Center Nav Links */}
-            <div className="hidden lg:flex items-center gap-1">
+            <div className="hidden lg:flex items-center gap-0.5">
               <Link
                 to="/dashboard"
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive('/dashboard')
                     ? 'text-burgundy-600 bg-burgundy-50'
                     : 'text-neutral-700 hover:bg-cream-100'
@@ -241,7 +241,7 @@ export function Navigation() {
               </Link>
               <Link
                 to="/leagues"
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive('/leagues') && !location.pathname.includes('/create')
                     ? 'text-burgundy-600 bg-burgundy-50'
                     : 'text-neutral-700 hover:bg-cream-100'
@@ -251,7 +251,7 @@ export function Navigation() {
               </Link>
               <Link
                 to="/castaways"
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive('/castaways')
                     ? 'text-burgundy-600 bg-burgundy-50'
                     : 'text-neutral-700 hover:bg-cream-100'
@@ -261,7 +261,7 @@ export function Navigation() {
               </Link>
               <Link
                 to="/leaderboard"
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive('/leaderboard')
                     ? 'text-burgundy-600 bg-burgundy-50'
                     : 'text-neutral-700 hover:bg-cream-100'
@@ -272,7 +272,7 @@ export function Navigation() {
               <div className="relative" ref={howToPlayRef}>
                 <button
                   onClick={() => setHowToPlayOpen(!howToPlayOpen)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
                     isActive('/how-to-play') || isActive('/scoring') || isActive('/weekly-timeline')
                       ? 'text-burgundy-600 bg-burgundy-50'
                       : 'text-neutral-700 hover:bg-cream-100'
@@ -280,7 +280,7 @@ export function Navigation() {
                 >
                   How to Play
                   <ChevronDown
-                    className={`h-4 w-4 transition-transform ${howToPlayOpen ? 'rotate-180' : ''}`}
+                    className={`h-3 w-3 transition-transform ${howToPlayOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
                 {howToPlayOpen && (
@@ -327,11 +327,11 @@ export function Navigation() {
               {/* TRIVIA - Highlighted */}
               <Link
                 to="/trivia"
-                className="trivia-pulse ml-2 px-5 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold rounded-xl flex items-center gap-2 hover:from-purple-600 hover:to-indigo-600 transition-all shadow-lg"
+                className="trivia-pulse ml-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold rounded-lg text-sm flex items-center gap-1.5 hover:from-purple-600 hover:to-indigo-600 transition-all shadow-lg"
               >
-                <Lightbulb className="w-5 h-5" />
+                <Lightbulb className="w-4 h-4" />
                 Trivia
-                <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs">NEW</span>
+                <span className="bg-white/20 px-1 py-0.5 rounded text-[10px]">NEW</span>
               </Link>
             </div>
 
@@ -348,9 +348,9 @@ export function Navigation() {
               </button>
 
               {/* Notification Bell */}
-              <button className="relative p-2 text-neutral-500 hover:text-neutral-700 hidden md:block">
-                <Bell className="w-6 h-6" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              <button className="relative p-1.5 text-neutral-500 hover:text-neutral-700 hidden md:block">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
               </button>
 
               {/* Admin View Toggle (only for admins) */}
@@ -365,19 +365,19 @@ export function Navigation() {
               )}
 
               {/* User Menu - Desktop */}
-              <div className="relative group hidden md:flex items-center gap-2 pl-4 border-l border-cream-200">
+              <div className="relative group hidden md:flex items-center gap-1.5 pl-3 border-l border-cream-200">
                 <button
-                  className="flex items-center gap-2 p-1 text-neutral-600 hover:text-neutral-800 transition-all"
+                  className="flex items-center gap-1.5 p-0.5 text-neutral-600 hover:text-neutral-800 transition-all"
                   aria-haspopup="true"
                 >
-                  <div className="w-9 h-9 bg-burgundy-500 rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="w-7 h-7 bg-burgundy-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
                     {profile?.display_name?.charAt(0).toUpperCase() || 'U'}
                     {profile?.display_name?.split(' ')[1]?.charAt(0).toUpperCase() || ''}
                   </div>
-                  <span className="text-neutral-700 font-medium hidden xl:inline">
+                  <span className="text-neutral-700 text-sm font-medium hidden xl:inline">
                     {profile?.display_name?.split(' ')[0] || 'User'}
                   </span>
-                  <ChevronDown className="w-4 h-4 text-neutral-400" />
+                  <ChevronDown className="w-3 h-3 text-neutral-400" />
                 </button>
                 <div
                   className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-float border border-cream-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all"

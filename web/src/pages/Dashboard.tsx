@@ -275,6 +275,11 @@ export function Dashboard() {
       {/* Alert Banners */}
       <AlertBanners recentlyEliminated={recentlyEliminated} autoPickedLeagues={autoPickedLeagues} />
 
+      {/* Announcements Section - Above draft rankings */}
+      <div className="mb-6">
+        <AnnouncementsCard />
+      </div>
+
       {/* Quick Actions Grid */}
       <QuickActionsGrid
         gamePhase={gamePhase}
@@ -344,10 +349,7 @@ export function Dashboard() {
 
         {/* Right Sidebar */}
         <div className="space-y-6">
-          {/* Announcements - show at top of sidebar */}
-          <AnnouncementsCard />
-
-          {/* Trivia Callout - show when season hasn't started */}
+          {/* Trivia Callout - moved under announcements as special callout */}
           <TriviaCalloutCard
             seasonStarted={gamePhase === 'active' || gamePhase === 'post_season'}
           />
