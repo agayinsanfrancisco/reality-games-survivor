@@ -1,4 +1,12 @@
-import { Trophy, Star, History, Award, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Trophy,
+  Star,
+  History,
+  Award,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { getAvatarUrl } from '@/lib/avatar';
 // Minimal castaway interface for grid display
 interface CastawayForGrid {
@@ -54,14 +62,10 @@ export function CastawayGridItem({
   // Get tribe color for styling
   const getTribeColor = (tribe: string | null | undefined) => {
     switch (tribe) {
-      case 'Vatu':
-        return '#7C3AED';
-      case 'Kalo':
-        return '#0D9488';
-      case 'Cila':
-        return '#EA580C';
-      default:
-        return '#6B7280';
+      case 'Vatu': return '#7C3AED';
+      case 'Kalo': return '#0D9488';
+      case 'Cila': return '#EA580C';
+      default: return '#6B7280';
     }
   };
 
@@ -76,9 +80,7 @@ export function CastawayGridItem({
       }`}
     >
       {/* Square Photo with Status Badge - Compact Variation A Style */}
-      <div
-        className={`aspect-square relative ${castaway.status === 'eliminated' ? 'grayscale' : ''}`}
-      >
+      <div className={`aspect-square relative ${castaway.status === 'eliminated' ? 'grayscale' : ''}`}>
         <img
           src={getAvatarUrl(castaway.name, castaway.photo_url)}
           alt={castaway.name}
@@ -107,14 +109,12 @@ export function CastawayGridItem({
           )}
         </div>
       </div>
-
+      
       {/* Compact Info Section */}
       <div className="p-3 text-center">
-        <p
-          className={`font-semibold truncate ${
-            castaway.status === 'eliminated' ? 'text-neutral-500' : 'text-neutral-800'
-          }`}
-        >
+        <p className={`font-semibold truncate ${
+          castaway.status === 'eliminated' ? 'text-neutral-500' : 'text-neutral-800'
+        }`}>
           {castaway.name}
         </p>
         {castaway.occupation && (
@@ -122,17 +122,12 @@ export function CastawayGridItem({
         )}
         <p
           className="text-sm font-bold mt-1"
-          style={{
-            color:
-              castaway.status === 'eliminated' ? '#9CA3AF' : getTribeColor(castaway.tribe_original),
-          }}
+          style={{ color: castaway.status === 'eliminated' ? '#9CA3AF' : getTribeColor(castaway.tribe_original) }}
         >
-          {stats?.total !== undefined
-            ? `${stats.total >= 0 ? '+' : ''}${stats.total} pts`
-            : '-- pts'}
+          {stats?.total !== undefined ? `${stats.total >= 0 ? '+' : ''}${stats.total} pts` : '-- pts'}
         </p>
       </div>
-
+      
       {/* Expand Button - More Compact */}
       <button
         onClick={(e) => {

@@ -457,6 +457,46 @@
   }
 }
 
+/* Trivia button pulse animation */
+@keyframes trivia-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px 5px rgba(139, 92, 246, 0.2);
+  }
+}
+
+.trivia-pulse {
+  animation: trivia-pulse 2s ease-in-out infinite;
+}
+
+/* Trivia shimmer effect */
+@keyframes trivia-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.trivia-shimmer {
+  background: linear-gradient(
+    90deg,
+    #8b5cf6 0%,
+    #a78bfa 25%,
+    #c4b5fd 50%,
+    #a78bfa 75%,
+    #8b5cf6 100%
+  );
+  background-size: 200% 100%;
+  animation: trivia-shimmer 3s linear infinite;
+}
+
 /* Smooth page transitions */
 .page-transition-enter {
   opacity: 0;
@@ -466,7 +506,9 @@
 .page-transition-enter-active {
   opacity: 1;
   transform: translateY(0);
-  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+  transition:
+    opacity 0.5s ease-out,
+    transform 0.5s ease-out;
 }
 
 /* Hide scrollbar for splash page while maintaining scroll functionality */

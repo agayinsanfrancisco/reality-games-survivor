@@ -256,28 +256,36 @@ export default function Castaways() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex flex-col">
       <Navigation />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         <div className="pb-12">
-          {/* Header */}
-          <div className="mb-6">
-            <div className="flex items-center gap-3 mb-2">
-              <Flame className="h-8 w-8 text-orange-500" />
-              <h1 className="text-3xl font-display font-bold text-neutral-800">Castaways</h1>
+          {/* Header - Centered with Emoji */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-3 mb-4">
+              <span className="text-4xl">🔥</span>
+              <h1 className="text-4xl font-display font-bold text-neutral-800">
+                {season?.name || `Season ${season?.number || ''}`} Castaways
+              </h1>
             </div>
-            <h2 className="text-2xl font-display font-bold text-burgundy-600 mb-2">
-              {season?.name || `Season ${season?.number || ''}`}
-            </h2>
-            <p className="text-neutral-500">
-              {castaways?.length || 0} castaways competing this season
+            <p className="text-neutral-500 text-lg">
+              {castaways?.length || 0} castaways competing for the title of Sole Survivor
             </p>
           </div>
 
-          {/* Stats Cards */}
-          <CastawayStatsCards
-            totalCount={castaways?.length || 0}
-            activeCount={activeCount}
-            eliminatedCount={eliminatedCount}
-          />
+          {/* Stats Row - Variation A Style */}
+          <div className="grid grid-cols-3 gap-4 mb-8 max-w-2xl mx-auto">
+            <div className="bg-white rounded-2xl p-4 text-center shadow-lg border border-cream-200">
+              <p className="text-3xl font-bold text-neutral-800">{castaways?.length || 0}</p>
+              <p className="text-sm text-neutral-500">Total</p>
+            </div>
+            <div className="bg-white rounded-2xl p-4 text-center shadow-lg border border-cream-200">
+              <p className="text-3xl font-bold text-green-600">{activeCount}</p>
+              <p className="text-sm text-neutral-500">Active</p>
+            </div>
+            <div className="bg-white rounded-2xl p-4 text-center shadow-lg border border-cream-200">
+              <p className="text-3xl font-bold text-neutral-400">{eliminatedCount}</p>
+              <p className="text-sm text-neutral-500">Eliminated</p>
+            </div>
+          </div>
 
           {/* Search, Filter & Sort */}
           <CastawayFilterBar
@@ -345,9 +353,9 @@ export default function Castaways() {
                         borderColor: config.borderColor,
                       }}
                     >
-                      {/* Tribe Header Section */}
+                      {/* Tribe Header Section - Variation A Style */}
                       <div
-                        className="px-6 py-6 border-b-2"
+                        className="px-6 py-5 border-b-2"
                         style={{
                           backgroundColor: config.bgColor,
                           borderColor: config.borderColor,
@@ -355,51 +363,40 @@ export default function Castaways() {
                       >
                         <div className="flex items-center gap-4">
                           <div
-                            className="w-8 h-8 rounded-full shadow-md flex items-center justify-center"
+                            className="w-10 h-10 rounded-full shadow-md flex items-center justify-center"
                             style={{ backgroundColor: config.color }}
                           >
-                            <div
-                              className="w-4 h-4 rounded-full"
-                              style={{ backgroundColor: 'white', opacity: 0.3 }}
-                            />
+                            <span className="text-white text-xl">
+                              {tribe === 'Vatu'
+                                ? '🟣'
+                                : tribe === 'Kalo'
+                                  ? '🟢'
+                                  : tribe === 'Cila'
+                                    ? '🟠'
+                                    : '⚪'}
+                            </span>
                           </div>
-                          <div className="flex-1">
-                            <h2
-                              className="text-3xl font-display font-bold mb-1"
+                          <div>
+                            <h3
+                              className="text-2xl font-display font-bold"
                               style={{ color: config.color }}
                             >
                               {config.name}
-                            </h2>
-                            <p className="text-neutral-600 text-sm font-medium">
-                              {sortedTribeCastaways.length} castaway
-                              {sortedTribeCastaways.length !== 1 ? 's' : ''}
-                              {sortedTribeCastaways.filter((c) => c.status === 'active').length >
-                                0 && (
-                                <span className="ml-2">
-                                  •{' '}
-                                  {sortedTribeCastaways.filter((c) => c.status === 'active').length}{' '}
-                                  active
-                                </span>
-                              )}
-                              {sortedTribeCastaways.filter((c) => c.status === 'eliminated')
-                                .length > 0 && (
-                                <span className="ml-2">
-                                  •{' '}
-                                  {
-                                    sortedTribeCastaways.filter((c) => c.status === 'eliminated')
-                                      .length
-                                  }{' '}
-                                  eliminated
-                                </span>
-                              )}
+                            </h3>
+                            <p className="text-neutral-600 text-sm">
+                              {sortedTribeCastaways.length} castaways •{' '}
+                              {sortedTribeCastaways.filter((c) => c.status === 'active').length}{' '}
+                              active •{' '}
+                              {sortedTribeCastaways.filter((c) => c.status === 'eliminated').length}{' '}
+                              eliminated
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      {/* Castaways Grid Section */}
+                      {/* Castaways Grid Section - 6 columns on XL like Variation A */}
                       <div className="p-6">
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                           {sortedTribeCastaways.map((castaway) => (
                             <CastawayGridItem
                               key={castaway.id}

@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useState, useEffect, useRef } from 'react';
-import { Shield, UserCircle, Menu, X, ChevronDown } from 'lucide-react';
+import { Shield, UserCircle, Menu, X, ChevronDown, Bell, Lightbulb } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -211,68 +211,71 @@ export function Navigation() {
     );
   }
 
-  // Authenticated player navigation - clean, Survivor-themed
+  // Authenticated player navigation - clean, Survivor-themed (Variation A)
   if (user) {
     return (
-      <nav className="bg-white border-b-2 border-burgundy-500 shadow-sm sticky top-0 z-50">
+      <nav className="bg-white rounded-b-2xl shadow-lg border border-cream-200 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
+            {/* Logo */}
             <Link to="/dashboard" className="flex items-center gap-2">
-              <img src="/logo.png" alt="RGFL" className="h-10 w-auto" />
+              <div className="w-10 h-10 bg-burgundy-500 rounded-xl flex items-center justify-center">
+                <img src="/logo.png" alt="RGFL" className="h-6 w-auto" />
+              </div>
+              <span className="font-display text-2xl text-burgundy-500 hidden sm:inline">
+                SURVIVOR FL
+              </span>
             </Link>
 
-            <div className="hidden md:flex items-center">
+            {/* Center Nav Links */}
+            <div className="hidden lg:flex items-center gap-1">
               <Link
                 to="/dashboard"
-                className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   isActive('/dashboard')
-                    ? 'text-burgundy-600'
-                    : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
+                    ? 'text-burgundy-600 bg-burgundy-50'
+                    : 'text-neutral-700 hover:bg-cream-100'
                 }`}
               >
                 Dashboard
               </Link>
-              <span className="text-burgundy-300 mx-1">|</span>
               <Link
                 to="/leagues"
-                className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   isActive('/leagues') && !location.pathname.includes('/create')
-                    ? 'text-burgundy-600'
-                    : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
+                    ? 'text-burgundy-600 bg-burgundy-50'
+                    : 'text-neutral-700 hover:bg-cream-100'
                 }`}
               >
                 Leagues
               </Link>
-              <span className="text-burgundy-300 mx-1">|</span>
-              <Link
-                to="/leaderboard"
-                className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
-                  isActive('/leaderboard')
-                    ? 'text-burgundy-600'
-                    : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
-                }`}
-              >
-                Leaderboard
-              </Link>
-              <span className="text-burgundy-300 mx-1">|</span>
               <Link
                 to="/castaways"
-                className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all ${
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   isActive('/castaways')
-                    ? 'text-burgundy-600'
-                    : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
+                    ? 'text-burgundy-600 bg-burgundy-50'
+                    : 'text-neutral-700 hover:bg-cream-100'
                 }`}
               >
                 Castaways
               </Link>
-              <span className="text-burgundy-300 mx-1">|</span>
-              <div className="relative group" ref={howToPlayRef}>
+              <Link
+                to="/leaderboard"
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  isActive('/leaderboard')
+                    ? 'text-burgundy-600 bg-burgundy-50'
+                    : 'text-neutral-700 hover:bg-cream-100'
+                }`}
+              >
+                Leaderboard
+              </Link>
+              <div className="relative" ref={howToPlayRef}>
                 <button
                   onClick={() => setHowToPlayOpen(!howToPlayOpen)}
-                  className={`px-4 py-2 text-sm font-semibold tracking-wide uppercase transition-all flex items-center gap-1 ${
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 ${
                     isActive('/how-to-play') || isActive('/scoring') || isActive('/weekly-timeline')
-                      ? 'text-burgundy-600'
-                      : 'text-neutral-600 hover:text-burgundy-600 hover:bg-burgundy-50'
+                      ? 'text-burgundy-600 bg-burgundy-50'
+                      : 'text-neutral-700 hover:bg-cream-100'
                   }`}
                 >
                   How to Play
@@ -285,7 +288,7 @@ export function Navigation() {
                     <Link
                       to="/how-to-play"
                       onClick={() => setHowToPlayOpen(false)}
-                      className={`block px-4 py-2 text-sm hover:bg-burgundy-50 ${
+                      className={`block px-4 py-2 text-sm hover:bg-burgundy-50 rounded-t-lg ${
                         isActive('/how-to-play') &&
                         !isActive('/scoring') &&
                         !isActive('/weekly-timeline')
@@ -309,7 +312,7 @@ export function Navigation() {
                     <Link
                       to="/how-to-play#weekly-timeline"
                       onClick={() => setHowToPlayOpen(false)}
-                      className={`block px-4 py-2 text-sm hover:bg-burgundy-50 ${
+                      className={`block px-4 py-2 text-sm hover:bg-burgundy-50 rounded-b-lg ${
                         isActive('/weekly-timeline')
                           ? 'text-burgundy-600 bg-burgundy-50'
                           : 'text-neutral-600'
@@ -320,24 +323,41 @@ export function Navigation() {
                   </div>
                 )}
               </div>
+
+              {/* TRIVIA - Highlighted */}
+              <Link
+                to="/trivia"
+                className="trivia-pulse ml-2 px-5 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold rounded-xl flex items-center gap-2 hover:from-purple-600 hover:to-indigo-600 transition-all shadow-lg"
+              >
+                <Lightbulb className="w-5 h-5" />
+                Trivia
+                <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs">NEW</span>
+              </Link>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Right: User Menu */}
+            <div className="flex items-center gap-4">
               {/* Mobile menu button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 text-neutral-600 hover:text-burgundy-600"
+                className="lg:hidden p-2 text-neutral-600 hover:text-burgundy-600"
                 aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                 aria-expanded={mobileMenuOpen}
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
 
+              {/* Notification Bell */}
+              <button className="relative p-2 text-neutral-500 hover:text-neutral-700 hidden md:block">
+                <Bell className="w-6 h-6" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+
               {/* Admin View Toggle (only for admins) */}
               {isAdmin && (
                 <button
                   onClick={() => setViewMode('admin')}
-                  className="hidden sm:flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors"
+                  className="hidden sm:flex items-center gap-1 text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-lg hover:bg-orange-100 transition-colors"
                 >
                   <Shield className="h-3 w-3" />
                   Admin
@@ -345,19 +365,22 @@ export function Navigation() {
               )}
 
               {/* User Menu - Desktop */}
-              <div className="relative group hidden md:block">
+              <div className="relative group hidden md:flex items-center gap-2 pl-4 border-l border-cream-200">
                 <button
-                  className="flex items-center gap-2 p-2 text-neutral-600 hover:text-neutral-800 hover:bg-burgundy-50 rounded-xl transition-all"
+                  className="flex items-center gap-2 p-1 text-neutral-600 hover:text-neutral-800 transition-all"
                   aria-haspopup="true"
                 >
-                  <div className="w-8 h-8 bg-burgundy-100 rounded-full flex items-center justify-center">
-                    <span className="text-burgundy-600 font-semibold text-sm">
-                      {profile?.display_name?.charAt(0).toUpperCase() || 'U'}
-                    </span>
+                  <div className="w-9 h-9 bg-burgundy-500 rounded-full flex items-center justify-center text-white font-bold">
+                    {profile?.display_name?.charAt(0).toUpperCase() || 'U'}
+                    {profile?.display_name?.split(' ')[1]?.charAt(0).toUpperCase() || ''}
                   </div>
+                  <span className="text-neutral-700 font-medium hidden xl:inline">
+                    {profile?.display_name?.split(' ')[0] || 'User'}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-neutral-400" />
                 </button>
                 <div
-                  className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-float border border-cream-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all"
+                  className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-float border border-cream-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all"
                   role="menu"
                 >
                   <div className="p-4 border-b border-cream-100">
@@ -406,7 +429,7 @@ export function Navigation() {
           {mobileMenuOpen && (
             <div
               ref={mobileMenuRef}
-              className="md:hidden border-t border-burgundy-100 py-2 bg-white"
+              className="lg:hidden border-t border-cream-200 py-2 bg-white rounded-b-2xl"
             >
               <div className="px-4 py-3 border-b border-cream-100">
                 <p className="font-semibold text-neutral-800">
@@ -414,6 +437,18 @@ export function Navigation() {
                 </p>
                 <p className="text-sm text-neutral-400">Fantasy Player</p>
               </div>
+
+              {/* Trivia - Highlighted on Mobile */}
+              <Link
+                to="/trivia"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mx-4 mt-3 mb-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold rounded-xl flex items-center justify-center gap-2"
+              >
+                <Lightbulb className="w-5 h-5" />
+                Play Trivia
+                <span className="bg-white/20 px-2 py-0.5 rounded text-xs">NEW</span>
+              </Link>
+
               <Link
                 to="/dashboard"
                 className={`block px-4 py-3 text-sm font-semibold ${
@@ -431,20 +466,20 @@ export function Navigation() {
                 Leagues
               </Link>
               <Link
-                to="/leaderboard"
-                className={`block px-4 py-3 text-sm font-semibold ${
-                  isActive('/leaderboard') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
-                }`}
-              >
-                Leaderboard
-              </Link>
-              <Link
                 to="/castaways"
                 className={`block px-4 py-3 text-sm font-semibold ${
                   isActive('/castaways') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
                 }`}
               >
                 Castaways
+              </Link>
+              <Link
+                to="/leaderboard"
+                className={`block px-4 py-3 text-sm font-semibold ${
+                  isActive('/leaderboard') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
+                }`}
+              >
+                Leaderboard
               </Link>
               <div>
                 <div className="px-4 py-2 text-sm font-semibold text-neutral-800">How to Play</div>

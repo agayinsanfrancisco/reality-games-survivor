@@ -27,8 +27,6 @@ import EpisodeResults from './pages/EpisodeResults';
 import Results from './pages/Results';
 import CreateLeague from './pages/CreateLeague';
 import LeagueSettings from './pages/LeagueSettings';
-import ResetPassword from './pages/ResetPassword';
-import UpdatePassword from './pages/UpdatePassword';
 import SMSCommands from './pages/SMSCommands';
 import SeasonSchedule from './pages/SeasonSchedule';
 import SeasonCastaways from './pages/SeasonCastaways';
@@ -85,8 +83,6 @@ export default function App() {
             <Route path="/scoring" element={<ScoringRules />} />
             <Route path="/scoring-rules" element={<ScoringRules />} />
             <Route path="/timeline" element={<WeeklyTimeline />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/sms" element={<SMSCommands />} />
             <Route path="/l/:code" element={<PublicLeaderboard />} />
             <Route path="/contact" element={<Contact />} />
@@ -154,7 +150,10 @@ export default function App() {
               <Route path="/admin/payments" element={withAdminErrorBoundary(AdminPayments)} />
               <Route path="/admin/jobs" element={withAdminErrorBoundary(AdminJobs)} />
               <Route path="/admin/global" element={withAdminErrorBoundary(AdminGlobal)} />
-              <Route path="/admin/announcements" element={withAdminErrorBoundary(AdminAnnouncements)} />
+              <Route
+                path="/admin/announcements"
+                element={withAdminErrorBoundary(AdminAnnouncements)}
+              />
               <Route
                 path="/admin/scoring-rules"
                 element={withAdminErrorBoundary(AdminScoringRules)}
