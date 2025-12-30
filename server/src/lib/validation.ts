@@ -13,8 +13,11 @@ export const createLeagueSchema = z.object({
   password: z.string().max(100).optional().nullable(),
   donation_amount: z.union([z.number().min(0).max(10000), z.null()]).optional(),
   season_id: z.string().uuid(),
-  // max_players is always 12, not configurable
   is_public: z.boolean().optional(),
+  // Client still sends this even though we override to 12; accept and ignore to avoid validation errors
+  max_players: z.number().min(2).max(24).optional(),
+  // Client may send this as a convenience toggle; we derive it from donation_amount
+  require_donation: z.boolean().optional(),
 });
 
 export const updateLeagueSettingsSchema = z.object({

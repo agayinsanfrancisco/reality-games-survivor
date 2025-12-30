@@ -17,6 +17,7 @@ interface UserProfile {
   phone?: string;
   phone_verified?: boolean;
   avatar_url?: string;
+  profile_setup_complete?: boolean;
 }
 
 interface AuthContextType {
@@ -50,7 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     for (let attempt = 0; attempt < retries; attempt++) {
       const { data, error } = await supabase
         .from('users')
-        .select('id, email, display_name, role, phone, phone_verified, avatar_url')
+        .select(
+          'id, email, display_name, role, phone, phone_verified, avatar_url, profile_setup_complete'
+        )
         .eq('id', userId)
         .single();
 

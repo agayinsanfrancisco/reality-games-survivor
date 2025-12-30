@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/auth';
 import { Loader2 } from 'lucide-react';
 
 export function ProtectedRoute() {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -18,6 +18,12 @@ export function ProtectedRoute() {
     // Preserve the intended destination so user can be redirected after login
     const redirectTo = location.pathname + location.search;
     return <Navigate to={`/login?redirect=${encodeURIComponent(redirectTo)}`} replace />;
+  }
+
+  // Force users through profile setup until explicitly marked complete
+  if (!profile?.profile_setup_complete && location.pathname !== '/profile/setup') {
+    const redirectTo = location.pathname + location.search;
+    return <Navigate to={`/profile/setup?redirect=${encodeURIComponent(redirectTo)}`} replace />;
   }
 
   return <Outlet />;
