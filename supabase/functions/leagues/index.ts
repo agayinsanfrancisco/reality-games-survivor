@@ -150,8 +150,17 @@ serve(async (req) => {
         return error('This league does not require payment')
       }
 
-      // Use FRONTEND_URL for redirects (frontend domain), fallback to production URL
-      const frontendUrl = Deno.env.get('FRONTEND_URL') || Deno.env.get('WEB_URL') || 'https://survivor.realitygamesfantasyleague.com'
+      // CRITICAL: Use FRONTEND_URL for redirects (frontend domain), NEVER BASE_URL (points to API)
+      // Hardcode production URL to prevent $10 mistakes - this MUST be the frontend, not API
+      let frontendUrl = Deno.env.get('FRONTEND_URL') || Deno.env.get('WEB_URL') || 'https://survivor.realitygamesfantasyleague.com'
+      
+      // Safety check: ensure we NEVER redirect to API domain (costs $10 per mistake!)
+      if (frontendUrl.includes('api.rgfl.app') || frontendUrl.includes('api.')) {
+        console.error('ERROR: frontendUrl contains API domain! Using hardcoded fallback.')
+        frontendUrl = 'https://survivor.realitygamesfantasyleague.com'
+      }
+      
+      console.log('Checkout success_url:', `${frontendUrl}/leagues/${leagueId}?joined=true`)
 
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',

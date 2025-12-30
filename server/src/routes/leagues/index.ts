@@ -127,8 +127,15 @@ router.post('/', authenticate, validate(createLeagueSchema), async (req: Authent
 
     // SECURITY: For paid leagues, redirect to checkout before adding commissioner
     if (league.require_donation) {
-      // Use FRONTEND_URL for redirects (frontend domain), fallback to production URL
-      const frontendUrl = process.env.FRONTEND_URL || process.env.WEB_URL || process.env.BASE_URL || 'https://survivor.realitygamesfantasyleague.com';
+      // CRITICAL: Use FRONTEND_URL for redirects (frontend domain), NEVER BASE_URL (points to API)
+      // Hardcode production URL to prevent $10 mistakes
+      let frontendUrl = process.env.FRONTEND_URL || process.env.WEB_URL || 'https://survivor.realitygamesfantasyleague.com';
+      
+      // Safety check: ensure we NEVER redirect to API domain (costs $10 per mistake!)
+      if (frontendUrl.includes('api.rgfl.app') || frontendUrl.includes('api.')) {
+        console.error('ERROR: frontendUrl contains API domain! Using hardcoded fallback.');
+        frontendUrl = 'https://survivor.realitygamesfantasyleague.com';
+      }
 
       // Create Stripe checkout session for commissioner
       const session = await requireStripe().checkout.sessions.create({
