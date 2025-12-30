@@ -1,3 +1,5 @@
+// Load environment variables before anything else
+import 'dotenv/config';
 // IMPORTANT: Import instrument.js at the very top for Sentry auto-instrumentation
 import './instrument.js';
 
