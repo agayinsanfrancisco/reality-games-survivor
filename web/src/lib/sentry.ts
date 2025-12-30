@@ -72,8 +72,12 @@ export const metrics = {
    * @example metrics.count('league_join', 1, { league_type: 'public' })
    */
   count: (name: string, value: number = 1, tags?: Record<string, string>) => {
-    if (Sentry.metrics) {
-      Sentry.metrics.increment(name, value, { tags });
+    try {
+      if (Sentry.metrics && typeof Sentry.metrics.increment === 'function') {
+        Sentry.metrics.increment(name, value, { tags });
+      }
+    } catch {
+      // Silently ignore metrics errors
     }
   },
 
@@ -83,8 +87,12 @@ export const metrics = {
    * @example metrics.gauge('queue_size', 15, { queue: 'email' })
    */
   gauge: (name: string, value: number, tags?: Record<string, string>) => {
-    if (Sentry.metrics) {
-      Sentry.metrics.gauge(name, value, { tags });
+    try {
+      if (Sentry.metrics && typeof Sentry.metrics.gauge === 'function') {
+        Sentry.metrics.gauge(name, value, { tags });
+      }
+    } catch {
+      // Silently ignore metrics errors
     }
   },
 
@@ -94,8 +102,12 @@ export const metrics = {
    * @example metrics.distribution('api_response_time', 200, { endpoint: '/api/leagues' })
    */
   distribution: (name: string, value: number, tags?: Record<string, string>) => {
-    if (Sentry.metrics) {
-      Sentry.metrics.distribution(name, value, { tags });
+    try {
+      if (Sentry.metrics && typeof Sentry.metrics.distribution === 'function') {
+        Sentry.metrics.distribution(name, value, { tags });
+      }
+    } catch {
+      // Silently ignore metrics errors
     }
   },
 
@@ -105,8 +117,12 @@ export const metrics = {
    * @example metrics.set('unique_leagues', 'league-abc', { season: '50' })
    */
   set: (name: string, value: string | number, tags?: Record<string, string>) => {
-    if (Sentry.metrics) {
-      Sentry.metrics.set(name, value, { tags });
+    try {
+      if (Sentry.metrics && typeof Sentry.metrics.set === 'function') {
+        Sentry.metrics.set(name, value, { tags });
+      }
+    } catch {
+      // Silently ignore metrics errors
     }
   },
 
@@ -119,14 +135,22 @@ export const metrics = {
     try {
       const result = await fn();
       const duration = performance.now() - start;
-      if (Sentry.metrics) {
-        Sentry.metrics.distribution(name, duration, { tags: { ...tags, status: 'success' } });
+      try {
+        if (Sentry.metrics && typeof Sentry.metrics.distribution === 'function') {
+          Sentry.metrics.distribution(name, duration, { tags: { ...tags, status: 'success' } });
+        }
+      } catch {
+        // Silently ignore metrics errors
       }
       return result;
     } catch (error) {
       const duration = performance.now() - start;
-      if (Sentry.metrics) {
-        Sentry.metrics.distribution(name, duration, { tags: { ...tags, status: 'error' } });
+      try {
+        if (Sentry.metrics && typeof Sentry.metrics.distribution === 'function') {
+          Sentry.metrics.distribution(name, duration, { tags: { ...tags, status: 'error' } });
+        }
+      } catch {
+        // Silently ignore metrics errors
       }
       throw error;
     }
