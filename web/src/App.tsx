@@ -60,6 +60,7 @@ import { AdminGlobal } from './pages/admin/AdminGlobal';
 import { AdminAnnouncements } from './pages/admin/AdminAnnouncements';
 import { AdminScoringRules } from './pages/admin/AdminScoringRules';
 import { AdminScoringGrid } from './pages/admin/AdminScoringGrid';
+import { AdminStats } from './pages/admin/AdminStats';
 import { AdminErrorBoundary } from './components/AdminErrorBoundary';
 
 // Wrapper to add error boundary to admin pages
@@ -164,6 +165,7 @@ export default function App() {
                 path="/admin/scoring/grid"
                 element={withAdminErrorBoundary(AdminScoringGrid)}
               />
+              <Route path="/admin/stats" element={withAdminErrorBoundary(AdminStats)} />
             </Route>
 
             {/* 404 */}

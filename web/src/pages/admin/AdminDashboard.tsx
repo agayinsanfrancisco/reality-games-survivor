@@ -115,6 +115,13 @@ export function AdminDashboard() {
 
   const adminLinks = [
     {
+      title: 'Analytics Dashboard',
+      description: 'Comprehensive stats and metrics',
+      href: '/admin/stats',
+      icon: '📊',
+      color: 'bg-gradient-to-br from-purple-500 to-indigo-600',
+    },
+    {
       title: 'Score Episode',
       description: 'Enter scores for the latest episode',
       href: '/admin/scoring',
