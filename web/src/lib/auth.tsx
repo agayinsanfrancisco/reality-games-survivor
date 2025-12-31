@@ -123,11 +123,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // If onAuthStateChange already handled auth (e.g., fired SIGNED_IN),
         // don't override that state - it's the source of truth
+        // Also don't set loading=false here - let onAuthStateChange do it after profile loads
         if (authStateHandledRef.current) {
           console.log(
             'Auth state already handled by onAuthStateChange, skipping initializeAuth state update'
           );
-          setLoading(false);
           return;
         }
 
