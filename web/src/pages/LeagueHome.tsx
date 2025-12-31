@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, Link, Navigate, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Lock, AlertCircle, CheckCircle } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { LeagueChat } from '@/components/LeagueChat';
@@ -39,27 +40,57 @@ export default function LeagueHome() {
   const [activeTab, setActiveTab] = useState<LeagueTab>('overview');
   const [copied, setCopied] = useState(false);
   const [showJoinedSuccess, setShowJoinedSuccess] = useState(false);
+  const [waitingForWebhook, setWaitingForWebhook] = useState(false);
+  const queryClient = useQueryClient();
 
   // Data fetching with shared hooks
   const { data: league, isLoading: leagueLoading, error: leagueError } = useLeague(id);
-  const { data: members, isLoading: membersLoading } = useLeagueMembers(id);
+  const {
+    data: members,
+    isLoading: membersLoading,
+    refetch: refetchMembers,
+  } = useLeagueMembers(id);
   const { data: allRosters } = useLeagueRosters(id);
   const { data: myRoster } = useRoster(id, user?.id);
   const { data: userProfile } = useUserProfile(user?.id);
   const { data: nextEpisode } = useNextEpisode(league?.season_id);
 
   // Handle joined=true query parameter from Stripe redirect
+  // The webhook may take a moment to process, so we poll for membership
   useEffect(() => {
     if (searchParams.get('joined') === 'true') {
       setShowJoinedSuccess(true);
+      setWaitingForWebhook(true);
+
       // Remove query parameter from URL
       searchParams.delete('joined');
       setSearchParams(searchParams, { replace: true });
+
+      // Poll for membership - webhook typically processes within 1-3 seconds
+      // but can take up to 10 seconds in some cases
+      let attempts = 0;
+      const maxAttempts = 10;
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        // Invalidate and refetch members to check for new membership
+        await queryClient.invalidateQueries({ queryKey: ['league-members', id] });
+        await refetchMembers();
+
+        if (attempts >= maxAttempts) {
+          clearInterval(pollInterval);
+          setWaitingForWebhook(false);
+        }
+      }, 1000);
+
       // Hide success message after 5 seconds
       const timer = setTimeout(() => setShowJoinedSuccess(false), 5000);
-      return () => clearTimeout(timer);
+
+      return () => {
+        clearInterval(pollInterval);
+        clearTimeout(timer);
+      };
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, id, queryClient, refetchMembers]);
 
   // Clipboard API with fallback for older browsers/HTTP
   const copyInviteCode = async () => {
@@ -188,6 +219,25 @@ export default function LeagueHome() {
   // - Private leagues: only members, commissioner, or admins can view
   const isMember = !!myMembership;
   const hasAccess = league.is_public || isMember || isCommissioner || isAdmin;
+
+  // If we're waiting for the webhook to process (after Stripe redirect),
+  // show loading instead of the "Private League" screen
+  if (!hasAccess && waitingForWebhook) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
+        <Navigation />
+        <div className="max-w-md mx-auto p-4 pt-16">
+          <div className="bg-white rounded-2xl shadow-card p-8 border border-cream-200 text-center">
+            <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin mx-auto mb-4" />
+            <h1 className="text-xl font-display font-bold text-neutral-800 mb-2">
+              Processing Payment...
+            </h1>
+            <p className="text-neutral-500">Please wait while we confirm your membership.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!hasAccess) {
     return (
