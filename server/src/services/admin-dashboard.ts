@@ -133,20 +133,21 @@ export async function getTimeline(): Promise<TimelineEvent[]> {
     }
 
     // 3. Scheduled jobs - next run times
+    // These times match the scheduler.ts definitions
     const jobSchedules = [
-      { name: 'lock-picks', day: 3, hour: 15, minute: 0, description: 'Lock Weekly Picks' },
-      { name: 'auto-pick', day: 3, hour: 15, minute: 5, description: 'Auto-Pick Missing' },
+      { name: 'lock-picks', day: 3, hour: 17, minute: 0, description: 'Lock Weekly Picks' },
+      { name: 'auto-pick', day: 3, hour: 17, minute: 5, description: 'Auto-Pick Missing' },
       {
         name: 'pick-reminders',
         day: 3,
-        hour: 12,
+        hour: 14,
         minute: 0,
         description: 'Pick Reminder Emails',
       },
       {
         name: 'results-notification',
-        day: 5,
-        hour: 12,
+        day: 4, // Thursday
+        hour: 10,
         minute: 0,
         description: 'Episode Results Posted',
       },
