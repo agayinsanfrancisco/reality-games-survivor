@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { metrics } from './sentry';
@@ -47,6 +47,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Track if onAuthStateChange has already handled auth state
+  // This prevents initializeAuth from overwriting valid state
+  const authStateHandledRef = useRef(false);
+
   const fetchProfile = async (userId: string, retries = 2): Promise<UserProfile | null> => {
     for (let attempt = 0; attempt < retries; attempt++) {
       const { data, error } = await supabase
@@ -89,6 +93,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Reset the flag on mount
+    authStateHandledRef.current = false;
+
     // Function to initialize auth state
     const initializeAuth = async () => {
       try {
@@ -114,6 +121,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const result = await Promise.race([sessionPromise, timeoutPromise]);
         const currentSession = result?.data?.session;
 
+        // If onAuthStateChange already handled auth (e.g., fired SIGNED_IN),
+        // don't override that state - it's the source of truth
+        if (authStateHandledRef.current) {
+          console.log(
+            'Auth state already handled by onAuthStateChange, skipping initializeAuth state update'
+          );
+          setLoading(false);
+          return;
+        }
+
         if (currentSession) {
           // Verify the session is actually valid by checking the user
           // This catches cases where localStorage has an expired/invalid token
@@ -122,6 +139,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               data: { user: verifiedUser },
               error: userError,
             } = await supabase.auth.getUser();
+
+            // Check again after async operation - onAuthStateChange may have fired
+            if (authStateHandledRef.current) {
+              console.log('Auth state handled by onAuthStateChange during getUser, skipping');
+              setLoading(false);
+              return;
+            }
 
             if (userError || !verifiedUser) {
               // Session is invalid - clear it
@@ -159,6 +183,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             }
           } catch (verifyError) {
+            // Check if onAuthStateChange handled it while we were waiting
+            if (authStateHandledRef.current) {
+              console.log('Auth state handled by onAuthStateChange during error, skipping clear');
+              setLoading(false);
+              return;
+            }
+
             // getUser() threw an error (e.g., malformed token)
             console.warn('Failed to verify user, clearing auth state:', verifyError);
             try {
@@ -174,32 +205,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } else {
           // No session found - ensure state is cleared
-          setSession(null);
-          setUser(null);
-          setProfile(null);
+          // But only if onAuthStateChange hasn't already set a valid session
+          if (!authStateHandledRef.current) {
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+          }
         }
 
         setLoading(false);
       } catch (error) {
         console.error('Failed to initialize auth:', error);
-        // Clear auth state on error to prevent stuck loading
-        // Also clear localStorage in case the token is corrupted
-        window.localStorage.removeItem('rgfl-auth-token');
-        setSession(null);
-        setUser(null);
-        setProfile(null);
+
+        // Only clear state if onAuthStateChange hasn't already handled it
+        if (!authStateHandledRef.current) {
+          // Clear auth state on error to prevent stuck loading
+          // Also clear localStorage in case the token is corrupted
+          window.localStorage.removeItem('rgfl-auth-token');
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+        }
         setLoading(false);
       }
     };
 
-    // Initialize auth state
-    initializeAuth();
-
     // Listen for auth changes (including URL hash extraction)
+    // Set up subscription BEFORE calling initializeAuth so we catch any events
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state change:', event, session?.user?.email);
+
+      // Mark that onAuthStateChange has handled auth state
+      // This prevents initializeAuth from overwriting valid state
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        authStateHandledRef.current = true;
+      }
 
       // Clear URL hash if we just got a session from URL (magic link or OAuth)
       if (event === 'SIGNED_IN' && window.location.hash.includes('access_token')) {
@@ -224,6 +266,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // This is especially important for magic link flow where initializeAuth returns early
       setLoading(false);
     });
+
+    // Initialize auth state AFTER setting up subscription
+    initializeAuth();
 
     return () => subscription.unsubscribe();
   }, []);
