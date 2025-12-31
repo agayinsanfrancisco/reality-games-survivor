@@ -52,9 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const authStateHandledRef = useRef(false);
 
   const fetchProfile = async (userId: string, retries = 2): Promise<UserProfile | null> => {
-    console.log('fetchProfile called with userId:', userId, 'retries:', retries);
     for (let attempt = 0; attempt < retries; attempt++) {
-      console.log('fetchProfile attempt:', attempt + 1);
       try {
         const { data, error } = await supabase
           .from('users')
@@ -63,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           )
           .eq('id', userId)
           .single();
-        console.log('fetchProfile result:', { data: data?.email, error: error?.message });
 
         if (!error && data) {
           return data as UserProfile;
@@ -115,7 +112,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Magic link flow: Supabase will automatically process the hash
           // and fire onAuthStateChange with SIGNED_IN event
           // Don't set loading to false here - wait for onAuthStateChange
-          console.log('Magic link detected, waiting for auth state change...');
           return;
         }
 
@@ -133,9 +129,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // don't override that state - it's the source of truth
         // Also don't set loading=false here - let onAuthStateChange do it after profile loads
         if (authStateHandledRef.current) {
-          console.log(
-            'Auth state already handled by onAuthStateChange, skipping initializeAuth state update'
-          );
           return;
         }
 
@@ -191,8 +184,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state change:', event, session?.user?.email);
-
       // Mark that onAuthStateChange has handled auth state
       // This prevents initializeAuth from overwriting valid state
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -210,34 +201,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Fetch profile asynchronously - don't block the callback
       // Use setTimeout to ensure we're outside the Supabase callback context
+      // This prevents a deadlock where Supabase client is blocked during the callback
       if (session?.user) {
         const userId = session.user.id;
         const isSignInEvent = event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED';
         const retries = isSignInEvent ? 5 : 2;
-        console.log('Scheduling profile fetch for user:', userId);
 
         setTimeout(async () => {
-          console.log('Executing profile fetch for user:', userId);
           try {
             const profileData = await fetchProfile(userId, retries);
-            console.log(
-              'Profile fetched:',
-              profileData?.display_name,
-              'setup_complete:',
-              profileData?.profile_setup_complete
-            );
             setProfile(profileData);
           } catch (error) {
             console.error('Failed to fetch profile:', error);
             setProfile(null);
           }
           setLoading(false);
-          console.log('Auth state update complete');
         }, 10);
       } else {
         setProfile(null);
         setLoading(false);
-        console.log('Auth state update complete (no user)');
       }
     });
 
