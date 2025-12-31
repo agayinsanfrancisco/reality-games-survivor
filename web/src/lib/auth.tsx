@@ -132,76 +132,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (currentSession) {
-          // Verify the session is actually valid by checking the user
-          // This catches cases where localStorage has an expired/invalid token
-          try {
-            const {
-              data: { user: verifiedUser },
-              error: userError,
-            } = await supabase.auth.getUser();
+          // Trust the session from getSession() - it's already validated by Supabase
+          // Don't call getUser() for verification as it can fail due to network issues
+          // and cause false negatives that log users out unnecessarily
+          setSession(currentSession);
+          setUser(currentSession.user ?? null);
 
-            // Check again after async operation - onAuthStateChange may have fired
-            if (authStateHandledRef.current) {
-              console.log('Auth state handled by onAuthStateChange during getUser, skipping');
-              setLoading(false);
-              return;
-            }
-
-            if (userError || !verifiedUser) {
-              // Session is invalid - clear it
-              console.warn('Session invalid, clearing auth state:', userError?.message);
-              // Use try-catch since signOut might fail with invalid token
-              try {
-                await supabase.auth.signOut();
-              } catch (signOutError) {
-                console.warn('SignOut failed (expected with invalid token):', signOutError);
-                // Manually clear localStorage as fallback
-                window.localStorage.removeItem('rgfl-auth-token');
-              }
-              setSession(null);
-              setUser(null);
-              setProfile(null);
-              setLoading(false);
-              return;
-            }
-
-            setSession(currentSession);
-            setUser(currentSession.user ?? null);
-
-            // Wait for profile to load before transitioning from loading state
-            // This prevents empty states when returning to the site
-            // Use more retries if coming from magic link (has hash in URL)
-            if (currentSession.user) {
-              try {
-                const isFromMagicLink = window.location.hash.includes('access_token');
-                const retries = isFromMagicLink ? 5 : 2;
-                const profileData = await fetchProfile(currentSession.user.id, retries);
-                setProfile(profileData);
-              } catch (error) {
-                console.error('Failed to fetch profile:', error);
-                // Still allow the app to load even if profile fetch fails
-              }
-            }
-          } catch (verifyError) {
-            // Check if onAuthStateChange handled it while we were waiting
-            if (authStateHandledRef.current) {
-              console.log('Auth state handled by onAuthStateChange during error, skipping clear');
-              setLoading(false);
-              return;
-            }
-
-            // getUser() threw an error (e.g., malformed token)
-            console.warn('Failed to verify user, clearing auth state:', verifyError);
-            try {
-              await supabase.auth.signOut();
-            } catch {
-              window.localStorage.removeItem('rgfl-auth-token');
-            }
-            setSession(null);
-            setUser(null);
-            setProfile(null);
-            setLoading(false);
-            return;
+          // Load profile in background - don't block on it
+          if (currentSession.user) {
+            const isFromMagicLink = window.location.hash.includes('access_token');
+            const retries = isFromMagicLink ? 5 : 2;
+            fetchProfile(currentSession.user.id, retries)
+              .then(setProfile)
+              .catch((error) => console.error('Failed to fetch profile:', error));
           }
         } else {
           // No session found - ensure state is cleared
