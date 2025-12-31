@@ -47,7 +47,7 @@ export default function LeagueHome() {
   const { data: league, isLoading: leagueLoading, error: leagueError } = useLeague(id);
   const {
     data: members,
-    isLoading: membersLoading,
+    isLoading: _membersLoading,
     refetch: refetchMembers,
   } = useLeagueMembers(id);
   const { data: allRosters } = useLeagueRosters(id);
@@ -183,42 +183,13 @@ export default function LeagueHome() {
   const isAdmin = userProfile?.role === 'admin';
   const canManageLeague = isCommissioner || isAdmin;
 
-  // Access control: Only members, commissioner, or admins can view private league data
-  const isGlobalLeague = league?.is_global === true;
-  const canViewLeague = isGlobalLeague || myMembership || isCommissioner || isAdmin;
-
-  if (!canViewLeague && !membersLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
-        <Navigation />
-        <div className="max-w-md mx-auto p-4 pt-16">
-          <div className="bg-white rounded-2xl shadow-card p-8 text-center border border-amber-200">
-            <Lock className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-neutral-800 mb-2">Private League</h2>
-            <p className="text-neutral-600 mb-4">
-              You need to be a member of this league to view its contents.
-            </p>
-            {league.code && (
-              <Link to={`/join/${league.code}`} className="btn btn-primary mb-3 inline-block">
-                Join This League
-              </Link>
-            )}
-            <div>
-              <Link to="/dashboard" className="text-burgundy-500 hover:text-burgundy-600">
-                Back to Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Security: Check if user has access to this league
+  // Access control:
   // - Public leagues: anyone can view
+  // - Global leagues: anyone can view
   // - Private leagues: only members, commissioner, or admins can view
+  const isGlobalLeague = league?.is_global === true;
   const isMember = !!myMembership;
-  const hasAccess = league.is_public || isMember || isCommissioner || isAdmin;
+  const hasAccess = league.is_public || isGlobalLeague || isMember || isCommissioner || isAdmin;
 
   // If we're waiting for the webhook to process (after Stripe redirect),
   // show loading instead of the "Private League" screen
