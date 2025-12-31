@@ -277,16 +277,58 @@ export function Navigation() {
               >
                 Leaderboard
               </Link>
-              <Link
-                to="/how-to-play"
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  isActive('/how-to-play') || isActive('/scoring') || isActive('/timeline')
-                    ? 'text-burgundy-600 bg-burgundy-50'
-                    : 'text-neutral-600 hover:text-burgundy-600 hover:bg-neutral-50'
-                }`}
-              >
-                How to Play
-              </Link>
+              <div className="relative" ref={howToPlayRef}>
+                <button
+                  onClick={() => setHowToPlayOpen(!howToPlayOpen)}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${
+                    isActive('/how-to-play') || isActive('/scoring') || isActive('/timeline')
+                      ? 'text-burgundy-600 bg-burgundy-50'
+                      : 'text-neutral-600 hover:text-burgundy-600 hover:bg-neutral-50'
+                  }`}
+                >
+                  How to Play
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${howToPlayOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {howToPlayOpen && (
+                  <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-neutral-200 min-w-[180px] z-50 py-1">
+                    <Link
+                      to="/how-to-play"
+                      onClick={() => setHowToPlayOpen(false)}
+                      className={`block px-4 py-2 text-sm hover:bg-neutral-50 ${
+                        isActive('/how-to-play') && !isActive('/scoring') && !isActive('/timeline')
+                          ? 'text-burgundy-600 bg-burgundy-50'
+                          : 'text-neutral-600'
+                      }`}
+                    >
+                      How to Play
+                    </Link>
+                    <Link
+                      to="/scoring-rules"
+                      onClick={() => setHowToPlayOpen(false)}
+                      className={`block px-4 py-2 text-sm hover:bg-neutral-50 ${
+                        isActive('/scoring') || isActive('/scoring-rules')
+                          ? 'text-burgundy-600 bg-burgundy-50'
+                          : 'text-neutral-600'
+                      }`}
+                    >
+                      Scoring Rules
+                    </Link>
+                    <Link
+                      to="/timeline"
+                      onClick={() => setHowToPlayOpen(false)}
+                      className={`block px-4 py-2 text-sm hover:bg-neutral-50 ${
+                        isActive('/timeline')
+                          ? 'text-burgundy-600 bg-burgundy-50'
+                          : 'text-neutral-600'
+                      }`}
+                    >
+                      Weekly Timeline
+                    </Link>
+                  </div>
+                )}
+              </div>
               {/* TRIVIA - Highlighted with animation */}
               <Link
                 to="/trivia"
