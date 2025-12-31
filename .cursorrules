@@ -11,8 +11,20 @@ Run these checks FIRST. Do not skip.
 3. Verify you're on main: `git branch --show-current` (must be `main`)
 4. Check for uncommitted changes: `git status`
 5. Verify deployed build matches the code you're reading
+6. Check Sentry MCP for recent errors related to the issue
 
 If ANY of these are misaligned, stop and fix the git state before touching code.
+
+## Sentry Error Checking (MANDATORY)
+
+Before diagnosing any bug or unexpected behavior:
+
+1. Query Sentry MCP for recent errors in the affected project
+2. Look for stack traces, error messages, and frequency patterns
+3. Check if the error correlates with recent deployments
+4. Identify if this is a new error or recurring issue
+
+Do NOT guess at causes when Sentry has the actual error data. Check Sentry first.
 
 ## Worktrees: BANNED
 
@@ -56,4 +68,4 @@ After completing Steps 0 and 1, you may recommend fixes.
 
 ## Violations
 
-Jumping to surface-level fixes without verifying deploy state and naming root cause = failed task. Start over.
+Jumping to surface-level fixes without verifying deploy state, checking Sentry, and naming root cause = failed task. Start over.

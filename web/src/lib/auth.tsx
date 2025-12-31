@@ -196,31 +196,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
       }
 
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      // Update profile when auth state changes
-      // Use more retries for SIGNED_IN events (magic link, OAuth) to wait for profile creation
+      // IMPORTANT: Fetch profile BEFORE updating any state to prevent race conditions
+      // If we set user/session first, ProtectedRoute will re-render and redirect
+      // before the profile is loaded
+      let profileData: UserProfile | null = null;
       if (session?.user) {
         const isSignInEvent = event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED';
-        const retries = isSignInEvent ? 5 : 2; // More retries for sign-in events
+        const retries = isSignInEvent ? 5 : 2;
         console.log('Fetching profile for user:', session.user.id);
-        const profileData = await fetchProfile(session.user.id, retries);
+        profileData = await fetchProfile(session.user.id, retries);
         console.log(
           'Profile fetched:',
           profileData?.display_name,
           'setup_complete:',
           profileData?.profile_setup_complete
         );
-        setProfile(profileData);
-      } else {
-        setProfile(null);
       }
 
-      // Always set loading to false after processing auth state change
-      // This is especially important for magic link flow where initializeAuth returns early
-      console.log('Setting loading to false after auth state change');
+      // Now update all state at once - React will batch these
+      setSession(session);
+      setUser(session?.user ?? null);
+      setProfile(profileData);
       setLoading(false);
+      console.log('Auth state update complete');
     });
 
     // Initialize auth state AFTER setting up subscription
