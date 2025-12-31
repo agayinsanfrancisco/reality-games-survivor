@@ -5,7 +5,7 @@
  * Collects display name, favorite season, and notification preferences.
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User, Loader2, Bell, MapPin, Star, FileText } from 'lucide-react';
@@ -309,15 +309,16 @@ export default function ProfileSetup() {
     }
   };
 
-  // Show skeleton while auth is initializing
-  if (authLoading) {
-    return renderSkeleton();
-  }
+  // Redirect to login if auth has finished loading but there's no user
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/login?redirect=/profile/setup', { replace: true });
+    }
+  }, [authLoading, user, navigate]);
 
-  // If auth has finished loading but there's no user, redirect to login
-  if (!user) {
-    navigate('/login?redirect=/profile/setup', { replace: true });
-    return null;
+  // Show skeleton while auth is initializing or no user yet
+  if (authLoading || !user) {
+    return renderSkeleton();
   }
 
   // Check if user has completed profile setup
