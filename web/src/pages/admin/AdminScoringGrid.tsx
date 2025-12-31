@@ -22,6 +22,7 @@ import {
   AlertCircle,
   X,
 } from 'lucide-react';
+import { ScoringRulesReference } from '@/components/admin/scoring';
 import {
   useAdminProfile,
   useActiveSeasonForScoring,
@@ -276,6 +277,9 @@ export function AdminScoringGrid() {
             </button>
           </div>
         )}
+
+        {/* Scoring Rules Reference */}
+        <ScoringRulesReference />
 
         {/* Controls */}
         <div className="bg-white rounded-2xl shadow-elevated p-5 mb-6">

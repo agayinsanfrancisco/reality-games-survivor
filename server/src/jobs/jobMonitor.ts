@@ -4,9 +4,11 @@
  * Tracks execution history for all scheduled jobs in a circular buffer.
  * Provides observability into job success/failure rates, execution times,
  * and error patterns without relying on external logging infrastructure.
+ * Also persists to job_runs database table for long-term analytics.
  */
 
 import { alertJobFailure } from './jobAlerting.js';
+import { supabaseAdmin } from '../config/supabase.js';
 
 export interface JobExecution {
   jobName: string;
@@ -23,14 +25,29 @@ const MAX_HISTORY_SIZE = 100;
 const executionHistory: JobExecution[] = [];
 
 /**
- * Add execution record to circular buffer
+ * Add execution record to circular buffer and persist to database
  */
-function addExecution(execution: JobExecution): void {
+async function addExecution(execution: JobExecution): Promise<void> {
   executionHistory.push(execution);
 
   // Trim to max size (circular buffer behavior)
   if (executionHistory.length > MAX_HISTORY_SIZE) {
     executionHistory.shift();
+  }
+
+  // Persist to database for long-term analytics (fire and forget)
+  try {
+    await supabaseAdmin.from('job_runs').insert({
+      job_name: execution.jobName,
+      status: execution.success ? 'success' : 'failed',
+      started_at: execution.startTime.toISOString(),
+      completed_at: execution.endTime?.toISOString(),
+      duration_ms: execution.durationMs,
+      error_message: execution.error || null,
+      metadata: execution.result ? { result: execution.result } : null,
+    });
+  } catch (dbError) {
+    console.error('Failed to persist job execution to database:', dbError);
   }
 }
 
@@ -60,7 +77,8 @@ export async function monitoredJobExecution<T>(
     execution.success = true;
     execution.result = result;
 
-    addExecution(execution);
+    // Don't await - fire and forget
+    addExecution(execution).catch(console.error);
 
     return result;
   } catch (error) {
@@ -69,7 +87,8 @@ export async function monitoredJobExecution<T>(
     execution.success = false;
     execution.error = error instanceof Error ? error.message : String(error);
 
-    addExecution(execution);
+    // Don't await - fire and forget
+    addExecution(execution).catch(console.error);
 
     // Send alert for job failure (async, don't await to avoid blocking)
     alertJobFailure(execution).catch((alertError) => {

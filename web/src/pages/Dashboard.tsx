@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { Users, ChevronRight } from 'lucide-react';
-import { Footer } from '@/components/Footer';
+// Footer is provided by Layout component
 
 // Dashboard components
 import {
@@ -443,8 +443,6 @@ export function Dashboard() {
           <QuickLinksCard />
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 }

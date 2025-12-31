@@ -38,12 +38,12 @@ export default function HowToPlay() {
       icon: Trophy,
       title: 'Rank Your Castaways',
       description:
-        'Before the draft deadline, rank all castaways from 1-24. This determines who you get in the snake draft.',
+        'After the first episode, participants rank all castaways 1-24. This determines who you get in the snake draft.',
       details: [
         'Rankings apply to ALL your leagues for the season',
-        "Rank based on who you think will score the most points, not just who'll win",
-        'Consider confessional counts, challenge ability, and edit visibility',
-        'Lock in rankings by the deadline (after Episode 1 airs)',
+        'Picks are made in reverse order of prior season fantasy rankings (or random for new leagues)',
+        'The picking order reverses each round (snake draft style)',
+        'Special selection rules apply if there are more participants than castaways',
       ],
     },
     {
@@ -52,7 +52,7 @@ export default function HowToPlay() {
       description:
         'After the deadline, the system runs a snake draft. You get 2 castaways based on your draft position and rankings.',
       details: [
-        'Draft positions are randomly assigned',
+        'Draft positions are randomly assigned for new leagues',
         'Snake draft means pick order reverses each round',
         "You'll get your highest-ranked available castaway each pick",
         'Your 2 castaways are your team for the entire season',
@@ -60,24 +60,27 @@ export default function HowToPlay() {
     },
     {
       icon: Calendar,
-      title: 'Make Weekly Picks',
+      title: 'Make Weekly Picks (Starting/Benched)',
       description:
-        'Each week, choose which of your 2 castaways to "play" for that episode. Only your picked castaway earns points.',
+        'Each week, choose which of your 2 castaways to "start" for that episode. Only your starting castaway earns points - the other is benched.',
       details: [
-        'Picks lock Wednesday at 3pm PST before the episode',
-        'Analyze the edit, preview clips, and tribal dynamics',
-        'If you forget, the system randomly picks from your roster',
-        'Both castaways eliminated = torch snuffed (but you can still watch!)',
+        'Picks lock Wednesday at 5pm PST before the episode',
+        'A random number generator is used if no pick is made',
+        'Prior week designations do NOT impact the current week',
+        'When only one castaway remains, they must be your starter',
       ],
     },
     {
       icon: Star,
       title: 'Earn Points',
       description:
-        'Your picked castaway earns (or loses) points based on what happens during the episode. See the full scoring rules for details.',
-      details: [],
+        "Points are based on your STARTING castaway's performance that week. Your benched castaway does not score.",
+      details: [
+        'If a team has no remaining castaways, they can no longer score points',
+        'Their Total Points are set at that point',
+      ],
       linkTo: '/scoring',
-      linkText: 'View Scoring Rules →',
+      linkText: 'View Full Scoring Rules →',
     },
     {
       icon: Award,
@@ -86,7 +89,7 @@ export default function HowToPlay() {
         'The player with the most total points at the end of the season wins! Track your progress on the leaderboard.',
       details: [
         'Points accumulate across all episodes',
-        'Leaderboard updates after each episode',
+        'Leaderboard updates after each episode is scored',
         'Compete for glory in multiple leagues',
         'Bragging rights last until next season!',
       ],
@@ -268,9 +271,7 @@ export default function HowToPlay() {
         {/* CTA Section */}
         <section className="text-center pb-16">
           <div className="bg-gradient-to-r from-burgundy-500 to-burgundy-600 rounded-2xl p-8 md:p-12 text-white shadow-lg">
-            <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">
-              Ready to Play?
-            </h2>
+            <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">Ready to Play?</h2>
             <p className="text-burgundy-100 mb-8 max-w-lg mx-auto text-lg">
               Join Season 50: In the Hands of the Fans and prove you know more about Survivor
               strategy than your friends.

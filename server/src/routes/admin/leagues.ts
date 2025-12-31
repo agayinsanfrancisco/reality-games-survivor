@@ -73,4 +73,90 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
+// GET /api/admin/leagues/:id/members - Get league members
+router.get('/:id/members', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const { data: members, error } = await supabaseAdmin
+      .from('league_members')
+      .select(`
+        *,
+        users:user_id (
+          id,
+          display_name,
+          email,
+          avatar_url
+        )
+      `)
+      .eq('league_id', id)
+      .order('joined_at', { ascending: true });
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({ members: members || [] });
+  } catch (err) {
+    console.error('GET /api/admin/leagues/:id/members error:', err);
+    res.status(500).json({ error: 'Failed to fetch league members' });
+  }
+});
+
+// DELETE /api/admin/leagues/:id/members/:userId - Remove member from league
+router.delete('/:id/members/:userId', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id: leagueId, userId } = req.params;
+
+    // Check if user is the commissioner
+    const { data: league } = await supabaseAdmin
+      .from('leagues')
+      .select('commissioner_id')
+      .eq('id', leagueId)
+      .single();
+
+    if (league?.commissioner_id === userId) {
+      return res.status(400).json({ error: 'Cannot remove the commissioner from their own league' });
+    }
+
+    // Remove member
+    const { error: memberError } = await supabaseAdmin
+      .from('league_members')
+      .delete()
+      .eq('league_id', leagueId)
+      .eq('user_id', userId);
+
+    if (memberError) {
+      return res.status(400).json({ error: memberError.message });
+    }
+
+    // Also remove their rosters
+    const { error: rosterError } = await supabaseAdmin
+      .from('rosters')
+      .delete()
+      .eq('league_id', leagueId)
+      .eq('user_id', userId);
+
+    if (rosterError) {
+      console.error('Error removing rosters:', rosterError);
+    }
+
+    // Also remove their weekly picks
+    const { error: picksError } = await supabaseAdmin
+      .from('weekly_picks')
+      .delete()
+      .eq('league_id', leagueId)
+      .eq('user_id', userId);
+
+    if (picksError) {
+      console.error('Error removing weekly picks:', picksError);
+    }
+
+    res.json({ success: true, message: 'Member removed from league' });
+  } catch (err) {
+    console.error('DELETE /api/admin/leagues/:id/members/:userId error:', err);
+    res.status(500).json({ error: 'Failed to remove member' });
+  }
+});
+
 export default router;

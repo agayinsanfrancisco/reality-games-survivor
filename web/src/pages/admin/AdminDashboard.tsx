@@ -7,11 +7,20 @@ import { TimelineFeed } from '@/components/admin/TimelineFeed';
 import { StatsGrid } from '@/components/admin/StatsGrid';
 import { SystemHealthBanner } from '@/components/admin/SystemHealthBanner';
 import { ActivityFeed } from '@/components/admin/ActivityFeed';
-import { NotificationPrefsWidget } from '@/components/admin/NotificationPrefsWidget';
 import { DraftStatsCard } from '@/components/admin/DraftStatsCard';
 import { PaymentStatsCard } from '@/components/admin/PaymentStatsCard';
 import { TriviaStatsCard } from '@/components/admin/TriviaStatsCard';
 import { LeagueBreakdownCard } from '@/components/admin/LeagueBreakdownCard';
+import {
+  AlertTriangle,
+  Clock,
+  Users,
+  Trophy,
+  Settings,
+  BarChart3,
+  Calendar,
+  Zap,
+} from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
 
@@ -19,6 +28,12 @@ interface UserProfile {
   id: string;
   display_name: string;
   role: string;
+}
+
+interface Alert {
+  type: 'error' | 'warning' | 'info';
+  message: string;
+  action?: { label: string; href: string };
 }
 
 export function AdminDashboard() {
@@ -55,7 +70,7 @@ export function AdminDashboard() {
       return data.timeline;
     },
     enabled: !!user?.id && profile?.role === 'admin',
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -113,73 +128,124 @@ export function AdminDashboard() {
     refetchInterval: 30000,
   });
 
-  const adminLinks = [
-    {
-      title: 'Analytics Dashboard',
-      description: 'Comprehensive stats and metrics',
-      href: '/admin/stats',
-      icon: '📊',
-      color: 'bg-gradient-to-br from-purple-500 to-indigo-600',
+  // Fetch failed emails count for alerts
+  const { data: failedEmails } = useQuery({
+    queryKey: ['failedEmailsCount'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('failed_emails')
+        .select('*', { count: 'exact', head: true })
+        .eq('retry_attempted', false);
+      return count || 0;
     },
+    enabled: !!user?.id && profile?.role === 'admin',
+    refetchInterval: 60000,
+  });
+
+  // Fetch pending jobs for alerts
+  const { data: pendingJobs } = useQuery({
+    queryKey: ['pendingJobsCount'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('job_runs')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'failed')
+        .gte('started_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      return count || 0;
+    },
+    enabled: !!user?.id && profile?.role === 'admin',
+    refetchInterval: 60000,
+  });
+
+  // Build alerts from data
+  const alerts: Alert[] = [];
+  if (failedEmails && failedEmails > 0) {
+    alerts.push({
+      type: 'error',
+      message: `${failedEmails} failed emails need attention`,
+      action: { label: 'View Queue', href: '/admin/email-queue' },
+    });
+  }
+  if (pendingJobs && pendingJobs > 0) {
+    alerts.push({
+      type: 'warning',
+      message: `${pendingJobs} job failures in the last 24 hours`,
+      action: { label: 'View Jobs', href: '/admin/jobs' },
+    });
+  }
+
+  // Quick Actions - moved to top
+  const quickActions = [
     {
       title: 'Score Episode',
       description: 'Enter scores for the latest episode',
       href: '/admin/scoring',
-      icon: '📝',
+      icon: Zap,
       color: 'bg-burgundy-500',
     },
     {
-      title: 'Manage Castaways',
-      description: 'Add, edit, or eliminate castaways',
+      title: 'Analytics',
+      description: 'Full platform metrics',
+      href: '/admin/stats',
+      icon: BarChart3,
+      color: 'bg-purple-500',
+    },
+    {
+      title: 'Manage Leagues',
+      description: 'View all leagues',
+      href: '/admin/leagues',
+      icon: Trophy,
+      color: 'bg-orange-500',
+    },
+    {
+      title: 'Manage Users',
+      description: 'User accounts',
+      href: '/admin/users',
+      icon: Users,
+      color: 'bg-teal-500',
+    },
+  ];
+
+  // Secondary admin links
+  const adminLinks = [
+    {
+      title: 'Castaways',
+      description: 'Add, edit, eliminate',
       href: '/admin/castaways',
       icon: '👥',
       color: 'bg-blue-500',
     },
     {
-      title: 'Manage Seasons',
-      description: 'Manage seasons and episodes',
+      title: 'Seasons',
+      description: 'Manage seasons & episodes',
       href: '/admin/seasons',
       icon: '📅',
       color: 'bg-green-500',
     },
     {
       title: 'Scoring Rules',
-      description: 'View and manage scoring rules',
+      description: 'View & manage rules',
       href: '/admin/scoring-rules',
       icon: '✓',
       color: 'bg-purple-500',
     },
     {
-      title: 'All Leagues',
-      description: 'View and manage all leagues',
-      href: '/admin/leagues',
-      icon: '🏆',
-      color: 'bg-orange-500',
-    },
-    {
-      title: 'All Users',
-      description: 'Manage user accounts',
-      href: '/admin/users',
-      icon: '👤',
-      color: 'bg-teal-500',
-    },
-    {
       title: 'Job Monitor',
-      description: 'View scheduled jobs and history',
+      description: 'Scheduled jobs',
       href: '/admin/jobs',
       icon: '⚙️',
       color: 'bg-indigo-500',
     },
     {
       title: 'Email Queue',
-      description: 'Monitor email queue and failed emails',
+      description: 'Monitor emails',
       href: '/admin/email-queue',
       icon: '📧',
       color: 'bg-pink-500',
     },
     {
       title: 'Announcements',
-      description: 'Manage dashboard announcements',
+      description: 'Dashboard messages',
       href: '/admin/announcements',
       icon: '📢',
       color: 'bg-amber-500',
@@ -194,19 +260,7 @@ export function AdminDashboard() {
         <main className="max-w-4xl mx-auto px-4 py-16 text-center">
           <div className="bg-white rounded-2xl shadow-elevated p-12">
             <div className="w-20 h-20 mx-auto mb-6 bg-red-100 rounded-full flex items-center justify-center">
-              <svg
-                className="w-10 h-10 text-red-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
+              <AlertTriangle className="w-10 h-10 text-red-600" />
             </div>
             <h1 className="text-2xl font-display text-neutral-800 mb-3">Access Denied</h1>
             <p className="text-neutral-500 mb-8">
@@ -242,6 +296,86 @@ export function AdminDashboard() {
           </Link>
         </div>
 
+        {/* Alerts Bar */}
+        {alerts.length > 0 && (
+          <div className="mb-6 space-y-2 animate-fade-in">
+            {alerts.map((alert, idx) => (
+              <div
+                key={idx}
+                className={`flex items-center justify-between p-4 rounded-xl ${
+                  alert.type === 'error'
+                    ? 'bg-red-50 border border-red-200'
+                    : alert.type === 'warning'
+                      ? 'bg-amber-50 border border-amber-200'
+                      : 'bg-blue-50 border border-blue-200'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <AlertTriangle
+                    className={`h-5 w-5 ${
+                      alert.type === 'error'
+                        ? 'text-red-500'
+                        : alert.type === 'warning'
+                          ? 'text-amber-500'
+                          : 'text-blue-500'
+                    }`}
+                  />
+                  <span
+                    className={`font-medium ${
+                      alert.type === 'error'
+                        ? 'text-red-700'
+                        : alert.type === 'warning'
+                          ? 'text-amber-700'
+                          : 'text-blue-700'
+                    }`}
+                  >
+                    {alert.message}
+                  </span>
+                </div>
+                {alert.action && (
+                  <Link
+                    to={alert.action.href}
+                    className={`text-sm font-semibold px-3 py-1 rounded-lg ${
+                      alert.type === 'error'
+                        ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                        : alert.type === 'warning'
+                          ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                          : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    }`}
+                  >
+                    {alert.action.label}
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Quick Actions - TOP OF PAGE */}
+        <div className="mb-8 animate-slide-up">
+          <h2 className="text-lg font-display text-neutral-800 mb-4 flex items-center gap-2">
+            <Zap className="h-5 w-5 text-amber-500" />
+            Quick Actions
+          </h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {quickActions.map((action) => (
+              <Link
+                key={action.href}
+                to={action.href}
+                className="bg-white rounded-xl shadow-card hover:shadow-card-hover p-5 transition-all group"
+              >
+                <div
+                  className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center text-white mb-3 group-hover:scale-110 transition-transform`}
+                >
+                  <action.icon className="h-6 w-6" />
+                </div>
+                <h3 className="font-semibold text-neutral-800 text-base mb-1">{action.title}</h3>
+                <p className="text-xs text-neutral-500">{action.description}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+
         {/* System Health Banner */}
         {health && <SystemHealthBanner health={health} />}
 
@@ -274,61 +408,73 @@ export function AdminDashboard() {
         {/* Dashboard Content */}
         {!isLoading && (
           <>
-            {/* Timeline + Stats Grid */}
+            {/* This Week Timeline + Stats Grid */}
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               {/* Timeline Feed (Left Column) */}
-              <div className="md:col-span-1 animate-slide-up">
-                {timeline && <TimelineFeed events={timeline} />}
+              <div className="md:col-span-1 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
+                  <h3 className="text-lg font-display text-neutral-800 mb-4 flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-burgundy-500" />
+                    This Week
+                  </h3>
+                  {timeline && <TimelineFeed events={timeline} />}
+                </div>
               </div>
 
-              {/* Stats Grid + Notification Widget (Right Column) */}
+              {/* Stats Grid (Right Column) */}
               <div className="md:col-span-2 space-y-6">
-                <div className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
-                  {stats && <StatsGrid stats={stats} />}
-                </div>
                 <div className="animate-slide-up" style={{ animationDelay: '0.15s' }}>
-                  <NotificationPrefsWidget />
+                  {stats && <StatsGrid stats={stats} />}
                 </div>
               </div>
             </div>
 
-            {/* New Connected Stats Section */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="animate-slide-up" style={{ animationDelay: '0.18s' }}>
-                <DraftStatsCard />
-              </div>
-              <div className="animate-slide-up" style={{ animationDelay: '0.21s' }}>
-                <PaymentStatsCard />
-              </div>
-              <div className="animate-slide-up" style={{ animationDelay: '0.24s' }}>
-                <TriviaStatsCard />
-              </div>
-              <div className="animate-slide-up" style={{ animationDelay: '0.27s' }}>
-                <LeagueBreakdownCard />
+            {/* Vitals Row - Connected Stats */}
+            <div className="mb-8">
+              <h2 className="text-lg font-display text-neutral-800 mb-4 flex items-center gap-2">
+                <Clock className="h-5 w-5 text-green-500" />
+                Real-time Vitals
+              </h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                  <DraftStatsCard />
+                </div>
+                <div className="animate-slide-up" style={{ animationDelay: '0.23s' }}>
+                  <PaymentStatsCard />
+                </div>
+                <div className="animate-slide-up" style={{ animationDelay: '0.26s' }}>
+                  <TriviaStatsCard />
+                </div>
+                <div className="animate-slide-up" style={{ animationDelay: '0.29s' }}>
+                  <LeagueBreakdownCard />
+                </div>
               </div>
             </div>
 
             {/* Activity Feed */}
-            <div className="mb-8 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+            <div className="mb-8 animate-slide-up" style={{ animationDelay: '0.32s' }}>
               {activity && <ActivityFeed activities={activity} />}
             </div>
 
-            {/* Admin Actions Grid */}
-            <div className="animate-slide-up" style={{ animationDelay: '0.3s' }}>
-              <h2 className="text-lg font-display text-neutral-800 mb-4">Quick Actions</h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Secondary Admin Links */}
+            <div className="animate-slide-up" style={{ animationDelay: '0.35s' }}>
+              <h2 className="text-lg font-display text-neutral-800 mb-4 flex items-center gap-2">
+                <Settings className="h-5 w-5 text-neutral-500" />
+                Management
+              </h2>
+              <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {adminLinks.map((link) => (
                   <Link
                     key={link.href}
                     to={link.href}
-                    className="bg-white rounded-xl shadow-card hover:shadow-card-hover p-5 transition-all group"
+                    className="bg-white rounded-xl shadow-card hover:shadow-card-hover p-4 transition-all group text-center"
                   >
                     <div
-                      className={`w-12 h-12 ${link.color} rounded-lg flex items-center justify-center text-white text-2xl mb-3 group-hover:scale-110 transition-transform`}
+                      className={`w-10 h-10 ${link.color} rounded-lg flex items-center justify-center text-white text-xl mb-2 mx-auto group-hover:scale-110 transition-transform`}
                     >
                       {link.icon}
                     </div>
-                    <h3 className="font-semibold text-neutral-800 text-base mb-1">{link.title}</h3>
+                    <h3 className="font-semibold text-neutral-800 text-sm mb-0.5">{link.title}</h3>
                     <p className="text-xs text-neutral-500">{link.description}</p>
                   </Link>
                 ))}

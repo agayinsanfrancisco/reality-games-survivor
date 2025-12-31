@@ -254,12 +254,26 @@ export function TriviaLeaderboardModal({
               </button>
             </>
           ) : (
-            <button
-              onClick={onClose}
-              className="w-full py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold rounded-xl hover:from-orange-500 hover:to-red-500 transition-all shadow-lg shadow-orange-500/25"
-            >
-              Try Again Tomorrow
-            </button>
+            <>
+              {/* CTA to join a league even on wrong answer */}
+              <div className="bg-neutral-800/50 rounded-xl p-4 mb-3 border border-orange-500/20">
+                <p className="text-neutral-300 text-sm mb-3 text-center">
+                  While you wait, why not join a Fantasy Survivor league?
+                </p>
+                <Link
+                  to="/leagues"
+                  className="block w-full py-2.5 bg-gradient-to-r from-burgundy-600 to-burgundy-700 text-white font-semibold rounded-lg hover:from-burgundy-500 hover:to-burgundy-600 transition-all text-center text-sm"
+                >
+                  Browse Leagues →
+                </Link>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-full py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold rounded-xl hover:from-orange-500 hover:to-red-500 transition-all shadow-lg shadow-orange-500/25"
+              >
+                Try Again Tomorrow
+              </button>
+            </>
           )}
         </div>
       </div>

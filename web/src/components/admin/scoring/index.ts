@@ -6,3 +6,5 @@ export * from './CastawayHeader';
 export * from './EpisodeSelector';
 export * from './ScoringHeader';
 export * from './ScoringCategoryAccordion';
+export * from './ScoringRulesReference';
+export * from './ScoringRulesReference';

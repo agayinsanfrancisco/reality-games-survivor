@@ -16,6 +16,7 @@ import {
   FinalizeResultModal,
   CastawayList,
   CastawayHeader,
+  ScoringRulesReference,
 } from '@/components/admin/scoring';
 import { apiWithAuth } from '@/lib/api';
 import {
@@ -260,6 +261,9 @@ export function AdminScoring() {
       <Navigation />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Scoring Rules Reference */}
+        <ScoringRulesReference />
+
         {/* Header */}
         <ScoringHeader
           scoringStatus={scoringStatus || null}
