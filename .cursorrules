@@ -12,6 +12,7 @@ Run these checks FIRST. Do not skip.
 4. Check for uncommitted changes: `git status`
 5. Verify deployed build matches the code you're reading
 6. Check Sentry MCP for recent errors related to the issue
+7. Check Supabase MCP for database/auth issues if relevant
 
 If ANY of these are misaligned, stop and fix the git state before touching code.
 
@@ -25,6 +26,18 @@ Before diagnosing any bug or unexpected behavior:
 4. Identify if this is a new error or recurring issue
 
 Do NOT guess at causes when Sentry has the actual error data. Check Sentry first.
+
+## Supabase Diagnostics (MANDATORY for data/auth issues)
+
+Before diagnosing any database, API, or authentication issue:
+
+1. Query Supabase MCP to check table schemas and relationships
+2. Check RLS policies if data isn't returning as expected
+3. Verify auth configuration if login/permissions are failing
+4. Look at recent migrations for schema drift
+5. Check edge function logs if serverless functions are involved
+
+Do NOT assume the database schema or RLS policies—verify them via Supabase MCP.
 
 ## Worktrees: BANNED
 
@@ -68,4 +81,4 @@ After completing Steps 0 and 1, you may recommend fixes.
 
 ## Violations
 
-Jumping to surface-level fixes without verifying deploy state, checking Sentry, and naming root cause = failed task. Start over.
+Jumping to surface-level fixes without verifying deploy state, checking Sentry, checking Supabase (if relevant), and naming root cause = failed task. Start over.

@@ -52,35 +52,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const authStateHandledRef = useRef(false);
 
   const fetchProfile = async (userId: string, retries = 2): Promise<UserProfile | null> => {
+    console.log('fetchProfile called with userId:', userId, 'retries:', retries);
     for (let attempt = 0; attempt < retries; attempt++) {
-      const { data, error } = await supabase
-        .from('users')
-        .select(
-          'id, email, display_name, role, phone, phone_verified, avatar_url, profile_setup_complete'
-        )
-        .eq('id', userId)
-        .single();
+      console.log('fetchProfile attempt:', attempt + 1);
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select(
+            'id, email, display_name, role, phone, phone_verified, avatar_url, profile_setup_complete'
+          )
+          .eq('id', userId)
+          .single();
+        console.log('fetchProfile result:', { data: data?.email, error: error?.message });
 
-      if (!error && data) {
-        return data as UserProfile;
-      }
+        if (!error && data) {
+          return data as UserProfile;
+        }
 
-      // If profile doesn't exist yet (new user), wait a bit and retry
-      // Handle both PGRST116 (PostgREST "no rows") and 406 status
-      const isNotFound = error?.code === 'PGRST116' || (error as any)?.status === 406;
-      if (isNotFound && attempt < retries - 1) {
-        // Progressive delay - longer waits for later attempts
-        // First retry: 150ms, second: 300ms, third: 500ms, etc.
-        const delay = Math.min(150 * (attempt + 1), 500);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        continue;
-      }
+        // If profile doesn't exist yet (new user), wait a bit and retry
+        // Handle both PGRST116 (PostgREST "no rows") and 406 status
+        const isNotFound = error?.code === 'PGRST116' || (error as any)?.status === 406;
+        if (isNotFound && attempt < retries - 1) {
+          // Progressive delay - longer waits for later attempts
+          // First retry: 150ms, second: 300ms, third: 500ms, etc.
+          const delay = Math.min(150 * (attempt + 1), 500);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
 
-      // Only log error if it's not a "not found" case (which is expected for new users)
-      if (!isNotFound) {
-        console.error('Error fetching profile:', error);
+        // Only log error if it's not a "not found" case (which is expected for new users)
+        if (!isNotFound) {
+          console.error('Error fetching profile:', error);
+        }
+        return null;
+      } catch (err) {
+        console.error('fetchProfile exception:', err);
+        return null;
       }
-      return null;
     }
     return null;
   };
@@ -182,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up subscription BEFORE calling initializeAuth so we catch any events
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state change:', event, session?.user?.email);
 
       // Mark that onAuthStateChange has handled auth state
@@ -196,32 +204,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
       }
 
-      // IMPORTANT: Fetch profile BEFORE updating any state to prevent race conditions
-      // If we set user/session first, ProtectedRoute will re-render and redirect
-      // before the profile is loaded
-      let profileData: UserProfile | null = null;
-      if (session?.user) {
-        const isSignInEvent = event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED';
-        const retries = isSignInEvent ? 5 : 2;
-        console.log('Fetching profile for user:', session.user.id);
-        // Defer the Supabase query to next tick to avoid deadlock
-        // The onAuthStateChange callback can block Supabase client operations
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        profileData = await fetchProfile(session.user.id, retries);
-        console.log(
-          'Profile fetched:',
-          profileData?.display_name,
-          'setup_complete:',
-          profileData?.profile_setup_complete
-        );
-      }
-
-      // Now update all state at once - React will batch these
+      // Update session and user immediately
       setSession(session);
       setUser(session?.user ?? null);
-      setProfile(profileData);
-      setLoading(false);
-      console.log('Auth state update complete');
+
+      // Fetch profile asynchronously - don't block the callback
+      // Use setTimeout to ensure we're outside the Supabase callback context
+      if (session?.user) {
+        const userId = session.user.id;
+        const isSignInEvent = event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED';
+        const retries = isSignInEvent ? 5 : 2;
+        console.log('Scheduling profile fetch for user:', userId);
+
+        setTimeout(async () => {
+          console.log('Executing profile fetch for user:', userId);
+          try {
+            const profileData = await fetchProfile(userId, retries);
+            console.log(
+              'Profile fetched:',
+              profileData?.display_name,
+              'setup_complete:',
+              profileData?.profile_setup_complete
+            );
+            setProfile(profileData);
+          } catch (error) {
+            console.error('Failed to fetch profile:', error);
+            setProfile(null);
+          }
+          setLoading(false);
+          console.log('Auth state update complete');
+        }, 10);
+      } else {
+        setProfile(null);
+        setLoading(false);
+        console.log('Auth state update complete (no user)');
+      }
     });
 
     // Initialize auth state AFTER setting up subscription
