@@ -78,7 +78,7 @@ export function Dashboard() {
     },
   });
 
-  // Fetch leagues with membership details
+  // Fetch leagues with membership details (including season_id for weekly picks)
   const { data: myLeagues } = useQuery({
     queryKey: ['my-leagues-detailed', user?.id],
     queryFn: async () => {
@@ -94,20 +94,29 @@ export function Dashboard() {
             name,
             code,
             status,
-            is_global
+            is_global,
+            season_id
           )
         `
         )
         .eq('user_id', user!.id);
       if (error) throw error;
-      return (data as any[])
+      type LeagueMemberData = {
+        league_id: string;
+        total_points: number;
+        rank: number | null;
+        league: (League & { season_id: string }) | null;
+      };
+      return (data as LeagueMemberData[])
         .map((d) => ({
           league_id: d.league_id,
           total_points: d.total_points,
           rank: d.rank,
-          league: d.league as League,
+          league: d.league as League & { season_id: string },
         }))
-        .filter((d) => d.league !== null) as (LeagueMembership & { league: League })[];
+        .filter((d) => d.league !== null) as (LeagueMembership & {
+        league: League & { season_id: string };
+      })[];
     },
     enabled: !!user?.id,
   });
@@ -133,7 +142,7 @@ export function Dashboard() {
         .eq('user_id', user!.id)
         .is('dropped_at', null);
       if (error) throw error;
-      return data as any[];
+      return data as RosterEntry[];
     },
     enabled: !!user?.id,
   });
@@ -273,7 +282,7 @@ export function Dashboard() {
   const totalPoints = globalLeague?.total_points || 0;
   const activeCastaways = Object.values(rostersByLeague)
     .flat()
-    .filter((r: any) => r.castaway?.status === 'active').length;
+    .filter((r: RosterEntry) => r.castaway?.status === 'active').length;
 
   const primaryLeagueId = nonGlobalLeagues.length > 0 ? nonGlobalLeagues[0].league_id : undefined;
 
@@ -364,6 +373,8 @@ export function Dashboard() {
                   totalPoints={membership.total_points}
                   rank={membership.rank}
                   rosters={rostersByLeague[membership.league_id] || []}
+                  seasonId={membership.league.season_id}
+                  showWeeklyPick={gamePhase === 'active'}
                 />
               ))}
             </div>
