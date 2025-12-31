@@ -19,28 +19,35 @@ export function WeeklyTimelineCard() {
         <div className="flex items-start gap-3">
           <div className="w-2 h-2 rounded-full bg-burgundy-500 mt-2 flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-neutral-800">Wednesday 3pm PST</p>
-            <p className="text-xs text-neutral-500">Picks lock for the week</p>
+            <p className="text-sm font-medium text-neutral-800">Wednesday 5pm PST</p>
+            <p className="text-xs text-neutral-500">Picks lock when episode airs</p>
           </div>
         </div>
         <div className="flex items-start gap-3">
           <div className="w-2 h-2 rounded-full bg-orange-500 mt-2 flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-neutral-800">Wednesday 8pm EST</p>
-            <p className="text-xs text-neutral-500">Episode airs (live scoring!)</p>
+            <p className="text-sm font-medium text-neutral-800">Wednesday 8pm EST / 5pm PST</p>
+            <p className="text-xs text-neutral-500">Episode airs on CBS</p>
           </div>
         </div>
         <div className="flex items-start gap-3">
           <div className="w-2 h-2 rounded-full bg-green-500 mt-2 flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-neutral-800">Friday at 2pm PST</p>
-            <p className="text-xs text-neutral-500">Results posted (likely Wed 10PM Pacific)</p>
+            <p className="text-sm font-medium text-neutral-800">Wednesday Night</p>
+            <p className="text-xs text-neutral-500">Results posted after West Coast airing</p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3">
+          <div className="w-2 h-2 rounded-full bg-amber-500 mt-2 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-neutral-800">Thursday Morning</p>
+            <p className="text-xs text-neutral-500">Scoring finalized</p>
           </div>
         </div>
         <div className="flex items-start gap-3">
           <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-neutral-800">Saturday 12pm PST</p>
+            <p className="text-sm font-medium text-neutral-800">Thursday</p>
             <p className="text-xs text-neutral-500">Next week's picks open</p>
           </div>
         </div>

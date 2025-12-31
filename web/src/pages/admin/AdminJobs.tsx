@@ -30,20 +30,23 @@ interface Job {
 const jobMetadata: Record<string, { description: string; schedule: string }> = {
   'draft-finalize': {
     description: 'Auto-complete incomplete drafts',
-    schedule: 'Mar 2, 8pm PST (one-time)',
+    schedule: 'One-time (from database)',
   },
-  'lock-picks': { description: 'Lock all pending weekly picks', schedule: 'Wed 3pm PST (weekly)' },
+  'lock-picks': {
+    description: 'Lock all pending weekly picks when episode airs',
+    schedule: 'Wed 5pm PST (weekly)',
+  },
   'auto-pick': {
     description: 'Fill missing picks with auto-select',
-    schedule: 'Wed 3:05pm PST (weekly)',
+    schedule: 'Wed 5:05pm PST (weekly)',
   },
   'pick-reminders': {
-    description: 'Send pick reminder notifications',
-    schedule: 'Wed 12pm PST (weekly)',
+    description: 'Send pick reminder notifications (3 hours before lock)',
+    schedule: 'Wed 2pm PST (weekly)',
   },
   'results-notification': {
-    description: 'Send scoring results to players',
-    schedule: 'Fri 12pm PST (weekly)',
+    description: 'Send scoring results to players (morning after episode)',
+    schedule: 'Thu 10am PST (weekly)',
   },
   'weekly-summary': {
     description: 'Send weekly standings summary',
@@ -52,6 +55,18 @@ const jobMetadata: Record<string, { description: string; schedule: string }> = {
   'draft-reminders': {
     description: 'Send draft reminder notifications',
     schedule: 'Daily 9am PST',
+  },
+  'release-results': {
+    description: 'Release spoiler-safe results (checks for finalized episodes)',
+    schedule: 'Every 10 minutes',
+  },
+  'email-queue-processor': {
+    description: 'Process pending emails from queue',
+    schedule: 'Every 5 minutes',
+  },
+  'nurture-trivia-completers': {
+    description: 'Send nurture emails to trivia completers',
+    schedule: 'Daily 11am PST',
   },
 };
 
