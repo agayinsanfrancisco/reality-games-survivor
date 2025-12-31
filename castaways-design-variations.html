@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Castaways Page Design Variations</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            burgundy: {
+              50: '#fdf2f4',
+              100: '#fce4e8',
+              200: '#facdd5',
+              300: '#f5a3b4',
+              400: '#ee6d8a',
+              500: '#e24267',
+              600: '#7B1818',
+              700: '#5f1313',
+              800: '#501414',
+              900: '#461617',
+            },
+            cream: {
+              50: '#FFFBF5',
+              100: '#FFF8ED',
+              200: '#F5EBE0',
+              300: '#E8DED1',
+            },
+            amber: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+            },
+            teal: {
+              500: '#14b8a6',
+              600: '#0d9488',
+            },
+            orange: {
+              500: '#f97316',
+              600: '#ea580c',
+            },
+            purple: {
+              500: '#8b5cf6',
+              600: '#7c3aed',
+            }
+          },
+          fontFamily: {
+            display: ['Playfair Display', 'serif'],
+            sans: ['Inter', 'sans-serif'],
+            bebas: ['Bebas Neue', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .nav-section {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: linear-gradient(to bottom, #FFF8ED, #F5EBE0);
+      border-bottom: 1px solid #E8DED1;
+      padding: 1rem 2rem;
+    }
+    .variation-section {
+      padding: 3rem 2rem;
+      border-bottom: 4px solid #7B1818;
+    }
+    .variation-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      color: #7B1818;
+      margin-bottom: 0.5rem;
+    }
+    .variation-description {
+      color: #666;
+      margin-bottom: 2rem;
+      max-width: 600px;
+    }
+    .tribe-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .castaway-card-hover {
+      transition: all 0.3s ease;
+    }
+    .castaway-card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px -8px rgba(0,0,0,0.15);
+    }
+  </style>
+</head>
+<body class="bg-cream-100 min-h-screen">
+  <!-- Navigation -->
+  <nav class="nav-section">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <h1 class="font-bebas text-2xl text-burgundy-600">RGFL Castaways Page - Design Variations</h1>
+      <div class="flex gap-4 text-sm">
+        <a href="#variation-1" class="text-burgundy-600 hover:underline">1. Polaroid Grid</a>
+        <a href="#variation-2" class="text-burgundy-600 hover:underline">2. Magazine Spread</a>
+        <a href="#variation-3" class="text-burgundy-600 hover:underline">3. Tribal Council</a>
+        <a href="#variation-4" class="text-burgundy-600 hover:underline">4. Island Map</a>
+        <a href="#variation-5" class="text-burgundy-600 hover:underline">5. Stats Dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- VARIATION 1: Polaroid Grid -->
+  <section id="variation-1" class="variation-section bg-cream-50">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="variation-title">Variation 1: Polaroid Grid</h2>
+      <p class="variation-description">Nostalgic polaroid-style cards with handwritten-style names. Casual, fun feel reminiscent of photo boards. Cards slightly rotate for organic look.</p>
+      
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="font-display text-5xl font-bold text-neutral-800 mb-4">🔥 Season 50 Castaways</h1>
+        <p class="text-neutral-500 text-lg">18 castaways competing for the title of Sole Survivor</p>
+        
+        <!-- Stats Pills -->
+        <div class="flex justify-center gap-4 mt-6">
+          <span class="bg-white px-4 py-2 rounded-full shadow-sm border border-cream-200 text-sm">
+            <span class="font-bold text-green-600">12</span> Active
+          </span>
+          <span class="bg-white px-4 py-2 rounded-full shadow-sm border border-cream-200 text-sm">
+            <span class="font-bold text-neutral-400">6</span> Eliminated
+          </span>
+        </div>
+      </div>
+
+      <!-- Tribe Section -->
+      <div class="mb-12">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-4 h-4 rounded-full bg-purple-500"></div>
+          <h3 class="font-display text-2xl font-bold text-purple-600">Vatu Tribe</h3>
+          <span class="text-sm text-neutral-500">6 castaways</span>
+        </div>
+        
+        <!-- Polaroid Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          <!-- Polaroid Card 1 -->
+          <div class="bg-white p-3 shadow-lg transform rotate-1 hover:rotate-0 transition-transform cursor-pointer castaway-card-hover">
+            <div class="aspect-square bg-neutral-200 mb-3 overflow-hidden">
+              <div class="w-full h-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                <span class="text-4xl">👤</span>
+              </div>
+            </div>
+            <p class="font-display text-lg text-neutral-800 text-center">Cirie Fields</p>
+            <p class="text-xs text-neutral-500 text-center">Nurse • Panama</p>
+            <div class="mt-2 text-center">
+              <span class="text-burgundy-600 font-bold">45 pts</span>
+            </div>
+          </div>
+          
+          <!-- Polaroid Card 2 -->
+          <div class="bg-white p-3 shadow-lg transform -rotate-2 hover:rotate-0 transition-transform cursor-pointer castaway-card-hover">
+            <div class="aspect-square bg-neutral-200 mb-3 overflow-hidden relative">
+              <div class="w-full h-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                <span class="text-4xl">👤</span>
+              </div>
+              <div class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded">ELIM</div>
+            </div>
+            <p class="font-display text-lg text-neutral-400 text-center line-through">Coach Wade</p>
+            <p class="text-xs text-neutral-400 text-center">Soccer Coach • Tocantins</p>
+            <div class="mt-2 text-center">
+              <span class="text-neutral-400 font-bold">32 pts</span>
+            </div>
+          </div>
+          
+          <!-- More cards... -->
+          <div class="bg-white p-3 shadow-lg transform rotate-2 hover:rotate-0 transition-transform cursor-pointer castaway-card-hover">
+            <div class="aspect-square bg-neutral-200 mb-3 overflow-hidden">
+              <div class="w-full h-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                <span class="text-4xl">👤</span>
+              </div>
+            </div>
+            <p class="font-display text-lg text-neutral-800 text-center">Ozzy Lusth</p>
+            <p class="text-xs text-neutral-500 text-center">Challenge Beast</p>
+            <div class="mt-2 text-center">
+              <span class="text-burgundy-600 font-bold">58 pts</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VARIATION 2: Magazine Spread -->
+  <section id="variation-2" class="variation-section bg-white">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="variation-title">Variation 2: Magazine Spread</h2>
+      <p class="variation-description">Editorial magazine-style layout with large hero images and pull quotes. Premium, sophisticated feel with asymmetric grid.</p>
+      
+      <!-- Magazine Header -->
+      <div class="border-b-4 border-burgundy-600 pb-4 mb-8">
+        <div class="flex items-end justify-between">
+          <div>
+            <p class="font-bebas text-sm text-burgundy-600 tracking-widest">SURVIVOR SEASON 50</p>
+            <h1 class="font-display text-6xl font-bold text-neutral-800">THE CASTAWAYS</h1>
+          </div>
+          <div class="text-right">
+            <p class="text-sm text-neutral-500">18 LEGENDS • 39 DAYS • 1 SURVIVOR</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Magazine Grid -->
+      <div class="grid grid-cols-12 gap-6">
+        <!-- Featured Large Card -->
+        <div class="col-span-12 md:col-span-5 bg-gradient-to-br from-burgundy-600 to-burgundy-700 rounded-2xl overflow-hidden text-white p-8">
+          <p class="text-amber-400 text-sm font-bold mb-2">⭐ TOP PERFORMER</p>
+          <h3 class="font-display text-4xl font-bold mb-4">Cirie Fields</h3>
+          <p class="text-cream-200 mb-6">"She never won, but she changed how the game is played forever."</p>
+          <div class="flex items-center gap-4">
+            <div class="bg-white/20 px-4 py-2 rounded-lg">
+              <p class="text-xs text-cream-200">TOTAL POINTS</p>
+              <p class="text-2xl font-bold">127</p>
+            </div>
+            <div class="bg-white/20 px-4 py-2 rounded-lg">
+              <p class="text-xs text-cream-200">TRIBE</p>
+              <p class="text-lg font-bold">Vatu</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Smaller Cards Grid -->
+        <div class="col-span-12 md:col-span-7 grid grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Card -->
+          <div class="bg-cream-50 rounded-xl p-4 border border-cream-200 castaway-card-hover cursor-pointer">
+            <div class="flex items-start justify-between mb-3">
+              <span class="tribe-badge bg-teal-100 text-teal-700">Kalo</span>
+              <span class="text-burgundy-600 font-bold text-lg">89 pts</span>
+            </div>
+            <h4 class="font-display text-xl font-bold text-neutral-800">Joe Anglim</h4>
+            <p class="text-sm text-neutral-500">Jewelry Designer</p>
+          </div>
+          
+          <div class="bg-cream-50 rounded-xl p-4 border border-cream-200 castaway-card-hover cursor-pointer">
+            <div class="flex items-start justify-between mb-3">
+              <span class="tribe-badge bg-orange-100 text-orange-700">Cila</span>
+              <span class="text-burgundy-600 font-bold text-lg">76 pts</span>
+            </div>
+            <h4 class="font-display text-xl font-bold text-neutral-800">Savannah Louie</h4>
+            <p class="text-sm text-neutral-500">Therapist</p>
+          </div>
+          
+          <div class="bg-cream-50 rounded-xl p-4 border border-cream-200 castaway-card-hover cursor-pointer opacity-60">
+            <div class="flex items-start justify-between mb-3">
+              <span class="tribe-badge bg-red-100 text-red-700">ELIMINATED</span>
+              <span class="text-neutral-400 font-bold text-lg">45 pts</span>
+            </div>
+            <h4 class="font-display text-xl font-bold text-neutral-400 line-through">Colby Donaldson</h4>
+            <p class="text-sm text-neutral-400">Actor</p>
+          </div>
+          
+          <div class="bg-cream-50 rounded-xl p-4 border border-cream-200 castaway-card-hover cursor-pointer">
+            <div class="flex items-start justify-between mb-3">
+              <span class="tribe-badge bg-purple-100 text-purple-700">Vatu</span>
+              <span class="text-burgundy-600 font-bold text-lg">92 pts</span>
+            </div>
+            <h4 class="font-display text-xl font-bold text-neutral-800">Christian Hubicki</h4>
+            <p class="text-sm text-neutral-500">Robotics Scientist</p>
+          </div>
+          
+          <div class="bg-cream-50 rounded-xl p-4 border border-cream-200 castaway-card-hover cursor-pointer">
+            <div class="flex items-start justify-between mb-3">
+              <span class="tribe-badge bg-teal-100 text-teal-700">Kalo</span>
+              <span class="text-burgundy-600 font-bold text-lg">67 pts</span>
+            </div>
+            <h4 class="font-display text-xl font-bold text-neutral-800">Chrissy Hofbeck</h4>
+            <p class="text-sm text-neutral-500">Actuary</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VARIATION 3: Tribal Council -->
+  <section id="variation-3" class="variation-section bg-gradient-to-b from-neutral-900 to-neutral-800">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="variation-title text-amber-400">Variation 3: Tribal Council</h2>
+      <p class="variation-description text-neutral-400">Dark, dramatic tribal council aesthetic with torch imagery. Active castaways have lit torches, eliminated have snuffed torches.</p>
+      
+      <!-- Tribal Header -->
+      <div class="text-center mb-12">
+        <div class="flex justify-center mb-4">
+          <span class="text-6xl">🔥</span>
+        </div>
+        <h1 class="font-bebas text-5xl text-amber-400 tracking-wider">TRIBAL COUNCIL</h1>
+        <p class="text-neutral-400 mt-2">The tribe has spoken... who remains?</p>
+      </div>
+
+      <!-- Torches Row -->
+      <div class="flex flex-wrap justify-center gap-6 mb-12">
+        <!-- Active Castaway with Lit Torch -->
+        <div class="text-center group cursor-pointer">
+          <div class="relative">
+            <div class="w-20 h-28 bg-gradient-to-b from-amber-600 to-amber-800 rounded-t-lg mx-auto relative">
+              <!-- Flame -->
+              <div class="absolute -top-6 left-1/2 -translate-x-1/2">
+                <span class="text-3xl animate-pulse">🔥</span>
+              </div>
+            </div>
+            <div class="w-4 h-16 bg-gradient-to-b from-amber-900 to-neutral-700 mx-auto"></div>
+          </div>
+          <div class="mt-4 bg-neutral-800 rounded-xl p-3 border border-amber-600/30 group-hover:border-amber-500 transition-colors">
+            <p class="font-display text-lg text-white">Cirie Fields</p>
+            <p class="text-xs text-neutral-400">Vatu • 127 pts</p>
+          </div>
+        </div>
+
+        <!-- Another Active -->
+        <div class="text-center group cursor-pointer">
+          <div class="relative">
+            <div class="w-20 h-28 bg-gradient-to-b from-amber-600 to-amber-800 rounded-t-lg mx-auto relative">
+              <div class="absolute -top-6 left-1/2 -translate-x-1/2">
+                <span class="text-3xl animate-pulse">🔥</span>
+              </div>
+            </div>
+            <div class="w-4 h-16 bg-gradient-to-b from-amber-900 to-neutral-700 mx-auto"></div>
+          </div>
+          <div class="mt-4 bg-neutral-800 rounded-xl p-3 border border-amber-600/30 group-hover:border-amber-500 transition-colors">
+            <p class="font-display text-lg text-white">Joe Anglim</p>
+            <p class="text-xs text-neutral-400">Kalo • 89 pts</p>
+          </div>
+        </div>
+
+        <!-- Eliminated - Snuffed Torch -->
+        <div class="text-center group cursor-pointer opacity-50">
+          <div class="relative">
+            <div class="w-20 h-28 bg-gradient-to-b from-neutral-600 to-neutral-700 rounded-t-lg mx-auto relative">
+              <!-- Smoke instead of flame -->
+              <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                <span class="text-2xl text-neutral-500">💨</span>
+              </div>
+            </div>
+            <div class="w-4 h-16 bg-gradient-to-b from-neutral-700 to-neutral-800 mx-auto"></div>
+          </div>
+          <div class="mt-4 bg-neutral-900 rounded-xl p-3 border border-neutral-700">
+            <p class="font-display text-lg text-neutral-500 line-through">Colby Donaldson</p>
+            <p class="text-xs text-neutral-600">Eliminated Ep. 4</p>
+          </div>
+        </div>
+
+        <!-- More Active -->
+        <div class="text-center group cursor-pointer">
+          <div class="relative">
+            <div class="w-20 h-28 bg-gradient-to-b from-amber-600 to-amber-800 rounded-t-lg mx-auto relative">
+              <div class="absolute -top-6 left-1/2 -translate-x-1/2">
+                <span class="text-3xl animate-pulse">🔥</span>
+              </div>
+            </div>
+            <div class="w-4 h-16 bg-gradient-to-b from-amber-900 to-neutral-700 mx-auto"></div>
+          </div>
+          <div class="mt-4 bg-neutral-800 rounded-xl p-3 border border-amber-600/30 group-hover:border-amber-500 transition-colors">
+            <p class="font-display text-lg text-white">Ozzy Lusth</p>
+            <p class="text-xs text-neutral-400">Vatu • 92 pts</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VARIATION 4: Island Map -->
+  <section id="variation-4" class="variation-section bg-gradient-to-br from-teal-50 to-blue-50">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="variation-title">Variation 4: Island Map</h2>
+      <p class="variation-description">Castaways organized by tribe camps on an island-inspired layout. Visual representation of tribe locations with connecting paths.</p>
+      
+      <!-- Island Header -->
+      <div class="text-center mb-12">
+        <h1 class="font-display text-5xl font-bold text-neutral-800 mb-2">🏝️ Fiji Islands</h1>
+        <p class="text-neutral-500">Season 50 Tribe Camps</p>
+      </div>
+
+      <!-- Island Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Vatu Camp -->
+        <div class="relative">
+          <div class="bg-purple-500/10 rounded-3xl p-6 border-2 border-purple-300 border-dashed">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
+                <span class="text-white text-xl">🟣</span>
+              </div>
+              <div>
+                <h3 class="font-display text-2xl font-bold text-purple-700">Vatu Camp</h3>
+                <p class="text-sm text-purple-600">Northern Beach • 6 members</p>
+              </div>
+            </div>
+            
+            <div class="space-y-3">
+              <div class="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3 cursor-pointer hover:shadow-md transition-shadow">
+                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-lg">👤</div>
+                <div class="flex-1">
+                  <p class="font-semibold text-neutral-800">Cirie Fields</p>
+                  <p class="text-xs text-neutral-500">127 pts • Active</p>
+                </div>
+                <span class="text-green-500">●</span>
+              </div>
+              
+              <div class="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3 cursor-pointer hover:shadow-md transition-shadow">
+                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-lg">👤</div>
+                <div class="flex-1">
+                  <p class="font-semibold text-neutral-800">Ozzy Lusth</p>
+                  <p class="text-xs text-neutral-500">92 pts • Active</p>
+                </div>
+                <span class="text-green-500">●</span>
+              </div>
+              
+              <div class="bg-neutral-100 rounded-xl p-3 flex items-center gap-3 opacity-60">
+                <div class="w-10 h-10 bg-neutral-200 rounded-full flex items-center justify-center text-lg">👤</div>
+                <div class="flex-1">
+                  <p class="font-semibold text-neutral-400 line-through">Coach Wade</p>
+                  <p class="text-xs text-neutral-400">Eliminated Ep. 3</p>
+                </div>
+                <span class="text-red-400">✕</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kalo Camp -->
+        <div class="relative">
+          <div class="bg-teal-500/10 rounded-3xl p-6 border-2 border-teal-300 border-dashed">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center">
+                <span class="text-white text-xl">🟢</span>
+              </div>
+              <div>
+                <h3 class="font-display text-2xl font-bold text-teal-700">Kalo Camp</h3>
+                <p class="text-sm text-teal-600">Western Cove • 6 members</p>
+              </div>
+            </div>
+            
+            <div class="space-y-3">
+              <div class="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3 cursor-pointer hover:shadow-md transition-shadow">
+                <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center text-lg">👤</div>
+                <div class="flex-1">
+                  <p class="font-semibold text-neutral-800">Joe Anglim</p>
+                  <p class="text-xs text-neutral-500">89 pts • Active</p>
+                </div>
+                <span class="text-green-500">●</span>
+              </div>
+              
+              <div class="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3 cursor-pointer hover:shadow-md transition-shadow">
+                <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center text-lg">👤</div>
+                <div class="flex-1">
+                  <p class="font-semibold text-neutral-800">Christian Hubicki</p>
+                  <p class="text-xs text-neutral-500">85 pts • Active</p>
+                </div>
+                <span class="text-green-500">●</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cila Camp -->
+        <div class="relative">
+          <div class="bg-orange-500/10 rounded-3xl p-6 border-2 border-orange-300 border-dashed">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
+                <span class="text-white text-xl">🟠</span>
+              </div>
+              <div>
+                <h3 class="font-display text-2xl font-bold text-orange-700">Cila Camp</h3>
+                <p class="text-sm text-orange-600">Eastern Shore • 6 members</p>
+              </div>
+            </div>
+            
+            <div class="space-y-3">
+              <div class="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3 cursor-pointer hover:shadow-md transition-shadow">
+                <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-lg">👤</div>
+                <div class="flex-1">
+                  <p class="font-semibold text-neutral-800">Savannah Louie</p>
+                  <p class="text-xs text-neutral-500">76 pts • Active</p>
+                </div>
+                <span class="text-green-500">●</span>
+              </div>
+              
+              <div class="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3 cursor-pointer hover:shadow-md transition-shadow">
+                <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-lg">👤</div>
+                <div class="flex-1">
+                  <p class="font-semibold text-neutral-800">Chrissy Hofbeck</p>
+                  <p class="text-xs text-neutral-500">67 pts • Active</p>
+                </div>
+                <span class="text-green-500">●</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VARIATION 5: Stats Dashboard -->
+  <section id="variation-5" class="variation-section bg-neutral-50">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="variation-title">Variation 5: Stats Dashboard</h2>
+      <p class="variation-description">Data-driven dashboard with sortable stats, mini charts, and performance indicators. Great for fantasy players who want quick comparisons.</p>
+      
+      <!-- Dashboard Header -->
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="font-display text-4xl font-bold text-neutral-800">Castaway Stats</h1>
+          <p class="text-neutral-500">Season 50 Performance Dashboard</p>
+        </div>
+        <div class="flex gap-2">
+          <button class="px-4 py-2 bg-burgundy-600 text-white rounded-lg text-sm font-medium">All</button>
+          <button class="px-4 py-2 bg-white text-neutral-600 rounded-lg text-sm font-medium border border-cream-200">Active</button>
+          <button class="px-4 py-2 bg-white text-neutral-600 rounded-lg text-sm font-medium border border-cream-200">Eliminated</button>
+        </div>
+      </div>
+
+      <!-- Stats Table -->
+      <div class="bg-white rounded-2xl shadow-lg border border-cream-200 overflow-hidden">
+        <!-- Table Header -->
+        <div class="grid grid-cols-12 gap-4 px-6 py-4 bg-cream-50 border-b border-cream-200 text-sm font-semibold text-neutral-600">
+          <div class="col-span-1">#</div>
+          <div class="col-span-3">Castaway</div>
+          <div class="col-span-2">Tribe</div>
+          <div class="col-span-2 text-right">Total Pts</div>
+          <div class="col-span-2 text-right">Avg/Ep</div>
+          <div class="col-span-2 text-right">Trend</div>
+        </div>
+        
+        <!-- Table Rows -->
+        <div class="divide-y divide-cream-100">
+          <!-- Row 1 -->
+          <div class="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-cream-50 cursor-pointer transition-colors">
+            <div class="col-span-1 font-bold text-burgundy-600">1</div>
+            <div class="col-span-3 flex items-center gap-3">
+              <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">👤</div>
+              <div>
+                <p class="font-semibold text-neutral-800">Cirie Fields</p>
+                <p class="text-xs text-neutral-500">Nurse • Panama</p>
+              </div>
+            </div>
+            <div class="col-span-2">
+              <span class="tribe-badge bg-purple-100 text-purple-700">Vatu</span>
+            </div>
+            <div class="col-span-2 text-right font-bold text-neutral-800">127</div>
+            <div class="col-span-2 text-right text-neutral-600">25.4</div>
+            <div class="col-span-2 text-right text-green-600 font-semibold">↑ +12</div>
+          </div>
+          
+          <!-- Row 2 -->
+          <div class="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-cream-50 cursor-pointer transition-colors">
+            <div class="col-span-1 font-bold text-burgundy-600">2</div>
+            <div class="col-span-3 flex items-center gap-3">
+              <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">👤</div>
+              <div>
+                <p class="font-semibold text-neutral-800">Ozzy Lusth</p>
+                <p class="text-xs text-neutral-500">Challenge Beast</p>
+              </div>
+            </div>
+            <div class="col-span-2">
+              <span class="tribe-badge bg-purple-100 text-purple-700">Vatu</span>
+            </div>
+            <div class="col-span-2 text-right font-bold text-neutral-800">92</div>
+            <div class="col-span-2 text-right text-neutral-600">18.4</div>
+            <div class="col-span-2 text-right text-green-600 font-semibold">↑ +8</div>
+          </div>
+          
+          <!-- Row 3 -->
+          <div class="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-cream-50 cursor-pointer transition-colors">
+            <div class="col-span-1 font-bold text-burgundy-600">3</div>
+            <div class="col-span-3 flex items-center gap-3">
+              <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">👤</div>
+              <div>
+                <p class="font-semibold text-neutral-800">Joe Anglim</p>
+                <p class="text-xs text-neutral-500">Jewelry Designer</p>
+              </div>
+            </div>
+            <div class="col-span-2">
+              <span class="tribe-badge bg-teal-100 text-teal-700">Kalo</span>
+            </div>
+            <div class="col-span-2 text-right font-bold text-neutral-800">89</div>
+            <div class="col-span-2 text-right text-neutral-600">17.8</div>
+            <div class="col-span-2 text-right text-red-500 font-semibold">↓ -3</div>
+          </div>
+          
+          <!-- Eliminated Row -->
+          <div class="grid grid-cols-12 gap-4 px-6 py-4 items-center bg-neutral-50 opacity-60">
+            <div class="col-span-1 font-bold text-neutral-400">—</div>
+            <div class="col-span-3 flex items-center gap-3">
+              <div class="w-10 h-10 bg-neutral-200 rounded-full flex items-center justify-center">👤</div>
+              <div>
+                <p class="font-semibold text-neutral-400 line-through">Colby Donaldson</p>
+                <p class="text-xs text-neutral-400">Eliminated Ep. 4</p>
+              </div>
+            </div>
+            <div class="col-span-2">
+              <span class="tribe-badge bg-red-100 text-red-600">ELIM</span>
+            </div>
+            <div class="col-span-2 text-right font-bold text-neutral-400">45</div>
+            <div class="col-span-2 text-right text-neutral-400">11.3</div>
+            <div class="col-span-2 text-right text-neutral-400">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Castaway Detail Modal Preview -->
+  <section class="variation-section bg-cream-100">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="variation-title">Castaway Detail View (When Clicked)</h2>
+      <p class="variation-description">When a castaway is clicked, this modal/page shows their full profile with episode-by-episode scoring breakdown.</p>
+      
+      <div class="bg-white rounded-2xl shadow-xl border border-cream-200 overflow-hidden max-w-2xl mx-auto">
+        <!-- Header with tribe color -->
+        <div class="bg-gradient-to-r from-purple-600 to-purple-700 p-6 text-white">
+          <div class="flex items-center gap-4">
+            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-4xl">
+              👤
+            </div>
+            <div>
+              <p class="text-purple-200 text-sm">Vatu Tribe • Active</p>
+              <h2 class="font-display text-3xl font-bold">Cirie Fields</h2>
+              <p class="text-purple-200">Nurse • Panama City, FL</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Stats Row -->
+        <div class="grid grid-cols-4 divide-x divide-cream-200 border-b border-cream-200">
+          <div class="p-4 text-center">
+            <p class="text-2xl font-bold text-burgundy-600">127</p>
+            <p class="text-xs text-neutral-500">Total Points</p>
+          </div>
+          <div class="p-4 text-center">
+            <p class="text-2xl font-bold text-neutral-800">5</p>
+            <p class="text-xs text-neutral-500">Episodes</p>
+          </div>
+          <div class="p-4 text-center">
+            <p class="text-2xl font-bold text-neutral-800">25.4</p>
+            <p class="text-xs text-neutral-500">Avg/Episode</p>
+          </div>
+          <div class="p-4 text-center">
+            <p class="text-2xl font-bold text-green-600">↑ 12</p>
+            <p class="text-xs text-neutral-500">Last Week</p>
+          </div>
+        </div>
+        
+        <!-- Bio -->
+        <div class="p-6 border-b border-cream-200">
+          <h3 class="font-semibold text-neutral-800 mb-2">About</h3>
+          <p class="text-neutral-600 text-sm">
+            Cirie has played 5 times: Panama, Micronesia, Heroes vs. Villains, Game Changers, and Australian Survivor. 
+            Known for her strategic mind and the famous "3-2-1" vote, she's never won but is considered one of the best to never win.
+          </p>
+        </div>
+        
+        <!-- Episode Breakdown -->
+        <div class="p-6">
+          <h3 class="font-semibold text-neutral-800 mb-4">Episode Breakdown</h3>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between p-3 bg-cream-50 rounded-lg">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 bg-burgundy-100 text-burgundy-700 rounded-full flex items-center justify-center text-sm font-bold">5</span>
+                <span class="text-neutral-800">Episode 5</span>
+              </div>
+              <span class="font-bold text-burgundy-600">+32 pts</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-cream-50 rounded-lg">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 bg-burgundy-100 text-burgundy-700 rounded-full flex items-center justify-center text-sm font-bold">4</span>
+                <span class="text-neutral-800">Episode 4</span>
+              </div>
+              <span class="font-bold text-burgundy-600">+28 pts</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-cream-50 rounded-lg">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 bg-burgundy-100 text-burgundy-700 rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                <span class="text-neutral-800">Episode 3</span>
+              </div>
+              <span class="font-bold text-burgundy-600">+24 pts</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-burgundy-600 text-white py-8 text-center">
+    <p class="font-bebas text-lg tracking-wider">REALITY GAMES FANTASY LEAGUE</p>
+    <p class="text-burgundy-200 text-sm mt-2">Choose your favorite variation and let me know!</p>
+  </footer>
+
+</body>
+</html>

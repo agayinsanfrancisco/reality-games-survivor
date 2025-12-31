@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Navigation } from '@/components/Navigation';
+import { apiWithAuth } from '@/lib/api';
 
 interface Job {
   name: string;
@@ -101,18 +102,13 @@ export function AdminJobs() {
       } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const response = await fetch('/api/admin/jobs', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+      const response = await apiWithAuth<{ jobs: any[] }>('/admin/jobs', session.access_token);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch jobs');
+      if (response.error) {
+        throw new Error(response.error);
       }
 
-      const data = await response.json();
-      return data.jobs || [];
+      return response.data?.jobs || [];
     },
   });
 
@@ -138,20 +134,17 @@ export function AdminJobs() {
       } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const response = await fetch(`/api/admin/jobs/${jobName}/run`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiWithAuth<{ job: string; result: any }>(
+        `/admin/jobs/${jobName}/run`,
+        session.access_token,
+        { method: 'POST' }
+      );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to run job');
+      if (response.error) {
+        throw new Error(response.error);
       }
 
-      return response.json();
+      return response.data;
     },
     onMutate: (jobName) => {
       setRunningJob(jobName);

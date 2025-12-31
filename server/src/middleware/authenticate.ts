@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { supabase } from '../config/supabase.js';
+import { supabase, supabaseAdmin } from '../config/supabase.js';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -31,7 +31,8 @@ export async function authenticate(
     }
 
     // Get user role from public.users table
-    const { data: userData } = await supabase
+    // Use supabaseAdmin to bypass RLS and ensure we always get the role
+    const { data: userData } = await supabaseAdmin
       .from('users')
       .select('role')
       .eq('id', user.id)
