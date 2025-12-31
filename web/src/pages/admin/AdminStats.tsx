@@ -8,6 +8,7 @@ import {
   Trophy,
   MessageCircle,
   Tv,
+  Server,
   TrendingUp,
   TrendingDown,
   Activity,
