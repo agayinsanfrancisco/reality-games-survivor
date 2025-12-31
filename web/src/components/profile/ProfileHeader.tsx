@@ -80,9 +80,10 @@ export function ProfileHeader({
 
     try {
       // Create a unique filename
+      // Note: filePath is relative to the bucket root, not including bucket name
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const filePath = fileName; // Just the filename - bucket is already 'avatars'
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
