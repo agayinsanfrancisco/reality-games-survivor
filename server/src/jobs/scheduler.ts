@@ -9,6 +9,12 @@ import { sendWeeklySummary } from './weeklySummary.js';
 import { releaseWeeklyResults } from './releaseResults.js';
 import { nurtureTriviaCompleters } from './nurtureTriviaCompleters.js';
 import { processEmailQueue } from '../lib/email-queue.js';
+import {
+  sendJoinLeagueNudges,
+  sendPreSeasonHype,
+  sendInactivityReminders,
+  sendTriviaProgressEmails,
+} from './lifecycleEmails.js';
 import { pstToCron, formatCronWithTimezone } from '../lib/timezone-utils.js';
 import { monitoredJobExecution } from './jobMonitor.js';
 import { seasonConfig } from '../lib/season-config.js';
@@ -94,6 +100,38 @@ const jobs: ScheduledJob[] = [
     schedule: pstToCron(11, 0),
     description: 'Send nurture emails to trivia completers who haven\'t joined a league',
     handler: nurtureTriviaCompleters,
+    enabled: true,
+  },
+  {
+    name: 'join-league-nudge',
+    // Daily 10am PST - Nudge users who haven't joined a league
+    schedule: pstToCron(10, 0),
+    description: 'Send join league nudge to users who signed up but haven\'t joined',
+    handler: sendJoinLeagueNudges,
+    enabled: true,
+  },
+  {
+    name: 'pre-season-hype',
+    // Daily 12pm PST - Send countdown emails before premiere
+    schedule: pstToCron(12, 0),
+    description: 'Send pre-season countdown emails (14, 7, 3, 1 days before)',
+    handler: sendPreSeasonHype,
+    enabled: true,
+  },
+  {
+    name: 'inactivity-reminder',
+    // Mon/Thu 11am PST - Remind inactive users
+    schedule: pstToCron(11, 0, 1), // Monday
+    description: 'Send reminders to inactive users during active season',
+    handler: sendInactivityReminders,
+    enabled: true,
+  },
+  {
+    name: 'trivia-progress',
+    // Daily 3pm PST - Encourage trivia players to finish
+    schedule: pstToCron(15, 0),
+    description: 'Send encouragement to users with partial trivia progress',
+    handler: sendTriviaProgressEmails,
     enabled: true,
   },
 ];

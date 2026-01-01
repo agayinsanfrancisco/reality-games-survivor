@@ -146,6 +146,7 @@ export function AdminNavigation() {
     { path: '/admin/push', label: 'Push Notifications' },
     { path: '/admin/email-queue', label: 'Email Queue', badgeKey: 'failedEmails' as const },
     { path: '/admin/sms', label: 'SMS' },
+    { path: '/admin/content', label: 'Content CMS' },
   ];
 
   // System dropdown items

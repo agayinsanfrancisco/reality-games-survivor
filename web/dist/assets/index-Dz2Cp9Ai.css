@@ -885,6 +885,12 @@ body {
 .mt-auto {
   margin-top: auto;
 }
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
 .line-clamp-2 {
   overflow: hidden;
   display: -webkit-box;
@@ -1020,8 +1026,14 @@ body {
 .max-h-64 {
   max-height: 16rem;
 }
+.max-h-\[400px\] {
+  max-height: 400px;
+}
 .max-h-\[40vh\] {
   max-height: 40vh;
+}
+.max-h-\[600px\] {
+  max-height: 600px;
 }
 .max-h-\[60vh\] {
   max-height: 60vh;
@@ -2798,6 +2810,9 @@ body {
 }
 .pl-5 {
   padding-left: 1.25rem;
+}
+.pl-8 {
+  padding-left: 2rem;
 }
 .pr-10 {
   padding-right: 2.5rem;

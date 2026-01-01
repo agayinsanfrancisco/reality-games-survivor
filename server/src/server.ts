@@ -23,6 +23,7 @@ import adminRoutes from './routes/admin.js';
 import webhookRoutes from './routes/webhooks.js';
 import resultsRoutes from './routes/results.js';
 import triviaRoutes from './routes/trivia.js';
+import siteCopyRoutes from './routes/site-copy.js';
 
 // Jobs scheduler
 import { startScheduler } from './jobs/index.js';
@@ -94,6 +95,7 @@ app.use('/api', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/results', resultsRoutes);
 app.use('/api/trivia', triviaRoutes);
+app.use('/api/site-copy', siteCopyRoutes);
 app.use('/webhooks', webhookRoutes);
 
 // Sentry error handler - In Sentry SDK v8+, use setupExpressErrorHandler

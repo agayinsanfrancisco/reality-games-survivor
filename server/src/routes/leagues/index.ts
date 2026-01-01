@@ -322,7 +322,7 @@ router.post('/:id/join', authenticate, joinLimiter, validate(joinLeagueSchema), 
 
       const { data: leagueWithSeason } = await supabaseAdmin
         .from('leagues')
-        .select('name, max_players, seasons(name, premiere_at, draft_deadline)')
+        .select('name, max_players, is_global, commissioner_id, seasons(name, premiere_at, draft_deadline)')
         .eq('id', leagueId)
         .single();
 
@@ -339,18 +339,41 @@ router.post('/:id/join', authenticate, joinLimiter, validate(joinLeagueSchema), 
       firstPickDue.setHours(15, 0, 0, 0); // Wed 3pm PST
 
       if (user && leagueWithSeason && season) {
-        await EmailService.sendLeagueJoined({
-          displayName: user.display_name,
-          email: user.email,
-          leagueName: leagueWithSeason.name,
-          leagueId: leagueId,
-          seasonName: season.name,
-          memberCount: memberCount || 1,
-          maxMembers: leagueWithSeason.max_players || 12,
-          premiereDate: premiereDate,
-          draftDeadline: new Date(season.draft_deadline),
-          firstPickDue: firstPickDue,
-        });
+        // Check if this is a private (non-global) league
+        if (!leagueWithSeason.is_global) {
+          // Get commissioner name for private league welcome
+          const { data: commissioner } = await supabaseAdmin
+            .from('users')
+            .select('display_name')
+            .eq('id', leagueWithSeason.commissioner_id)
+            .single();
+
+          // Send private league welcome email
+          await EmailService.sendPrivateLeagueWelcome({
+            displayName: user.display_name,
+            email: user.email,
+            leagueName: leagueWithSeason.name,
+            leagueId: leagueId,
+            commissionerName: commissioner?.display_name || 'The Commissioner',
+            seasonName: season.name,
+            memberCount: memberCount || 1,
+            maxMembers: leagueWithSeason.max_players || 12,
+          });
+        } else {
+          // Send standard league joined email for global leagues
+          await EmailService.sendLeagueJoined({
+            displayName: user.display_name,
+            email: user.email,
+            leagueName: leagueWithSeason.name,
+            leagueId: leagueId,
+            seasonName: season.name,
+            memberCount: memberCount || 1,
+            maxMembers: leagueWithSeason.max_players || 12,
+            premiereDate: premiereDate,
+            draftDeadline: new Date(season.draft_deadline),
+            firstPickDue: firstPickDue,
+          });
+        }
       }
     } catch (emailErr) {
       console.error('Failed to send league joined email:', emailErr);

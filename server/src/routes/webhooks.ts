@@ -97,7 +97,7 @@ router.post('/stripe', async (req: Request, res: Response) => {
             // Also send league joined email
             const { data: leagueWithSeason } = await supabaseAdmin
               .from('leagues')
-              .select('name, max_players, seasons(name, premiere_at, draft_deadline)')
+              .select('name, max_players, is_global, commissioner_id, seasons(name, premiere_at, draft_deadline)')
               .eq('id', league_id)
               .single();
 
@@ -107,24 +107,45 @@ router.post('/stripe', async (req: Request, res: Response) => {
               .eq('league_id', league_id);
 
             const season = (leagueWithSeason as any)?.seasons;
-            if (season) {
+            if (season && leagueWithSeason) {
               const premiereDate = new Date(season.premiere_at);
               const firstPickDue = new Date(premiereDate);
               firstPickDue.setDate(firstPickDue.getDate() + 7);
               firstPickDue.setHours(15, 0, 0, 0);
 
-              await EmailService.sendLeagueJoined({
-                displayName: user.display_name,
-                email: user.email,
-                leagueName: leagueWithSeason!.name,
-                leagueId: league_id,
-                seasonName: season.name,
-                memberCount: memberCount || 1,
-                maxMembers: leagueWithSeason!.max_players || 12,
-                premiereDate: premiereDate,
-                draftDeadline: new Date(season.draft_deadline),
-                firstPickDue: firstPickDue,
-              });
+              // Check if this is a private (non-global) league
+              if (!leagueWithSeason.is_global) {
+                // Get commissioner name for private league welcome
+                const { data: commissioner } = await supabaseAdmin
+                  .from('users')
+                  .select('display_name')
+                  .eq('id', leagueWithSeason.commissioner_id)
+                  .single();
+
+                await EmailService.sendPrivateLeagueWelcome({
+                  displayName: user.display_name,
+                  email: user.email,
+                  leagueName: leagueWithSeason.name,
+                  leagueId: league_id,
+                  commissionerName: commissioner?.display_name || 'The Commissioner',
+                  seasonName: season.name,
+                  memberCount: memberCount || 1,
+                  maxMembers: leagueWithSeason.max_players || 12,
+                });
+              } else {
+                await EmailService.sendLeagueJoined({
+                  displayName: user.display_name,
+                  email: user.email,
+                  leagueName: leagueWithSeason.name,
+                  leagueId: league_id,
+                  seasonName: season.name,
+                  memberCount: memberCount || 1,
+                  maxMembers: leagueWithSeason.max_players || 12,
+                  premiereDate: premiereDate,
+                  draftDeadline: new Date(season.draft_deadline),
+                  firstPickDue: firstPickDue,
+                });
+              }
             }
 
             // Log notification
