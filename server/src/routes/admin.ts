@@ -33,6 +33,7 @@ import announcementsRouter from './admin/announcements.js';
 import emailsRouter from './admin/emails.js';
 import alertingRouter from './admin/alerting.js';
 import statsRouter from './admin/stats.js';
+import analyticsRouter from './admin/analytics.js';
 
 const router = Router();
 
@@ -51,6 +52,7 @@ router.use('/payments', paymentsRouter);
 router.use('/leagues', leaguesRouter);
 router.use('/announcements', announcementsRouter);
 router.use('/stats', statsRouter);  // Handles /stats/* - comprehensive analytics
+router.use('/analytics', analyticsRouter);  // Handles /analytics/* - 3-tab analytics
 router.use('/', emailsRouter);      // Handles /email-queue/* and /failed-emails/*
 router.use('/', alertingRouter);    // Handles /test-alert, /alerting/*, /notification-preferences/*
 

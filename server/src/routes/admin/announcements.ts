@@ -38,7 +38,7 @@ interface UpdateAnnouncementBody {
 
 /**
  * GET /admin/announcements
- * List all announcements (including inactive)
+ * List all announcements with view/dismissal stats
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
@@ -49,8 +49,44 @@ router.get('/', async (req: Request, res: Response) => {
 
     if (error) throw error;
 
+    // Get view and dismissal counts for each announcement
+    const announcementsWithStats = await Promise.all(
+      (data || []).map(async (announcement) => {
+        const { count: viewCount } = await supabaseAdmin
+          .from('announcement_views')
+          .select('*', { count: 'exact', head: true })
+          .eq('announcement_id', announcement.id);
+
+        const { count: dismissCount } = await supabaseAdmin
+          .from('announcement_dismissals')
+          .select('*', { count: 'exact', head: true })
+          .eq('announcement_id', announcement.id);
+
+        return {
+          ...announcement,
+          view_count: viewCount || 0,
+          dismiss_count: dismissCount || 0,
+        };
+      })
+    );
+
+    // Categorize announcements
+    const now = new Date();
+    const active = announcementsWithStats.filter(
+      (a) => a.is_active && (!a.expires_at || new Date(a.expires_at) > now)
+    );
+    const scheduled = announcementsWithStats.filter(
+      (a) => a.scheduled_at && new Date(a.scheduled_at) > now
+    );
+    const archived = announcementsWithStats.filter(
+      (a) => !a.is_active || (a.expires_at && new Date(a.expires_at) <= now)
+    );
+
     res.json({
-      announcements: data as Announcement[],
+      announcements: announcementsWithStats,
+      active,
+      scheduled,
+      archived,
       total: data?.length || 0,
     });
   } catch (error) {
@@ -61,7 +97,7 @@ router.get('/', async (req: Request, res: Response) => {
 
 /**
  * GET /admin/announcements/:id
- * Get a single announcement by ID
+ * Get a single announcement by ID with stats
  */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
@@ -80,7 +116,22 @@ router.get('/:id', async (req: Request, res: Response) => {
       throw error;
     }
 
-    res.json(data as Announcement);
+    // Get view and dismissal counts
+    const { count: viewCount } = await supabaseAdmin
+      .from('announcement_views')
+      .select('*', { count: 'exact', head: true })
+      .eq('announcement_id', id);
+
+    const { count: dismissCount } = await supabaseAdmin
+      .from('announcement_dismissals')
+      .select('*', { count: 'exact', head: true })
+      .eq('announcement_id', id);
+
+    res.json({
+      ...data,
+      view_count: viewCount || 0,
+      dismiss_count: dismissCount || 0,
+    } as Announcement);
   } catch (error) {
     console.error('Error fetching announcement:', error);
     res.status(500).json({ error: 'Failed to fetch announcement' });
