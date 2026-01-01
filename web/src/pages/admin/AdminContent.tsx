@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Check,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { AdminNavigation } from '@/components/AdminNavigation';
 import { apiWithAuth } from '@/lib/api';
@@ -76,7 +77,7 @@ export function AdminContent() {
   const { data: copyData, isLoading: copyLoading } = useQuery({
     queryKey: ['admin', 'site-copy', _pageFilter],
     queryFn: async () => {
-      const response = await apiWithAuth(`/api/admin/content/site-copy?page=${pageFilter}`);
+      const response = await apiWithAuth(`/api/admin/content/site-copy?page=${_pageFilter}`);
       return response.data || { data: [], grouped: {} };
     },
   });
@@ -130,6 +131,20 @@ export function AdminContent() {
         }),
       });
       return response.data;
+    },
+  });
+
+  // Clear template cache mutation
+  const clearCache = useMutation({
+    mutationFn: async () => {
+      const response = await apiWithAuth('/api/admin/content/clear-cache', {
+        method: 'POST',
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'email-templates'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'site-copy'] });
     },
   });
 
@@ -194,9 +209,19 @@ export function AdminContent() {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold text-neutral-800">Content Management</h1>
-          <p className="text-neutral-600 mt-1">Edit email templates and site copy</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-display font-bold text-neutral-800">Content Management</h1>
+            <p className="text-neutral-600 mt-1">Edit email templates and site copy</p>
+          </div>
+          <button
+            onClick={() => clearCache.mutate()}
+            disabled={clearCache.isPending}
+            className="flex items-center gap-2 px-4 py-2 bg-cream-100 text-neutral-700 rounded-xl hover:bg-cream-200 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${clearCache.isPending ? 'animate-spin' : ''}`} />
+            {clearCache.isPending ? 'Clearing...' : 'Clear Cache'}
+          </button>
         </div>
 
         {/* Tabs */}

@@ -38,6 +38,16 @@ export declare function getRenderedTemplate(slug: string, variables: Record<stri
  */
 export declare function clearTemplateCache(slug?: string): void;
 /**
+ * Template Service - static class interface
+ */
+export declare const TemplateService: {
+    getTemplate: typeof getEmailTemplate;
+    render: typeof renderTemplate;
+    getRendered: typeof getRenderedTemplate;
+    clearCache: typeof clearTemplateCache;
+    getAll: typeof getAllEmailTemplates;
+};
+/**
  * Get all active email templates
  */
 export declare function getAllEmailTemplates(): Promise<EmailTemplate[]>;

@@ -310,8 +310,14 @@ export function Dashboard() {
     }));
   };
 
-  const nonGlobalLeagues = myLeagues?.filter((l) => !l.league.is_global) || [];
-  const globalLeague = myLeagues?.find((l) => l.league.is_global);
+  // Filter to non-global leagues for the active season only
+  const nonGlobalLeagues =
+    myLeagues?.filter(
+      (l) => !l.league.is_global && (!activeSeason?.id || l.league.season_id === activeSeason.id)
+    ) || [];
+  const globalLeague = myLeagues?.find(
+    (l) => l.league.is_global && (!activeSeason?.id || l.league.season_id === activeSeason.id)
+  );
   const gamePhase = getGamePhase(activeSeason || null, nextEpisode || null);
   const weeklyPhase =
     gamePhase === 'active' ? getWeeklyPhase(nextEpisode || null, previousEpisode || null) : null;

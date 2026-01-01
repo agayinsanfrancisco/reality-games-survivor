@@ -102,6 +102,17 @@ export function clearTemplateCache(slug?: string): void {
 }
 
 /**
+ * Template Service - static class interface
+ */
+export const TemplateService = {
+  getTemplate: getEmailTemplate,
+  render: renderTemplate,
+  getRendered: getRenderedTemplate,
+  clearCache: clearTemplateCache,
+  getAll: getAllEmailTemplates,
+};
+
+/**
  * Get all active email templates
  */
 export async function getAllEmailTemplates(): Promise<EmailTemplate[]> {

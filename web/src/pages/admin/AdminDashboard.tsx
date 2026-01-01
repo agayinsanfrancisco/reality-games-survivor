@@ -134,15 +134,15 @@ export function AdminDashboard() {
       // Check upcoming pick deadline
       const { data: nextEpisode } = await supabase
         .from('episodes')
-        .select('id, number, pick_deadline')
-        .gt('pick_deadline', new Date().toISOString())
-        .order('pick_deadline', { ascending: true })
+        .select('id, number, picks_lock_at')
+        .gt('picks_lock_at', new Date().toISOString())
+        .order('picks_lock_at', { ascending: true })
         .limit(1)
         .single();
 
       if (nextEpisode) {
         const hoursUntil =
-          (new Date(nextEpisode.pick_deadline).getTime() - Date.now()) / (1000 * 60 * 60);
+          (new Date(nextEpisode.picks_lock_at).getTime() - Date.now()) / (1000 * 60 * 60);
 
         if (hoursUntil <= 24) {
           // Get pick submission rate
@@ -185,7 +185,7 @@ export function AdminDashboard() {
       const { count: activeUsers } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true })
-        .gte('last_sign_in_at', sevenDaysAgo);
+        .gte('last_active_at', sevenDaysAgo);
 
       const { count: totalUsers } = await supabase
         .from('users')
@@ -195,8 +195,8 @@ export function AdminDashboard() {
       const { data: currentEpisode } = await supabase
         .from('episodes')
         .select('id')
-        .gt('pick_deadline', new Date().toISOString())
-        .order('pick_deadline', { ascending: true })
+        .gt('picks_lock_at', new Date().toISOString())
+        .order('picks_lock_at', { ascending: true })
         .limit(1)
         .single();
 

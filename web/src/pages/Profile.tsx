@@ -16,7 +16,7 @@ import {
   ProfileHeader,
   ProfileInfo,
   // PhoneSection, // Hidden until SMS feature launches
-  // NotificationsSection, // Hidden until notification features are implemented
+  NotificationsSection,
   SecuritySection,
   LogoutButton,
 } from '@/components/profile';
@@ -100,8 +100,7 @@ export default function Profile() {
     },
   });
 
-  // Update notifications mutation - commented out until notification features are implemented
-  /*
+  // Update notifications mutation
   const updateNotifications = useMutation({
     mutationFn: async (updates: {
       notification_email?: boolean;
@@ -121,7 +120,6 @@ export default function Profile() {
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
     },
   });
-  */
 
   // Phone mutations - commented out until SMS feature launches
   /*
@@ -326,7 +324,7 @@ export default function Profile() {
       />
       */}
 
-      {/* Notification Preferences - Hidden until notification features are implemented
+      {/* Notification Preferences */}
       <NotificationsSection
         emailEnabled={user?.notification_email ?? true}
         smsEnabled={false}
@@ -337,7 +335,6 @@ export default function Profile() {
         onPushChange={(enabled) => updateNotifications.mutate({ notification_push: enabled })}
         hideSms={true}
       />
-      */}
 
       {/* Security / Password */}
       <SecuritySection

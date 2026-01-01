@@ -134,6 +134,23 @@ const jobs: ScheduledJob[] = [
     handler: sendTriviaProgressEmails,
     enabled: true,
   },
+  {
+    name: 'cleanup-lifecycle-email-logs',
+    // Weekly on Sunday at 3am PST - Clean up old lifecycle email logs
+    schedule: pstToCron(3, 0, 0),
+    description: 'Clean up lifecycle email logs older than 30 days',
+    handler: async () => {
+      const { supabaseAdmin } = await import('../config/supabase.js');
+      const { error } = await supabaseAdmin.rpc('cleanup_old_lifecycle_emails');
+      if (error) {
+        console.error('[Cleanup] Failed to clean up lifecycle email logs:', error);
+        throw error;
+      }
+      console.log('[Cleanup] Lifecycle email logs cleaned up successfully');
+      return { success: true };
+    },
+    enabled: true,
+  },
 ];
 
 // Store for one-time jobs

@@ -104,4 +104,10 @@ router.post('/clear-cache', async (req, res) => {
   res.json({ message: 'Cache cleared' });
 });
 
+// Export cache clearing function for direct use
+export function clearSiteCopyCache(): void {
+  copyCache = null;
+  cacheTime = 0;
+}
+
 export default router;

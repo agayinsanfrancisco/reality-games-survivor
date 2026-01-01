@@ -88,5 +88,10 @@ router.post('/clear-cache', async (req, res) => {
     cacheTime = 0;
     res.json({ message: 'Cache cleared' });
 });
+// Export cache clearing function for direct use
+export function clearSiteCopyCache() {
+    copyCache = null;
+    cacheTime = 0;
+}
 export default router;
 //# sourceMappingURL=site-copy.js.map

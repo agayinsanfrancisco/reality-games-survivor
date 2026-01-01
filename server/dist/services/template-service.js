@@ -74,6 +74,16 @@ export function clearTemplateCache(slug) {
     }
 }
 /**
+ * Template Service - static class interface
+ */
+export const TemplateService = {
+    getTemplate: getEmailTemplate,
+    render: renderTemplate,
+    getRendered: getRenderedTemplate,
+    clearCache: clearTemplateCache,
+    getAll: getAllEmailTemplates,
+};
+/**
  * Get all active email templates
  */
 export async function getAllEmailTemplates() {

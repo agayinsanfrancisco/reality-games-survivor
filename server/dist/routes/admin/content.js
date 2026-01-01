@@ -495,5 +495,32 @@ router.get('/content-stats', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch content stats' });
     }
 });
+// ============================================
+// CACHE MANAGEMENT
+// ============================================
+// Clear template and site copy cache
+router.post('/clear-cache', async (req, res) => {
+    try {
+        // Import the template service and clear its cache
+        const { TemplateService } = await import('../../services/template-service.js');
+        TemplateService.clearCache();
+        // Also clear the site copy cache if it exists
+        try {
+            const siteCopyModule = await import('../site-copy.js');
+            if (siteCopyModule.clearSiteCopyCache) {
+                siteCopyModule.clearSiteCopyCache();
+            }
+        }
+        catch {
+            // Site copy cache clearing is optional
+        }
+        console.log('[Admin] Template and site copy cache cleared');
+        res.json({ success: true, message: 'Cache cleared successfully' });
+    }
+    catch (err) {
+        console.error('Failed to clear cache:', err);
+        res.status(500).json({ error: 'Failed to clear cache' });
+    }
+});
 export default router;
 //# sourceMappingURL=content.js.map

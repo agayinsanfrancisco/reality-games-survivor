@@ -95,6 +95,7 @@ export function Trivia() {
   const [gameStarted, setGameStarted] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(20);
+  const [timerActive, setTimerActive] = useState(false);
   const [isTimedOut, setIsTimedOut] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -103,7 +104,31 @@ export function Trivia() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardTitle, setLeaderboardTitle] = useState<string>('The Tribe Has Spoken');
 
-  // Fetch next question and progress
+  // Fetch progress first (needed for auto-start logic)
+  const { data: progress } = useQuery<ProgressData>({
+    queryKey: ['trivia', 'progress'],
+    queryFn: async () => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      const response = await apiWithAuth<{ data: ProgressData }>(
+        '/trivia/progress',
+        session.access_token
+      );
+      if (response.error) throw new Error(response.error);
+      if (!response.data?.data) throw new Error('No data returned');
+      return response.data.data;
+    },
+    enabled: !!user && !!session?.access_token,
+    refetchInterval: 60000,
+  });
+
+  // Auto-start game if user already has progress (and not locked/complete)
+  useEffect(() => {
+    if (progress && progress.questionsAnswered > 0 && !progress.isLocked && !progress.isComplete) {
+      setGameStarted(true);
+    }
+  }, [progress]);
+
+  // Fetch next question (only when game is started)
   const {
     data: triviaData,
     isLoading: questionLoading,
@@ -118,39 +143,13 @@ export function Trivia() {
       );
       if (response.error) throw new Error(response.error);
       if (!response.data?.data) throw new Error('No data returned');
-      // API wraps response in { data: ... }, so unwrap it
       return response.data.data;
     },
     enabled: !!user && !!session?.access_token && gameStarted,
     retry: false,
   });
 
-  // Auto-start game if user already has progress
-  useEffect(() => {
-    if (progress && progress.questionsAnswered > 0) {
-      setGameStarted(true);
-    }
-  }, [progress]);
-
-  // Fetch progress separately
-  const { data: progress } = useQuery<ProgressData>({
-    queryKey: ['trivia', 'progress'],
-    queryFn: async () => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-      const response = await apiWithAuth<{ data: ProgressData }>(
-        '/trivia/progress',
-        session.access_token
-      );
-      if (response.error) throw new Error(response.error);
-      if (!response.data?.data) throw new Error('No data returned');
-      // API wraps response in { data: ... }, so unwrap it
-      return response.data.data;
-    },
-    enabled: !!user && !!session?.access_token,
-    refetchInterval: 60000,
-  });
-
-  // Fetch all questions (public - no auth required)
+  // Fetch all questions (public - no auth required) for study guide
   const { data: allQuestionsData } = useQuery<{ questions: TriviaQuestionWithAnswer[] }>({
     queryKey: ['trivia', 'all-questions'],
     queryFn: async () => {
@@ -159,26 +158,37 @@ export function Trivia() {
       );
       if (response.error) throw new Error(response.error);
       if (!response.data?.data?.questions) throw new Error('No data returned');
-      // API wraps response in { data: ... }, so unwrap it
       return { questions: response.data.data.questions };
     },
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });
 
-  // Timer countdown
+  // Start timer when question loads and game is started
   useEffect(() => {
     if (
-      !triviaData?.question ||
-      triviaData.alreadyAnswered ||
-      showResult ||
-      isTimedOut ||
-      triviaData.isLocked
+      triviaData?.question &&
+      !triviaData.alreadyAnswered &&
+      !triviaData.isLocked &&
+      gameStarted
     ) {
+      setTimeRemaining(20);
+      setIsTimedOut(false);
+      setShowResult(false);
+      setSelectedIndex(null);
+      setFunFact(null);
+      setTimerActive(true);
+    }
+  }, [triviaData?.question?.id, gameStarted]);
+
+  // Timer countdown - only runs when timerActive is true
+  useEffect(() => {
+    if (!timerActive || showResult || isTimedOut) {
       return;
     }
 
     if (timeRemaining <= 0) {
       setIsTimedOut(true);
+      setTimerActive(false);
       return;
     }
 
@@ -186,6 +196,7 @@ export function Trivia() {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           setIsTimedOut(true);
+          setTimerActive(false);
           return 0;
         }
         return prev - 1;
@@ -193,27 +204,7 @@ export function Trivia() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [
-    timeRemaining,
-    triviaData?.question,
-    triviaData?.alreadyAnswered,
-    triviaData?.isLocked,
-    showResult,
-    isTimedOut,
-  ]);
-
-  // Reset timer when new question loads
-  useEffect(() => {
-    if (triviaData?.question && !triviaData.alreadyAnswered && !triviaData.isLocked) {
-      setTimeRemaining(20);
-      setIsTimedOut(false);
-      setShowResult(false);
-      setSelectedIndex(null);
-      setFunFact(null);
-    }
-    // Only reset when question ID changes, not when other triviaData fields change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [triviaData?.question?.id]);
+  }, [timeRemaining, timerActive, showResult, isTimedOut]);
 
   // Submit answer mutation
   interface AnswerResponse {
@@ -225,7 +216,7 @@ export function Trivia() {
   }
 
   const submitAnswer = useMutation({
-    mutationFn: async (selectedIndex: number): Promise<AnswerResponse> => {
+    mutationFn: async (answerIndex: number): Promise<AnswerResponse> => {
       if (!session?.access_token) throw new Error('Not authenticated');
       if (!triviaData?.question) throw new Error('No question available');
 
@@ -236,16 +227,16 @@ export function Trivia() {
           method: 'POST',
           body: JSON.stringify({
             questionId: triviaData.question.id,
-            selectedIndex,
+            selectedIndex: answerIndex,
           }),
         }
       );
       if (response.error) throw new Error(response.error);
       if (!response.data?.data) throw new Error('No data returned');
-      // API wraps response in { data: ... }, so unwrap it
       return response.data.data;
     },
     onSuccess: (data) => {
+      setTimerActive(false);
       setIsCorrect(data.isCorrect);
       setFunFact(data.funFact || null);
       setShowResult(true);
@@ -254,10 +245,10 @@ export function Trivia() {
         const msg = WRONG_MESSAGES[Math.floor(Math.random() * WRONG_MESSAGES.length)];
         setWrongMessage(msg);
         setLeaderboardTitle(msg);
-        // Show leaderboard after a brief delay when wrong
+        // Show leaderboard after showing the wrong answer for 3 seconds
         setTimeout(() => {
           setShowLeaderboard(true);
-        }, 2000);
+        }, 3000);
       }
 
       queryClient.invalidateQueries({ queryKey: ['trivia', 'next'] });
@@ -282,10 +273,11 @@ export function Trivia() {
   const handleAnswer = (index: number) => {
     if (triviaData?.alreadyAnswered || showResult || isTimedOut || triviaData?.isLocked) return;
     setSelectedIndex(index);
+    setTimerActive(false);
     submitAnswer.mutate(index);
   };
 
-  // Auto-advance to next question
+  // Auto-advance to next question after correct answer
   useEffect(() => {
     if (showResult && !triviaData?.isLocked && isCorrect) {
       const timer = setTimeout(() => {
@@ -303,7 +295,7 @@ export function Trivia() {
   // Show leaderboard when completing all 24 questions
   useEffect(() => {
     if (triviaData?.isComplete || progress?.isComplete) {
-      setLeaderboardTitle('🏆 Trivia Champion!');
+      setLeaderboardTitle('Trivia Champion!');
       setWrongMessage('You completed all 24 questions!');
       setShowLeaderboard(true);
     }
@@ -460,7 +452,7 @@ export function Trivia() {
 
   // Show loading while auth is initializing OR while waiting for session to load trivia data
   const isWaitingForSession = user && !session?.access_token;
-  const isLoadingTrivia = user && session?.access_token && questionLoading;
+  const isLoadingTrivia = user && session?.access_token && gameStarted && questionLoading;
 
   if (authLoading || isWaitingForSession || isLoadingTrivia) {
     return (
@@ -557,83 +549,95 @@ export function Trivia() {
         )}
 
         {/* No Question Available - Show all questions as study guide */}
-        {!isLocked && !isComplete && !question && allQuestionsData?.questions && (
-          <div className="space-y-4">
-            <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
-                  <Lightbulb className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-neutral-800">
-                    All 24 Trivia Questions
-                  </h3>
-                  <p className="text-sm text-neutral-500">Study up before you play!</p>
+        {gameStarted &&
+          !isLocked &&
+          !isComplete &&
+          !question &&
+          !questionLoading &&
+          allQuestionsData?.questions && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
+                    <Lightbulb className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-neutral-800">
+                      All 24 Trivia Questions
+                    </h3>
+                    <p className="text-sm text-neutral-500">Study up before you play!</p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-3">
-              {allQuestionsData.questions.map((q) => (
-                <div
-                  key={q.id}
-                  className="bg-white rounded-xl shadow-sm border border-cream-200 overflow-hidden p-4"
-                >
-                  <div className="flex items-start gap-3 mb-4">
-                    <span className="flex-shrink-0 w-8 h-8 bg-burgundy-100 text-burgundy-700 rounded-full flex items-center justify-center font-bold text-sm">
-                      {q.questionNumber}
-                    </span>
-                    <p className="text-neutral-800 font-medium flex-1">{q.question}</p>
-                  </div>
-
-                  <div className="space-y-2 mb-4 ml-11">
-                    {q.options.map((option, idx) => (
-                      <div
-                        key={idx}
-                        className={`p-3 rounded-lg flex items-center gap-2 ${
-                          idx === q.correctIndex
-                            ? 'bg-green-50 border border-green-200'
-                            : 'bg-neutral-50 border border-neutral-100'
-                        }`}
-                      >
-                        {idx === q.correctIndex && (
-                          <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                        )}
-                        <span
-                          className={
-                            idx === q.correctIndex
-                              ? 'text-green-800 font-medium'
-                              : 'text-neutral-600'
-                          }
-                        >
-                          {option}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {q.funFact && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 ml-11">
-                      <div className="flex items-start gap-2">
-                        <Lightbulb className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-amber-800">{q.funFact}</p>
-                      </div>
+              <div className="space-y-3">
+                {allQuestionsData.questions.map((q) => (
+                  <div
+                    key={q.id}
+                    className="bg-white rounded-xl shadow-sm border border-cream-200 overflow-hidden p-4"
+                  >
+                    <div className="flex items-start gap-3 mb-4">
+                      <span className="flex-shrink-0 w-8 h-8 bg-burgundy-100 text-burgundy-700 rounded-full flex items-center justify-center font-bold text-sm">
+                        {q.questionNumber}
+                      </span>
+                      <p className="text-neutral-800 font-medium flex-1">{q.question}</p>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    <div className="space-y-2 mb-4 ml-11">
+                      {q.options.map((option, idx) => (
+                        <div
+                          key={idx}
+                          className={`p-3 rounded-lg flex items-center gap-2 ${
+                            idx === q.correctIndex
+                              ? 'bg-green-50 border border-green-200'
+                              : 'bg-neutral-50 border border-neutral-100'
+                          }`}
+                        >
+                          {idx === q.correctIndex && (
+                            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                          )}
+                          <span
+                            className={
+                              idx === q.correctIndex
+                                ? 'text-green-800 font-medium'
+                                : 'text-neutral-600'
+                            }
+                          >
+                            {option}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {q.funFact && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 ml-11">
+                        <div className="flex items-start gap-2">
+                          <Lightbulb className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                          <p className="text-sm text-amber-800">{q.funFact}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* No questions at all */}
-        {!isLocked && !isComplete && !question && !allQuestionsData?.questions && (
-          <div className="bg-white rounded-2xl shadow-card p-12 border border-cream-200 text-center">
-            <AlertCircle className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-neutral-800 mb-2">No Questions Available</h3>
-            <p className="text-neutral-500">Check back later for trivia questions!</p>
-          </div>
-        )}
+        {gameStarted &&
+          !isLocked &&
+          !isComplete &&
+          !question &&
+          !questionLoading &&
+          !allQuestionsData?.questions && (
+            <div className="bg-white rounded-2xl shadow-card p-12 border border-cream-200 text-center">
+              <AlertCircle className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-neutral-800 mb-2">
+                No Questions Available
+              </h3>
+              <p className="text-neutral-500">Check back later for trivia questions!</p>
+            </div>
+          )}
 
         {/* CTA Card */}
         {!isComplete && <TriviaCTACard />}
