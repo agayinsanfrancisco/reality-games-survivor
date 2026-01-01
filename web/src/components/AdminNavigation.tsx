@@ -3,23 +3,7 @@ import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useState, useEffect, useRef } from 'react';
-import {
-  Shield,
-  UserCircle,
-  Menu,
-  X,
-  ChevronDown,
-  LayoutDashboard,
-  Trophy,
-  Zap,
-  Users,
-  Palmtree,
-  MessageSquare,
-  Bell,
-  Mail,
-  MessageCircle,
-  Settings,
-} from 'lucide-react';
+import { Shield, UserCircle, Menu, X, ChevronDown } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -103,24 +87,24 @@ export function AdminNavigation() {
 
   // Main nav items
   const mainNavItems = [
-    { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-    { path: '/admin/scoring', label: 'Scoring', icon: Zap },
+    { path: '/admin', label: 'Dashboard', exact: true },
+    { path: '/admin/scoring', label: 'Scoring' },
   ];
 
   // Manage dropdown items
   const manageItems = [
-    { path: '/admin/leagues', label: 'Leagues', icon: Trophy },
-    { path: '/admin/castaways', label: 'Castaways', icon: Palmtree },
-    { path: '/admin/users', label: 'Players', icon: Users },
-    { path: '/admin/seasons', label: 'Seasons', icon: Settings },
+    { path: '/admin/leagues', label: 'Leagues' },
+    { path: '/admin/castaways', label: 'Castaways' },
+    { path: '/admin/users', label: 'Players' },
+    { path: '/admin/seasons', label: 'Seasons' },
   ];
 
   // Communication items
   const commItems = [
-    { path: '/admin/announcements', label: 'Announcements', icon: MessageSquare },
-    { path: '/admin/push', label: 'Push Notifications', icon: Bell },
-    { path: '/admin/email-queue', label: 'Email Queue', icon: Mail },
-    { path: '/admin/sms', label: 'SMS', icon: MessageCircle },
+    { path: '/admin/announcements', label: 'Announcements' },
+    { path: '/admin/push', label: 'Push' },
+    { path: '/admin/email-queue', label: 'Email Queue' },
+    { path: '/admin/sms', label: 'SMS' },
   ];
 
   return (
@@ -160,7 +144,7 @@ export function AdminNavigation() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                     item.exact
                       ? location.pathname === item.path
                         ? 'bg-orange-500 text-white'
@@ -170,7 +154,6 @@ export function AdminNavigation() {
                         : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
                   }`}
                 >
-                  <item.icon className="h-4 w-4" />
                   {item.label}
                 </Link>
               ))}
@@ -179,13 +162,12 @@ export function AdminNavigation() {
               <div className="relative" ref={manageRef}>
                 <button
                   onClick={() => setManageOpen(!manageOpen)}
-                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
                     isManageActive()
                       ? 'bg-orange-500 text-white'
                       : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
                   }`}
                 >
-                  <Settings className="h-4 w-4" />
                   Manage
                   <ChevronDown
                     className={`h-3 w-3 transition-transform ${manageOpen ? 'rotate-180' : ''}`}
@@ -198,13 +180,12 @@ export function AdminNavigation() {
                         key={item.path}
                         to={item.path}
                         onClick={() => setManageOpen(false)}
-                        className={`flex items-center gap-2 px-3 py-2 text-sm ${
+                        className={`block px-3 py-2 text-sm ${
                           isActive(item.path)
                             ? 'text-orange-400 bg-neutral-700'
                             : 'text-neutral-300 hover:text-white hover:bg-neutral-700'
                         }`}
                       >
-                        <item.icon className="h-4 w-4" />
                         {item.label}
                       </Link>
                     ))}
@@ -220,14 +201,13 @@ export function AdminNavigation() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                     isActive(item.path)
                       ? 'bg-orange-500 text-white'
                       : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
                   }`}
                 >
-                  <item.icon className="h-4 w-4" />
-                  <span className="hidden lg:inline">{item.label}</span>
+                  {item.label}
                 </Link>
               ))}
             </div>
@@ -263,7 +243,7 @@ export function AdminNavigation() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium ${
+                  className={`block px-4 py-2.5 text-sm font-medium ${
                     item.exact
                       ? location.pathname === item.path
                         ? 'bg-orange-500 text-white'
@@ -273,7 +253,6 @@ export function AdminNavigation() {
                         : 'text-neutral-300'
                   }`}
                 >
-                  <item.icon className="h-4 w-4" />
                   {item.label}
                 </Link>
               ))}
@@ -285,11 +264,10 @@ export function AdminNavigation() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-2 px-6 py-2 text-sm ${
+                  className={`block px-6 py-2 text-sm ${
                     isActive(item.path) ? 'text-orange-400' : 'text-neutral-300'
                   }`}
                 >
-                  <item.icon className="h-4 w-4" />
                   {item.label}
                 </Link>
               ))}
@@ -301,11 +279,10 @@ export function AdminNavigation() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-2 px-6 py-2 text-sm ${
+                  className={`block px-6 py-2 text-sm ${
                     isActive(item.path) ? 'text-orange-400' : 'text-neutral-300'
                   }`}
                 >
-                  <item.icon className="h-4 w-4" />
                   {item.label}
                 </Link>
               ))}
