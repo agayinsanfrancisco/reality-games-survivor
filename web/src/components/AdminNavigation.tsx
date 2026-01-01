@@ -80,6 +80,26 @@ export function AdminNavigation() {
     enabled: !!user?.id,
   });
 
+  // Fetch badge counts for navigation
+  const { data: badgeCounts } = useQuery({
+    queryKey: ['admin', 'nav-badges'],
+    queryFn: async () => {
+      const [failedEmailsResult, failedJobsResult] = await Promise.all([
+        supabase.from('failed_emails').select('*', { count: 'exact', head: true }),
+        supabase
+          .from('job_runs')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'failed')
+          .gte('started_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+      ]);
+      return {
+        failedEmails: failedEmailsResult.count || 0,
+        failedJobs: failedJobsResult.count || 0,
+      };
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
   const displayName =
     profile?.display_name || user?.user_metadata?.display_name || user?.email?.split('@')[0] || '';
 
@@ -123,16 +143,26 @@ export function AdminNavigation() {
   const communicateItems = [
     { path: '/admin/announcements', label: 'Announcements' },
     { path: '/admin/push', label: 'Push Notifications' },
-    { path: '/admin/email-queue', label: 'Email Queue' },
+    { path: '/admin/email-queue', label: 'Email Queue', badgeKey: 'failedEmails' as const },
     { path: '/admin/sms', label: 'SMS' },
   ];
 
   // System dropdown items
   const systemItems = [
-    { path: '/admin/jobs', label: 'Job Monitor' },
+    { path: '/admin/jobs', label: 'Job Monitor', badgeKey: 'failedJobs' as const },
     { path: '/admin/health', label: 'System Health' },
     { path: '/admin/stats', label: 'Analytics' },
   ];
+
+  // Helper to render badge
+  const renderBadge = (count: number | undefined) => {
+    if (!count || count === 0) return null;
+    return (
+      <span className="ml-2 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+        {count > 99 ? '99+' : count}
+      </span>
+    );
+  };
 
   return (
     <>
@@ -239,6 +269,7 @@ export function AdminNavigation() {
                   }`}
                 >
                   Communicate
+                  {badgeCounts?.failedEmails ? renderBadge(badgeCounts.failedEmails) : null}
                   <ChevronDown
                     className={`h-3 w-3 transition-transform ${communicateOpen ? 'rotate-180' : ''}`}
                   />
@@ -250,13 +281,14 @@ export function AdminNavigation() {
                         key={item.path}
                         to={item.path}
                         onClick={() => setCommunicateOpen(false)}
-                        className={`block px-3 py-2 text-sm ${
+                        className={`flex items-center justify-between px-3 py-2 text-sm ${
                           isActive(item.path)
                             ? 'text-orange-400 bg-neutral-700'
                             : 'text-neutral-300 hover:text-white hover:bg-neutral-700'
                         }`}
                       >
-                        {item.label}
+                        <span>{item.label}</span>
+                        {item.badgeKey && renderBadge(badgeCounts?.[item.badgeKey])}
                       </Link>
                     ))}
                   </div>
@@ -278,6 +310,7 @@ export function AdminNavigation() {
                   }`}
                 >
                   System
+                  {badgeCounts?.failedJobs ? renderBadge(badgeCounts.failedJobs) : null}
                   <ChevronDown
                     className={`h-3 w-3 transition-transform ${systemOpen ? 'rotate-180' : ''}`}
                   />
@@ -289,13 +322,14 @@ export function AdminNavigation() {
                         key={item.path}
                         to={item.path}
                         onClick={() => setSystemOpen(false)}
-                        className={`block px-3 py-2 text-sm ${
+                        className={`flex items-center justify-between px-3 py-2 text-sm ${
                           isActive(item.path)
                             ? 'text-orange-400 bg-neutral-700'
                             : 'text-neutral-300 hover:text-white hover:bg-neutral-700'
                         }`}
                       >
-                        {item.label}
+                        <span>{item.label}</span>
+                        {item.badgeKey && renderBadge(badgeCounts?.[item.badgeKey])}
                       </Link>
                     ))}
                   </div>
