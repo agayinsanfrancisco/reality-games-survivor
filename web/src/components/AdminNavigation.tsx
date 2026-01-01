@@ -17,13 +17,19 @@ export function AdminNavigation() {
   const { user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
+  const [communicateOpen, setCommunicateOpen] = useState(false);
+  const [systemOpen, setSystemOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const manageRef = useRef<HTMLDivElement>(null);
+  const communicateRef = useRef<HTMLDivElement>(null);
+  const systemRef = useRef<HTMLDivElement>(null);
 
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
     setManageOpen(false);
+    setCommunicateOpen(false);
+    setSystemOpen(false);
   }, [location.pathname]);
 
   // Close menus when clicking outside
@@ -35,12 +41,18 @@ export function AdminNavigation() {
       if (manageRef.current && !manageRef.current.contains(event.target as Node)) {
         setManageOpen(false);
       }
+      if (communicateRef.current && !communicateRef.current.contains(event.target as Node)) {
+        setCommunicateOpen(false);
+      }
+      if (systemRef.current && !systemRef.current.contains(event.target as Node)) {
+        setSystemOpen(false);
+      }
     };
-    if (mobileMenuOpen || manageOpen) {
+    if (mobileMenuOpen || manageOpen || communicateOpen || systemOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [mobileMenuOpen, manageOpen]);
+  }, [mobileMenuOpen, manageOpen, communicateOpen, systemOpen]);
 
   const handleSignOut = async () => {
     try {
@@ -77,34 +89,49 @@ export function AdminNavigation() {
   };
 
   const isManageActive = () => {
+    return isActive('/admin/castaways') || isActive('/admin/users') || isActive('/admin/seasons');
+  };
+
+  const isCommunicateActive = () => {
     return (
-      isActive('/admin/leagues') ||
-      isActive('/admin/castaways') ||
-      isActive('/admin/users') ||
-      isActive('/admin/seasons')
+      isActive('/admin/announcements') ||
+      isActive('/admin/push') ||
+      isActive('/admin/email-queue') ||
+      isActive('/admin/sms')
     );
   };
 
-  // Main nav items
+  const isSystemActive = () => {
+    return isActive('/admin/jobs') || isActive('/admin/health') || isActive('/admin/stats');
+  };
+
+  // Main nav items (top level)
   const mainNavItems = [
     { path: '/admin', label: 'Dashboard', exact: true },
+    { path: '/admin/leagues', label: 'Leagues' },
     { path: '/admin/scoring', label: 'Scoring' },
   ];
 
   // Manage dropdown items
   const manageItems = [
-    { path: '/admin/leagues', label: 'Leagues' },
     { path: '/admin/castaways', label: 'Castaways' },
-    { path: '/admin/users', label: 'Players' },
+    { path: '/admin/users', label: 'Users' },
     { path: '/admin/seasons', label: 'Seasons' },
   ];
 
-  // Communication items
-  const commItems = [
+  // Communicate dropdown items
+  const communicateItems = [
     { path: '/admin/announcements', label: 'Announcements' },
-    { path: '/admin/push', label: 'Push' },
+    { path: '/admin/push', label: 'Push Notifications' },
     { path: '/admin/email-queue', label: 'Email Queue' },
     { path: '/admin/sms', label: 'SMS' },
+  ];
+
+  // System dropdown items
+  const systemItems = [
+    { path: '/admin/jobs', label: 'Job Monitor' },
+    { path: '/admin/health', label: 'System Health' },
+    { path: '/admin/stats', label: 'Analytics' },
   ];
 
   return (
@@ -139,7 +166,7 @@ export function AdminNavigation() {
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-1">
-              {/* Dashboard & Scoring */}
+              {/* Dashboard, Leagues, Scoring */}
               {mainNavItems.map((item) => (
                 <Link
                   key={item.path}
@@ -161,7 +188,11 @@ export function AdminNavigation() {
               {/* Manage Dropdown */}
               <div className="relative" ref={manageRef}>
                 <button
-                  onClick={() => setManageOpen(!manageOpen)}
+                  onClick={() => {
+                    setManageOpen(!manageOpen);
+                    setCommunicateOpen(false);
+                    setSystemOpen(false);
+                  }}
                   className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
                     isManageActive()
                       ? 'bg-orange-500 text-white'
@@ -193,23 +224,83 @@ export function AdminNavigation() {
                 )}
               </div>
 
-              {/* Divider */}
-              <div className="w-px h-6 bg-neutral-700 mx-2" />
-
-              {/* Communication Items */}
-              {commItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                    isActive(item.path)
+              {/* Communicate Dropdown */}
+              <div className="relative" ref={communicateRef}>
+                <button
+                  onClick={() => {
+                    setCommunicateOpen(!communicateOpen);
+                    setManageOpen(false);
+                    setSystemOpen(false);
+                  }}
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                    isCommunicateActive()
                       ? 'bg-orange-500 text-white'
                       : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
                   }`}
                 >
-                  {item.label}
-                </Link>
-              ))}
+                  Communicate
+                  <ChevronDown
+                    className={`h-3 w-3 transition-transform ${communicateOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {communicateOpen && (
+                  <div className="absolute top-full left-0 mt-1 bg-neutral-800 rounded-lg shadow-xl border border-neutral-700 min-w-[180px] z-50 py-1">
+                    {communicateItems.map((item) => (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setCommunicateOpen(false)}
+                        className={`block px-3 py-2 text-sm ${
+                          isActive(item.path)
+                            ? 'text-orange-400 bg-neutral-700'
+                            : 'text-neutral-300 hover:text-white hover:bg-neutral-700'
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* System Dropdown */}
+              <div className="relative" ref={systemRef}>
+                <button
+                  onClick={() => {
+                    setSystemOpen(!systemOpen);
+                    setManageOpen(false);
+                    setCommunicateOpen(false);
+                  }}
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                    isSystemActive()
+                      ? 'bg-orange-500 text-white'
+                      : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
+                  }`}
+                >
+                  System
+                  <ChevronDown
+                    className={`h-3 w-3 transition-transform ${systemOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {systemOpen && (
+                  <div className="absolute top-full left-0 mt-1 bg-neutral-800 rounded-lg shadow-xl border border-neutral-700 min-w-[160px] z-50 py-1">
+                    {systemItems.map((item) => (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setSystemOpen(false)}
+                        className={`block px-3 py-2 text-sm ${
+                          isActive(item.path)
+                            ? 'text-orange-400 bg-neutral-700'
+                            : 'text-neutral-300 hover:text-white hover:bg-neutral-700'
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Right side */}
@@ -273,9 +364,24 @@ export function AdminNavigation() {
               ))}
 
               <div className="px-4 py-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider mt-2">
-                Communication
+                Communicate
               </div>
-              {commItems.map((item) => (
+              {communicateItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`block px-6 py-2 text-sm ${
+                    isActive(item.path) ? 'text-orange-400' : 'text-neutral-300'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+
+              <div className="px-4 py-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider mt-2">
+                System
+              </div>
+              {systemItems.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
