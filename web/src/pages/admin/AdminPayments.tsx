@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -11,34 +11,69 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Trophy,
+  Users,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { AdminNavigation } from '@/components/AdminNavigation';
+
+interface League {
+  id: string;
+  name: string;
+}
+
+interface Payment {
+  id: string;
+  amount: string | number;
+  status: string;
+  created_at: string;
+  refunded_at?: string;
+  stripe_payment_intent_id?: string;
+  league_id: string;
+  users?: { display_name: string; email: string };
+  leagues?: { name: string };
+}
 
 export function AdminPayments() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [selectedLeagueId, setSelectedLeagueId] = useState<string>('all');
   const [refundingId, setRefundingId] = useState<string | null>(null);
 
   // Fetch all payments
   const { data: payments, isLoading } = useQuery({
     queryKey: ['admin-payments'],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('payments')
         .select('*, users(display_name, email), leagues(name)')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data || [];
+      return (data || []) as Payment[];
     },
   });
+
+  // Get unique leagues from payments for tab filtering
+  const leagues = useMemo(() => {
+    if (!payments) return [];
+    const leagueMap = new Map<string, League>();
+    payments.forEach((payment: Payment) => {
+      if (payment.league_id && payment.leagues?.name && !leagueMap.has(payment.league_id)) {
+        leagueMap.set(payment.league_id, {
+          id: payment.league_id,
+          name: payment.leagues.name,
+        });
+      }
+    });
+    return Array.from(leagueMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [payments]);
 
   // Refund mutation
   const refundPayment = useMutation({
     mutationFn: async (paymentId: string) => {
       // In production, this would call Stripe API
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('payments')
         .update({ status: 'refunded', refunded_at: new Date().toISOString() })
         .eq('id', paymentId);
@@ -50,30 +85,53 @@ export function AdminPayments() {
     },
   });
 
-  const filteredPayments = payments?.filter((payment: any) => {
+  const filteredPayments = payments?.filter((payment: Payment) => {
     const matchesSearch =
       payment.users?.display_name?.toLowerCase().includes(search.toLowerCase()) ||
       payment.users?.email?.toLowerCase().includes(search.toLowerCase()) ||
       payment.leagues?.name?.toLowerCase().includes(search.toLowerCase()) ||
       payment.stripe_payment_intent_id?.includes(search);
     const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesLeague = selectedLeagueId === 'all' || payment.league_id === selectedLeagueId;
+    return matchesSearch && matchesStatus && matchesLeague;
   });
 
+  // Calculate stats for the selected league (or all)
+  const selectedPayments =
+    selectedLeagueId === 'all'
+      ? payments
+      : payments?.filter((p: Payment) => p.league_id === selectedLeagueId);
+
   const stats = {
-    total: payments?.length || 0,
-    completed: payments?.filter((p: any) => p.status === 'completed').length || 0,
-    refunded: payments?.filter((p: any) => p.status === 'refunded').length || 0,
-    pending: payments?.filter((p: any) => p.status === 'pending').length || 0,
+    total: selectedPayments?.length || 0,
+    completed: selectedPayments?.filter((p: Payment) => p.status === 'completed').length || 0,
+    refunded: selectedPayments?.filter((p: Payment) => p.status === 'refunded').length || 0,
+    pending: selectedPayments?.filter((p: Payment) => p.status === 'pending').length || 0,
     totalRevenue:
-      payments
-        ?.filter((p: any) => p.status === 'completed')
-        .reduce((sum: number, p: any) => sum + parseFloat(p.amount || 0), 0) || 0,
+      selectedPayments
+        ?.filter((p: Payment) => p.status === 'completed')
+        .reduce((sum: number, p: Payment) => sum + parseFloat(String(p.amount) || '0'), 0) || 0,
     totalRefunded:
-      payments
-        ?.filter((p: any) => p.status === 'refunded')
-        .reduce((sum: number, p: any) => sum + parseFloat(p.amount || 0), 0) || 0,
+      selectedPayments
+        ?.filter((p: Payment) => p.status === 'refunded')
+        .reduce((sum: number, p: Payment) => sum + parseFloat(String(p.amount) || '0'), 0) || 0,
   };
+
+  // Calculate per-league stats for the tab badges
+  const leagueStats = useMemo(() => {
+    if (!payments) return new Map<string, { count: number; revenue: number }>();
+    const statsMap = new Map<string, { count: number; revenue: number }>();
+    payments.forEach((payment: Payment) => {
+      const leagueId = payment.league_id;
+      const current = statsMap.get(leagueId) || { count: 0, revenue: 0 };
+      current.count += 1;
+      if (payment.status === 'completed') {
+        current.revenue += parseFloat(String(payment.amount) || '0');
+      }
+      statsMap.set(leagueId, current);
+    });
+    return statsMap;
+  }, [payments]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -127,9 +185,15 @@ export function AdminPayments() {
           <div>
             <h1 className="text-2xl font-display font-bold text-neutral-800 flex items-center gap-2">
               <DollarSign className="h-6 w-6 text-burgundy-500" />
-              All Payments
+              {selectedLeagueId === 'all'
+                ? 'All Payments'
+                : `${leagues.find((l) => l.id === selectedLeagueId)?.name || 'League'} Payments`}
             </h1>
-            <p className="text-neutral-500">{payments?.length || 0} transactions</p>
+            <p className="text-neutral-500">
+              {selectedLeagueId === 'all'
+                ? `${payments?.length || 0} total transactions`
+                : `${selectedPayments?.length || 0} transactions in this league`}
+            </p>
           </div>
         </div>
 
@@ -166,6 +230,62 @@ export function AdminPayments() {
           </div>
         </div>
 
+        {/* League Tabs */}
+        {leagues.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-card border border-cream-200 mb-6 overflow-hidden">
+            <div className="p-3 border-b border-cream-200 flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-burgundy-500" />
+              <h3 className="font-display font-bold text-neutral-800">Filter by League</h3>
+            </div>
+            <div className="flex flex-wrap gap-2 p-3">
+              <button
+                onClick={() => setSelectedLeagueId('all')}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+                  selectedLeagueId === 'all'
+                    ? 'bg-burgundy-500 text-white shadow-md'
+                    : 'bg-cream-100 text-neutral-700 hover:bg-cream-200'
+                }`}
+              >
+                <Users className="h-4 w-4" />
+                All Leagues
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs ${selectedLeagueId === 'all' ? 'bg-burgundy-600' : 'bg-cream-200'}`}
+                >
+                  {payments?.length || 0}
+                </span>
+              </button>
+              {leagues.map((league) => {
+                const stats = leagueStats.get(league.id);
+                return (
+                  <button
+                    key={league.id}
+                    onClick={() => setSelectedLeagueId(league.id)}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
+                      selectedLeagueId === league.id
+                        ? 'bg-burgundy-500 text-white shadow-md'
+                        : 'bg-cream-100 text-neutral-700 hover:bg-cream-200'
+                    }`}
+                  >
+                    {league.name}
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs ${selectedLeagueId === league.id ? 'bg-burgundy-600' : 'bg-cream-200'}`}
+                    >
+                      {stats?.count || 0}
+                    </span>
+                    {stats && stats.revenue > 0 && (
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs ${selectedLeagueId === league.id ? 'bg-green-600' : 'bg-green-100 text-green-700'}`}
+                      >
+                        ${stats.revenue.toFixed(0)}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Search & Filter */}
         <div className="flex gap-2 mb-6">
           <div className="relative flex-1">
@@ -193,7 +313,7 @@ export function AdminPayments() {
 
         {/* Payments List */}
         <div className="space-y-3">
-          {filteredPayments?.map((payment: any) => (
+          {filteredPayments?.map((payment: Payment) => (
             <div
               key={payment.id}
               className="bg-white rounded-2xl shadow-card p-4 border border-cream-200"
@@ -205,7 +325,7 @@ export function AdminPayments() {
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-bold text-neutral-800">
-                    ${parseFloat(payment.amount).toFixed(2)}
+                    ${parseFloat(String(payment.amount)).toFixed(2)}
                   </p>
                   <span
                     className={`px-2 py-0.5 rounded-full text-xs inline-flex items-center gap-1 ${getStatusBadgeClass(payment.status)}`}
