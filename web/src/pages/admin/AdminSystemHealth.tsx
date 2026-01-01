@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AdminNavigation } from '@/components/AdminNavigation';
 import { Footer } from '@/components/Footer';
 import { apiWithAuth } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import {
   AlertTriangle,
   CheckCircle,
@@ -48,6 +49,8 @@ interface SystemHealthResponse {
 }
 
 export function AdminSystemHealth() {
+  const { session } = useAuth();
+
   const {
     data: health,
     isLoading,
@@ -56,18 +59,25 @@ export function AdminSystemHealth() {
   } = useQuery({
     queryKey: ['admin', 'system-health'],
     queryFn: async () => {
-      const response = await apiWithAuth('/api/admin/dashboard/system-health');
+      if (!session?.access_token) throw new Error('Not authenticated');
+      const response = await apiWithAuth(
+        '/api/admin/dashboard/system-health',
+        session.access_token
+      );
       return response as SystemHealthResponse;
     },
+    enabled: !!session?.access_token,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const { data: operationsData } = useQuery({
     queryKey: ['admin', 'analytics', 'operations'],
     queryFn: async () => {
-      const response = await apiWithAuth('/api/admin/analytics/operations');
+      if (!session?.access_token) throw new Error('Not authenticated');
+      const response = await apiWithAuth('/api/admin/analytics/operations', session.access_token);
       return response;
     },
+    enabled: !!session?.access_token,
     refetchInterval: 60000, // Refresh every minute
   });
 
