@@ -3,6 +3,9 @@
  *
  * Main admin router that combines modular route files.
  * Routes are organized by domain:
+ * - /command-center/* - Real-time operations hub
+ * - /quick-actions/* - One-click platform controls
+ * - /incidents/* - Incident management
  * - /dashboard/* - Dashboard, stats, activity, health
  * - /seasons/* - Season management
  * - /castaways/* - Castaway management

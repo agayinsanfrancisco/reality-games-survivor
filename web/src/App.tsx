@@ -48,6 +48,9 @@ import Trivia from './pages/Trivia';
 
 // Admin Pages
 import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { AdminCommandCenter } from './pages/admin/AdminCommandCenter';
+import { AdminPicks } from './pages/admin/AdminPicks';
+import { AdminDrafts } from './pages/admin/AdminDrafts';
 import { AdminScoring } from './pages/admin/AdminScoring';
 import { AdminCastaways } from './pages/admin/AdminCastaways';
 import { AdminSeasons } from './pages/admin/AdminSeasons';
@@ -132,6 +135,12 @@ export default function App() {
             {/* Admin routes - require admin role */}
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={withAdminErrorBoundary(AdminDashboard)} />
+              <Route
+                path="/admin/command-center"
+                element={withAdminErrorBoundary(AdminCommandCenter)}
+              />
+              <Route path="/admin/picks" element={withAdminErrorBoundary(AdminPicks)} />
+              <Route path="/admin/drafts" element={withAdminErrorBoundary(AdminDrafts)} />
               <Route path="/admin/scoring" element={withAdminErrorBoundary(AdminScoring)} />
               <Route path="/admin/castaways" element={withAdminErrorBoundary(AdminCastaways)} />
               <Route path="/admin/seasons" element={withAdminErrorBoundary(AdminSeasons)} />

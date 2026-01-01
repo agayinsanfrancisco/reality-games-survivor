@@ -3,6 +3,9 @@
  *
  * Main admin router that combines modular route files.
  * Routes are organized by domain:
+ * - /command-center/* - Real-time operations hub
+ * - /quick-actions/* - One-click platform controls
+ * - /incidents/* - Incident management
  * - /dashboard/* - Dashboard, stats, activity, health
  * - /seasons/* - Season management
  * - /castaways/* - Castaway management
@@ -19,6 +22,11 @@
 import { Router } from 'express';
 import { authenticate, requireAdmin } from '../middleware/authenticate.js';
 // Import modular routers
+import commandCenterRouter from './admin/command-center.js';
+import quickActionsRouter from './admin/quick-actions.js';
+import incidentsRouter from './admin/incidents.js';
+import picksRouter from './admin/picks.js';
+import draftsRouter from './admin/drafts.js';
 import dashboardRouter from './admin/dashboard.js';
 import seasonsRouter from './admin/seasons.js';
 import castawaysRouter from './admin/castaways.js';
@@ -36,7 +44,12 @@ const router = Router();
 // All admin routes require authentication and admin role
 router.use(authenticate);
 router.use(requireAdmin);
-// Mount modular routers
+// Mount modular routers - Command Center first for priority
+router.use('/command-center', commandCenterRouter);
+router.use('/quick-actions', quickActionsRouter);
+router.use('/incidents', incidentsRouter);
+router.use('/picks', picksRouter);
+router.use('/drafts', draftsRouter);
 router.use('/dashboard', dashboardRouter);
 router.use('/seasons', seasonsRouter);
 router.use('/castaways', castawaysRouter);
