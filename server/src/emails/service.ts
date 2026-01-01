@@ -170,6 +170,63 @@ interface TriviaWelcomeEmailData {
   email: string;
 }
 
+// NEW LIFECYCLE EMAIL TYPES
+
+interface TriviaProgressEmailData {
+  displayName: string;
+  email: string;
+  questionsAnswered: number;
+  questionsCorrect: number;
+  totalQuestions: number;
+}
+
+interface JoinLeagueNudgeEmailData {
+  displayName: string;
+  email: string;
+  daysSinceSignup: number;
+  seasonName: string;
+  premiereDate: Date;
+}
+
+interface PreSeasonHypeEmailData {
+  displayName: string;
+  email: string;
+  seasonName: string;
+  seasonNumber: number;
+  premiereDate: Date;
+  daysUntilPremiere: number;
+  hasLeague: boolean;
+  leagueName?: string;
+}
+
+interface PostSeasonWrapUpEmailData {
+  displayName: string;
+  email: string;
+  seasonName: string;
+  totalPoints: number;
+  bestRank: number;
+  leaguesPlayed: number;
+  winnerName: string;
+}
+
+interface PrivateLeagueWelcomeEmailData {
+  displayName: string;
+  email: string;
+  leagueName: string;
+  leagueId: string;
+  commissionerName: string;
+  seasonName: string;
+  memberCount: number;
+  maxMembers: number;
+}
+
+interface InactivityReminderEmailData {
+  displayName: string;
+  email: string;
+  daysSinceLastActivity: number;
+  missedEpisodes: number;
+}
+
 // ============================================
 // EMAIL TEMPLATES
 // ============================================
@@ -191,8 +248,7 @@ function welcomeEmailTemplate({ displayName }: WelcomeEmailData): string {
     ${divider()}
     ${card(`
       <div style="text-align: center;">
-        <div style="font-size: 32px; margin-bottom: 8px;">📱</div>
-        ${heading('Text Your Picks!', 2)}
+        ${heading('Text Your Picks', 2)}
         ${paragraph(`Add your phone number to use SMS commands. Text <strong>PICK [Name]</strong> to make picks, <strong>STATUS</strong> to check your current pick, and <strong>TEAM</strong> to see your roster — all from your phone.`)}
         <p style="color: #8A7654; font-size: 14px; margin: 16px 0 8px 0;">Text us at:</p>
         <div style="font-family: -apple-system, sans-serif; font-size: 28px; font-weight: 700; color: #A52A2A; letter-spacing: 2px;">(918) 505-7435</div>
@@ -222,10 +278,10 @@ function leagueCreatedEmailTemplate(data: LeagueCreatedEmailData): string {
     ${divider()}
     ${heading('What You Can Do', 2)}
     ${paragraph('As commissioner, you can:')}
-    ${paragraph('✓ Invite 2-12 players to your league')}
-    ${paragraph('✓ Set an optional league donation amount')}
-    ${paragraph('✓ Customize your league name and settings')}
-    ${paragraph('✓ View all league member activity')}
+    ${paragraph('- Invite 2-12 players to your league')}
+    ${paragraph('- Set an optional league donation amount')}
+    ${paragraph('- Customize your league name and settings')}
+    ${paragraph('- View all league member activity')}
     ${card(`
       ${heading('Key Dates', 2)}
       ${paragraph(`<strong>Registration closes:</strong> ${formatDate(data.registrationCloses, { includeTime: true })}`)}
@@ -306,7 +362,7 @@ function draftCompleteEmailTemplate(data: DraftCompleteEmailData): string {
     ${divider()}
     ${card(`
       <div style="text-align: center;">
-        <div style="font-size: 24px; margin-bottom: 8px;">📱 Pro Tip: Text Your Picks!</div>
+        <div style="font-size: 24px; margin-bottom: 8px; font-weight: 600;">Pro Tip: Text Your Picks</div>
         ${paragraph(`Make picks on the go! Text <strong>PICK ${data.castaways[0]?.name || 'Name'}</strong> to submit your weekly pick. <a href="${BASE_URL}/profile/notifications" style="color:#A52A2A; font-weight: 500;">Set up SMS now →</a>`)}
       </div>
     `)}
@@ -341,7 +397,7 @@ function autoPickAlertEmailTemplate(data: AutoPickAlertEmailData): string {
     ${button('View Your Team', `${BASE_URL}/leagues/${data.leagueId}/team`)}
     ${card(`
       <div style="text-align: center;">
-        <div style="font-size: 24px; margin-bottom: 8px;">📱 Never Miss a Pick Again!</div>
+        <div style="font-size: 24px; margin-bottom: 8px; font-weight: 600;">Never Miss a Pick Again</div>
         ${paragraph(`Set up SMS to make picks on the go. Just text <strong>PICK [Name]</strong> from anywhere!`)}
         ${button('Set Up SMS', `${BASE_URL}/profile/notifications`, 'success')}
       </div>
@@ -436,64 +492,40 @@ function pickFinalWarningEmailTemplate(data: PickFinalWarningEmailData): string 
 }
 
 function episodeResultsEmailTemplate(data: EpisodeResultsEmailData): string {
-  const leagueCards = data.leagues.map(league => `
-    <div style="background-color: #FBF8F3; border: 1px solid #EDE5D5; border-radius: 12px; padding: 20px; margin: 12px 0;">
-      <h3 style="margin: 0 0 12px 0; color: #A52A2A; font-family: Georgia, serif;">${league.name}</h3>
-      <div style="display: flex; justify-content: space-around; text-align: center;">
-        <div>
-          <div style="font-family: -apple-system, sans-serif; font-size: 32px; font-weight: 700; color: #A52A2A;">${league.totalPoints}</div>
-          <div style="color: #8A7654; font-size: 11px; text-transform: uppercase;">Total Points</div>
-        </div>
-        <div>
-          <div style="font-family: -apple-system, sans-serif; font-size: 32px; font-weight: 700; color: #8B6914;">#${league.rank}</div>
-          <div style="color: #8A7654; font-size: 11px; text-transform: uppercase;">Rank ${league.rankChange > 0 ? `<span style="color: #22c55e;">▲${league.rankChange}</span>` : league.rankChange < 0 ? `<span style="color: #DC2626;">▼${Math.abs(league.rankChange)}</span>` : ''}</div>
-        </div>
-        <div>
-          <div style="font-family: -apple-system, sans-serif; font-size: 32px; font-weight: 700; color: #5C1717;">${league.totalPlayers}</div>
-          <div style="color: #8A7654; font-size: 11px; text-transform: uppercase;">Players</div>
-        </div>
-      </div>
-    </div>
-  `).join('');
-
+  // SPOILER-SAFE: No scores, names, or outcomes in the email body
+  // User must click through to see results
   return emailWrapper(`
-    ${heading(`Episode ${data.episodeNumber} Results Are In!`, 1, 'gold')}
+    ${heading(`Episode ${data.episodeNumber} Results Are Ready`, 1)}
     ${paragraph(`Hey ${data.displayName},`)}
-    ${paragraph(`<em>"Come on in, guys!" The results are in...</em>`)}
+    ${paragraph(`The latest episode has been scored and your results are ready to view.`)}
     ${card(`
-      <p style="color: #8A7654; margin: 0 0 4px 0; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; text-align: center;">Your Pick</p>
-      <div style="font-family: Georgia, serif; font-size: 24px; font-weight: 700; color: #5C1717; margin-bottom: 12px; text-align: center;">${data.castawayName}</div>
-      <div style="font-family: -apple-system, sans-serif; font-size: 52px; font-weight: 700; color: #8B6914; text-align: center;">+${data.pointsEarned}</div>
-      <p style="color: #8A7654; margin: 4px 0 0 0; font-size: 13px; text-align: center;">Points This Episode</p>
-    `, 'immunity')}
-    ${divider()}
-    ${heading('Your Leagues', 2, 'gold')}
-    ${leagueCards}
-    ${button('View Full Breakdown', `${BASE_URL}/dashboard`, 'gold')}
-    ${paragraph(`<em style="color: #8A7654; text-align: center; display: block;">"Worth playing for?" Absolutely. See you next week!</em>`)}
-  `, `Episode ${data.episodeNumber} results: +${data.pointsEarned} points!`);
+      <div style="text-align: center; padding: 16px;">
+        <p style="color: #92400E; margin: 0 0 12px 0; font-weight: 600; font-size: 16px;">Spoiler Warning</p>
+        <p style="color: #A16207; margin: 0 0 16px 0; font-size: 14px;">Click the button below to reveal your scores and standings. This will show episode results including eliminations and gameplay events.</p>
+        ${button('View My Results', `${BASE_URL}/dashboard`)}
+      </div>
+    `, 'warning')}
+    ${paragraph(`Not ready to see spoilers? No problem! Results will be available in your dashboard whenever you're ready.`)}
+    ${paragraph(`<em style="color: #8A7654;">The tribe has spoken.</em>`)}
+  `, `Episode ${data.episodeNumber} results are ready to view`);
 }
 
 function eliminationAlertEmailTemplate(data: EliminationAlertEmailData): string {
+  // SPOILER-SAFE: No castaway names or elimination details in the email body
+  // User must click through to see what happened
   return emailWrapper(`
-    ${heading('The Tribe Has Spoken', 1, 'error')}
+    ${heading('This Week\'s Results Are Ready', 1)}
     ${paragraph(`Hey ${data.displayName},`)}
-    ${paragraph('Bad news from the island...')}
+    ${paragraph(`There's been a change to your roster in ${highlight(data.leagueName)}. Log in to see the details.`)}
     ${card(`
-      <div style="text-align: center; padding: 20px;">
-        <div style="font-size: 64px; margin-bottom: 12px;">🔥</div>
-        <p style="font-family: Georgia, serif; color: #DC2626; font-weight: 700; font-size: 28px; margin: 16px 0 0 0;">${data.castawayName}</p>
-        <p style="color: #991B1B; margin: 8px 0 0 0; font-style: italic;">has been voted out.</p>
+      <div style="text-align: center; padding: 16px;">
+        <p style="color: #92400E; margin: 0 0 12px 0; font-weight: 600; font-size: 16px;">Spoiler Warning</p>
+        <p style="color: #A16207; margin: 0 0 16px 0; font-size: 14px;">Click the button below to see this week's results, including any roster changes and what it means for your team.</p>
+        ${button('View Results', `${BASE_URL}/leagues/${data.leagueId}/team`)}
       </div>
-    `, 'error')}
-    ${card(`
-      ${heading('What This Means', 2)}
-      ${paragraph(`${data.castawayName} is no longer earning points for you in ${highlight(data.leagueName)}. You'll continue with your remaining castaway.`)}
-      ${paragraph('Each week, choose wisely from whoever is left on your roster!')}
-    `)}
-    ${button('View Your Team', `${BASE_URL}/leagues/${data.leagueId}/team`)}
-    ${paragraph(`<em style="color: #8A7654; text-align: center; display: block;">"The game is afoot." Don't give up!</em>`)}
-  `, `${data.castawayName} has been eliminated`, 'tribal_council');
+    `, 'warning')}
+    ${paragraph(`Not ready to see spoilers? No problem! Your results will be available whenever you're ready.`)}
+  `, `This week's results are ready`);
 }
 
 function paymentRecoveryEmailTemplate(data: PaymentRecoveryEmailData): string {
@@ -503,7 +535,6 @@ function paymentRecoveryEmailTemplate(data: PaymentRecoveryEmailData): string {
     ${paragraph(`Your payment for ${highlight(data.leagueName)} wasn't completed. No worries — you can try again anytime!`)}
     ${card(`
       <div style="text-align: center;">
-        <div style="font-size: 48px; margin-bottom: 12px;">💳</div>
         <p style="color: #8A7654; margin: 0 0 8px 0; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">League Entry Fee</p>
         <div style="font-family: -apple-system, sans-serif; font-size: 36px; font-weight: 700; color: #A52A2A;">$${data.amount.toFixed(2)}</div>
         <p style="color: #5C1717; font-size: 14px; margin: 8px 0 0 0;">${data.leagueName}</p>
@@ -513,9 +544,9 @@ function paymentRecoveryEmailTemplate(data: PaymentRecoveryEmailData): string {
     ${card(`
       ${heading('What Happened?', 2)}
       ${paragraph('Your checkout session expired or the payment was not completed. This can happen if:')}
-      ${paragraph('• You closed the payment page before completing')}
-      ${paragraph('• Your card was declined')}
-      ${paragraph('• The session timed out')}
+      ${paragraph('- You closed the payment page before completing')}
+      ${paragraph('- Your card was declined')}
+      ${paragraph('- The session timed out')}
       ${paragraph(`<strong>Don't worry</strong> — just click the button above to try again!`)}
     `)}
     ${paragraph(`<p style="color: #8A7654; font-size: 14px; text-align: center;">Need help? Reply to this email or contact us at support@realitygamesfantasyleague.com</p>`)}
@@ -523,39 +554,26 @@ function paymentRecoveryEmailTemplate(data: PaymentRecoveryEmailData): string {
 }
 
 function torchSnuffedEmailTemplate(data: TorchSnuffedEmailData): string {
+  // SPOILER-SAFE: No details about what happened - just a generic "results ready" message
+  // User must click through to see the full details
   return emailWrapper(`
-    ${heading('Your Torch Has Been Snuffed', 1, 'error')}
+    ${heading('This Week\'s Results Are Ready')}
     ${paragraph(`Hey ${data.displayName},`)}
-    ${paragraph('The tribe has spoken.')}
+    ${paragraph(`There's an important update about your status in ${highlight(data.leagueName)}. Log in to see the details.`)}
     ${card(`
-      <div style="text-align: center; padding: 20px;">
-        <div style="font-size: 64px; margin-bottom: 16px;">🔥</div>
-        <p style="font-family: Georgia, serif; color: #DC2626; font-weight: 700; font-size: 24px; margin: 16px 0 8px 0;">Both your castaways have been eliminated</p>
-        <p style="color: #991B1B; margin: 8px 0 0 0; font-style: italic; font-size: 16px;">You can no longer compete in ${data.leagueName}</p>
+      <div style="text-align: center; padding: 16px;">
+        <p style="color: #92400E; margin: 0 0 12px 0; font-weight: 600; font-size: 16px;">Spoiler Warning</p>
+        <p style="color: #A16207; margin: 0 0 16px 0; font-size: 14px;">Click the button below to see this week's results and what they mean for your team.</p>
+        ${button('View Results', `${BASE_URL}/leagues/${data.leagueId}`)}
       </div>
-    `, 'error')}
-    ${card(`
-      ${heading('What This Means', 2)}
-      ${paragraph(`Both castaways on your roster have been voted out. With no active players remaining, you cannot make picks for Episode ${data.episodeNumber} or future episodes this season.`)}
-      ${paragraph('You can still:')}
-      ${paragraph('✓ Watch the leaderboard and standings')}
-      ${paragraph('✓ Participate in league chat and discussions')}
-      ${paragraph('✓ Join other leagues for the season (if spots are available)')}
-    `)}
-    ${button('View League Standings', `${BASE_URL}/leagues/${data.leagueId}/standings`)}
-    ${card(`
-      <div style="text-align: center;">
-        <div style="font-size: 20px; margin-bottom: 12px;">📺 Keep Watching!</div>
-        ${paragraph('Even though your game is over, you can still follow along as the season unfolds. Better luck next season!')}
-      </div>
-    `)}
-    ${paragraph(`<em style="color: #8A7654; text-align: center; display: block;">"The tribe has spoken."</em>`)}
-  `, `Your torch has been snuffed in ${data.leagueName}`);
+    `, 'warning')}
+    ${paragraph(`Not ready to see spoilers? No problem! Your results will be available whenever you're ready.`)}
+  `, `This week's results are ready`);
 }
 
 function triviaWelcomeEmailTemplate({ displayName }: TriviaWelcomeEmailData): string {
   return emailWrapper(`
-    ${heading('Welcome, Survivor Fan! 🏝️')}
+    ${heading('Welcome, Survivor Fan')}
     ${paragraph(`Hey ${displayName},`)}
     ${paragraph(`Thanks for playing our Survivor trivia! You clearly know your stuff. Now it's time to put that knowledge to the test in our fantasy leagues.`)}
     ${divider()}
@@ -570,14 +588,168 @@ function triviaWelcomeEmailTemplate({ displayName }: TriviaWelcomeEmailData): st
     ${divider()}
     ${card(`
       <div style="text-align: center;">
-        <div style="font-size: 32px; margin-bottom: 8px;">🏆</div>
-        ${heading('Season 50 is Coming!', 2)}
+        ${heading('Season 50 is Coming', 2)}
         ${paragraph(`Join Season 50: In the Hands of the Fans and compete with other superfans. Draft your team, make strategic picks, and prove you're the ultimate Survivor expert.`)}
       </div>
     `)}
     ${paragraph(`Want to learn more? Check out our <a href="${BASE_URL}/how-to-play" style="color:#A52A2A; font-weight: 500;">How to Play</a> guide.`)}
     ${paragraph(`<em style="color: #8A7654;">Outwit. Outplay. Outlast.</em>`)}
   `, 'Welcome to Reality Games: Survivor');
+}
+
+// ============================================
+// NEW LIFECYCLE EMAIL TEMPLATES
+// ============================================
+
+function triviaProgressEmailTemplate(data: TriviaProgressEmailData): string {
+  const percentComplete = Math.round((data.questionsAnswered / data.totalQuestions) * 100);
+  const accuracy = data.questionsAnswered > 0 
+    ? Math.round((data.questionsCorrect / data.questionsAnswered) * 100) 
+    : 0;
+  
+  return emailWrapper(`
+    ${heading('Keep Going - You\'re Doing Great')}
+    ${paragraph(`Hey ${data.displayName},`)}
+    ${paragraph(`You've been crushing our Survivor trivia! Here's how you're doing:`)}
+    <div style="text-align: center; margin: 24px 0;">
+      ${statBox(`${percentComplete}%`, 'Complete')}
+      ${statBox(`${accuracy}%`, 'Accuracy')}
+      ${statBox(`${data.questionsCorrect}`, 'Correct')}
+    </div>
+    ${card(`
+      ${paragraph(`You've answered ${data.questionsAnswered} of ${data.totalQuestions} questions. ${data.totalQuestions - data.questionsAnswered} more to go!`)}
+      ${paragraph(`Complete all questions correctly to earn your spot on the leaderboard and show off your Survivor expertise.`)}
+    `)}
+    ${button('Continue Trivia', `${BASE_URL}/trivia`)}
+    ${paragraph(`<em style="color: #8A7654;">The tribe is watching. Keep it up!</em>`)}
+  `, 'Your trivia progress');
+}
+
+function joinLeagueNudgeEmailTemplate(data: JoinLeagueNudgeEmailData): string {
+  return emailWrapper(`
+    ${heading('Ready to Play?')}
+    ${paragraph(`Hey ${data.displayName},`)}
+    ${paragraph(`You signed up ${data.daysSinceSignup} days ago but haven't joined a league yet. The fun is just getting started!`)}
+    ${card(`
+      <div style="text-align: center;">
+        ${heading(`${data.seasonName} Awaits`, 2)}
+        ${paragraph(`The premiere is ${formatDate(data.premiereDate)}. Join a league now to draft your team and compete with other Survivor superfans.`)}
+      </div>
+    `)}
+    ${divider()}
+    ${heading('Three Ways to Play', 2)}
+    ${paragraph(`<strong>1. Create a Private League</strong> — Invite friends and family to compete together`)}
+    ${paragraph(`<strong>2. Join a Public League</strong> — Match up with other fans looking for a league`)}
+    ${paragraph(`<strong>3. Global Rankings</strong> — Already enrolled! Compete against all players worldwide`)}
+    ${button('Find a League', `${BASE_URL}/leagues/browse`)}
+    ${paragraph(`<em style="color: #8A7654;">Don't miss out on the season!</em>`)}
+  `, 'Join a league before the season starts');
+}
+
+function preSeasonHypeEmailTemplate(data: PreSeasonHypeEmailData): string {
+  const hasLeagueContent = data.hasLeague
+    ? `You're all set in ${highlight(data.leagueName || 'your league')}. Make sure your draft rankings are ready!`
+    : `You haven't joined a league yet. There's still time to find one and get in on the action.`;
+
+  return emailWrapper(`
+    ${heading(`${data.daysUntilPremiere} Days Until the Premiere`)}
+    ${paragraph(`Hey ${data.displayName},`)}
+    ${paragraph(`${data.seasonName} kicks off in just ${data.daysUntilPremiere} days! Are you ready?`)}
+    ${card(`
+      <div style="text-align: center;">
+        <div style="font-family: Georgia, serif; font-size: 48px; font-weight: 700; color: #A52A2A;">${data.daysUntilPremiere}</div>
+        <p style="color: #8A7654; margin: 4px 0 0 0; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">Days to Go</p>
+      </div>
+    `, 'immunity')}
+    ${paragraph(hasLeagueContent)}
+    ${data.hasLeague
+      ? button('Check Your Rankings', `${BASE_URL}/dashboard`)
+      : button('Join a League Now', `${BASE_URL}/leagues/browse`)
+    }
+    ${divider()}
+    ${card(`
+      ${heading('Pre-Season Checklist', 2)}
+      ${paragraph(`- ${data.hasLeague ? 'League joined' : 'Join a league'}`)}
+      ${paragraph('- Rank all 24 castaways before the draft deadline')}
+      ${paragraph('- Review the scoring rules')}
+      ${paragraph('- Set up SMS for easy picks (optional)')}
+    `)}
+    ${paragraph(`<em style="color: #8A7654;">Outwit. Outplay. Outlast.</em>`)}
+  `, `${data.daysUntilPremiere} days until Season ${data.seasonNumber}`);
+}
+
+function postSeasonWrapUpEmailTemplate(data: PostSeasonWrapUpEmailData): string {
+  return emailWrapper(`
+    ${heading('Season Complete - Thanks for Playing')}
+    ${paragraph(`Hey ${data.displayName},`)}
+    ${paragraph(`${data.seasonName} has come to an end. ${data.winnerName} took home the title of Sole Survivor!`)}
+    ${card(`
+      ${heading('Your Season Stats', 2)}
+      <div style="text-align: center; margin: 16px 0;">
+        ${statBox(data.totalPoints, 'Total Points', 'gold')}
+        ${statBox(`#${data.bestRank}`, 'Best Rank', 'burgundy')}
+        ${statBox(data.leaguesPlayed, 'Leagues', 'dark')}
+      </div>
+    `, 'immunity')}
+    ${paragraph(`Thanks for being part of Reality Games Fantasy League this season. We hope you had a blast competing!`)}
+    ${divider()}
+    ${card(`
+      ${heading('What\'s Next', 2)}
+      ${paragraph(`Stay tuned for the next season of Survivor. We'll let you know when registration opens so you can defend your title — or seek redemption!`)}
+      ${paragraph(`In the meantime, challenge your friends to our Survivor trivia and keep your knowledge sharp.`)}
+    `)}
+    ${button('Play Trivia', `${BASE_URL}/trivia`)}
+    ${paragraph(`<em style="color: #8A7654;">See you next season!</em>`)}
+  `, `Season wrap-up: ${data.seasonName}`);
+}
+
+function privateLeagueWelcomeEmailTemplate(data: PrivateLeagueWelcomeEmailData): string {
+  return emailWrapper(`
+    ${heading('Welcome to ' + data.leagueName)}
+    ${paragraph(`Hey ${data.displayName},`)}
+    ${paragraph(`You've joined a private league created by ${highlight(data.commissionerName)} for ${data.seasonName}. This is going to be fun!`)}
+    ${card(`
+      <div style="text-align: center;">
+        <div style="font-family: -apple-system, sans-serif; font-size: 48px; font-weight: 700; color: #A52A2A;">${data.memberCount}<span style="color: #8A7654; font-size: 24px;">/${data.maxMembers}</span></div>
+        <p style="color: #8A7654; margin: 4px 0 0 0; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">Players Joined</p>
+      </div>
+    `)}
+    ${button('View League', `${BASE_URL}/leagues/${data.leagueId}`)}
+    ${divider()}
+    ${heading('What to Do Now', 2)}
+    ${paragraph(`<strong>1. Complete your draft rankings</strong> — Rank all 24 castaways from best to worst. This determines who you draft.`)}
+    ${paragraph(`<strong>2. Invite others</strong> — Share the league with friends who might want to join.`)}
+    ${paragraph(`<strong>3. Trash talk</strong> — Head to the league chat and let your competitors know you mean business.`)}
+    ${card(`
+      ${heading('About Private Leagues', 2)}
+      ${paragraph(`Unlike the global rankings, private leagues let you compete directly with people you know. Same scoring, same rules — just a more personal competition.`)}
+    `)}
+    ${paragraph(`<em style="color: #8A7654;">May the best fan win!</em>`)}
+  `, `You've joined ${data.leagueName}`);
+}
+
+function inactivityReminderEmailTemplate(data: InactivityReminderEmailData): string {
+  return emailWrapper(`
+    ${heading('We Miss You')}
+    ${paragraph(`Hey ${data.displayName},`)}
+    ${paragraph(`It's been ${data.daysSinceLastActivity} days since we last saw you. The game is still going and your team needs you!`)}
+    ${data.missedEpisodes > 0 ? card(`
+      <div style="text-align: center;">
+        <div style="font-family: -apple-system, sans-serif; font-size: 36px; font-weight: 700; color: #DC2626;">${data.missedEpisodes}</div>
+        <p style="color: #991B1B; margin: 4px 0 0 0; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">Episodes Missed</p>
+      </div>
+      ${paragraph(`You've missed ${data.missedEpisodes} episode${data.missedEpisodes > 1 ? 's' : ''} worth of picks. Auto-picks were applied, but you'd probably do better choosing yourself!`)}
+    `, 'warning') : ''}
+    ${button('Get Back in the Game', `${BASE_URL}/dashboard`)}
+    ${divider()}
+    ${card(`
+      ${heading('Quick Catch-Up', 2)}
+      ${paragraph('- Check your current standings in each league')}
+      ${paragraph('- Review your roster and see who\'s still in the game')}
+      ${paragraph('- Make your pick for the next episode')}
+    `)}
+    ${paragraph(`<em style="color: #8A7654;">Your tribe awaits!</em>`)}
+  `, 'Your fantasy team needs you');
 }
 
 // ============================================
@@ -590,7 +762,7 @@ export class EmailService {
     const html = welcomeEmailTemplate(data);
     return sendEmail({
       to: data.email,
-      subject: '🏝️ Welcome to Reality Games: Survivor!',
+      subject: 'Welcome to Reality Games: Survivor',
       html,
     });
   }
@@ -600,7 +772,7 @@ export class EmailService {
     const html = triviaWelcomeEmailTemplate(data);
     return sendEmail({
       to: data.email,
-      subject: '🏝️ Welcome, Survivor Fan! Here\'s How to Play',
+      subject: 'Welcome, Survivor Fan - Here\'s How to Play',
       html,
     });
   }
@@ -610,7 +782,7 @@ export class EmailService {
     const html = leagueCreatedEmailTemplate(data);
     return sendEmail({
       to: data.email,
-      subject: `🏝️ Your league "${data.leagueName}" is ready!`,
+      subject: `Your league "${data.leagueName}" is ready`,
       html,
     });
   }
@@ -620,7 +792,7 @@ export class EmailService {
     const html = leagueJoinedEmailTemplate(data);
     return sendEmailCritical({
       to: data.email,
-      subject: `🏝️ You've joined ${data.leagueName}!`,
+      subject: `You've joined ${data.leagueName}`,
       html,
     });
   }
@@ -630,7 +802,7 @@ export class EmailService {
     const html = draftPickConfirmedEmailTemplate(data);
     return sendEmailCritical({
       to: data.email,
-      subject: `🏝️ Draft Pick: ${data.castawayName}`,
+      subject: `Draft Pick: ${data.castawayName}`,
       html,
     });
   }
@@ -640,7 +812,7 @@ export class EmailService {
     const html = draftCompleteEmailTemplate(data);
     return sendEmail({
       to: data.email,
-      subject: `🏝️ Your team is set for ${data.leagueName}!`,
+      subject: `Your team is set for ${data.leagueName}`,
       html,
     });
   }
@@ -650,7 +822,7 @@ export class EmailService {
     const html = pickConfirmedEmailTemplate(data);
     return sendEmailCritical({
       to: data.email,
-      subject: `🏝️ Pick confirmed: ${data.castawayName}`,
+      subject: `Pick confirmed: ${data.castawayName}`,
       html,
     });
   }
@@ -660,7 +832,7 @@ export class EmailService {
     const html = autoPickAlertEmailTemplate(data);
     return sendEmail({
       to: data.email,
-      subject: `⚠️ Auto-pick applied: ${data.castawayName}`,
+      subject: `Auto-pick applied: ${data.castawayName}`,
       html,
     });
   }
@@ -670,7 +842,7 @@ export class EmailService {
     const html = paymentConfirmedEmailTemplate(data);
     return sendEmailCritical({
       to: data.email,
-      subject: `✅ Payment received - ${data.leagueName}`,
+      subject: `Payment received - ${data.leagueName}`,
       html,
     });
   }
@@ -680,7 +852,7 @@ export class EmailService {
     const html = draftReminderEmailTemplate(data);
     const result = await enqueueEmail({
       to: data.email,
-      subject: `⏰ ${data.daysRemaining} days left to complete your draft`,
+      subject: `${data.daysRemaining} days left to complete your draft`,
       html,
       type: 'normal',
     });
@@ -692,7 +864,7 @@ export class EmailService {
     const html = draftFinalWarningEmailTemplate(data);
     const result = await enqueueEmail({
       to: data.email,
-      subject: `🚨 URGENT: ${data.hoursRemaining} hours to complete rankings!`,
+      subject: `URGENT: ${data.hoursRemaining} hours to complete rankings`,
       html,
       type: 'normal',
     });
@@ -704,7 +876,7 @@ export class EmailService {
     const html = pickReminderEmailTemplate(data);
     const result = await enqueueEmail({
       to: data.email,
-      subject: `⏰ ${data.hoursRemaining} hours to make your pick`,
+      subject: `${data.hoursRemaining} hours to make your pick`,
       html,
       type: 'normal',
     });
@@ -716,31 +888,31 @@ export class EmailService {
     const html = pickFinalWarningEmailTemplate(data);
     const result = await enqueueEmail({
       to: data.email,
-      subject: `🚨 PICKS LOCK IN ${data.minutesRemaining} MINUTES!`,
+      subject: `PICKS LOCK IN ${data.minutesRemaining} MINUTES`,
       html,
       type: 'normal',
     });
     return result !== null;
   }
 
-  // Send episode results (enqueued for background delivery)
+  // Send episode results - SPOILER-SAFE subject (doesn't reveal points in subject)
   static async sendEpisodeResults(data: EpisodeResultsEmailData): Promise<boolean> {
     const html = episodeResultsEmailTemplate(data);
     const result = await enqueueEmail({
       to: data.email,
-      subject: `🏆 Episode ${data.episodeNumber} Results: +${data.pointsEarned} points!`,
+      subject: `Episode ${data.episodeNumber} results are ready`,
       html,
       type: 'normal',
     });
     return result !== null;
   }
 
-  // Send elimination alert (enqueued for background delivery)
+  // Send elimination alert - SPOILER-SAFE version (doesn't reveal who was eliminated)
   static async sendEliminationAlert(data: EliminationAlertEmailData): Promise<boolean> {
     const html = eliminationAlertEmailTemplate(data);
     const result = await enqueueEmail({
       to: data.email,
-      subject: `😢 ${data.castawayName} has been eliminated`,
+      subject: `This week's results are ready - ${data.leagueName}`,
       html,
       type: 'normal',
     });
@@ -752,21 +924,95 @@ export class EmailService {
     const html = paymentRecoveryEmailTemplate(data);
     const result = await enqueueEmail({
       to: data.email,
-      subject: `💳 Complete your payment for ${data.leagueName}`,
+      subject: `Complete your payment for ${data.leagueName}`,
       html,
       type: 'normal',
     });
     return result !== null;
   }
 
-  // Send torch snuffed notification when user has no active castaways (CRITICAL - uses retry logic)
+  // Send torch snuffed notification - SPOILER-SAFE version (doesn't reveal details)
   static async sendTorchSnuffed(data: TorchSnuffedEmailData): Promise<boolean> {
     const html = torchSnuffedEmailTemplate(data);
     return sendEmailCritical({
       to: data.email,
-      subject: `🔥 Your torch has been snuffed in ${data.leagueName}`,
+      subject: `This week's results are ready - ${data.leagueName}`,
       html,
     });
+  }
+
+  // ============================================
+  // NEW LIFECYCLE EMAILS
+  // ============================================
+
+  // Send trivia progress encouragement email
+  static async sendTriviaProgress(data: TriviaProgressEmailData): Promise<boolean> {
+    const html = triviaProgressEmailTemplate(data);
+    const result = await enqueueEmail({
+      to: data.email,
+      subject: 'Keep going - you\'re doing great',
+      html,
+      type: 'normal',
+    });
+    return result !== null;
+  }
+
+  // Send nudge to join a league (for users who signed up but haven't joined)
+  static async sendJoinLeagueNudge(data: JoinLeagueNudgeEmailData): Promise<boolean> {
+    const html = joinLeagueNudgeEmailTemplate(data);
+    const result = await enqueueEmail({
+      to: data.email,
+      subject: 'Ready to play? Join a league before the season starts',
+      html,
+      type: 'normal',
+    });
+    return result !== null;
+  }
+
+  // Send pre-season hype/reminder email
+  static async sendPreSeasonHype(data: PreSeasonHypeEmailData): Promise<boolean> {
+    const html = preSeasonHypeEmailTemplate(data);
+    const result = await enqueueEmail({
+      to: data.email,
+      subject: `${data.daysUntilPremiere} days until Season ${data.seasonNumber} premieres`,
+      html,
+      type: 'normal',
+    });
+    return result !== null;
+  }
+
+  // Send post-season wrap-up email
+  static async sendPostSeasonWrapUp(data: PostSeasonWrapUpEmailData): Promise<boolean> {
+    const html = postSeasonWrapUpEmailTemplate(data);
+    const result = await enqueueEmail({
+      to: data.email,
+      subject: `Season complete - thanks for playing ${data.seasonName}`,
+      html,
+      type: 'normal',
+    });
+    return result !== null;
+  }
+
+  // Send private league welcome email (different from global league join)
+  static async sendPrivateLeagueWelcome(data: PrivateLeagueWelcomeEmailData): Promise<boolean> {
+    const html = privateLeagueWelcomeEmailTemplate(data);
+    return sendEmailCritical({
+      to: data.email,
+      subject: `Welcome to ${data.leagueName}`,
+      html,
+    });
+  }
+
+  // Send inactivity reminder to bring users back
+  static async sendInactivityReminder(data: InactivityReminderEmailData): Promise<boolean> {
+    const html = inactivityReminderEmailTemplate(data);
+    const result = await enqueueEmail({
+      to: data.email,
+      subject: 'We miss you - your fantasy team needs you',
+      html,
+      type: 'normal',
+    });
+    return result !== null;
   }
 
   // Log email to notifications table

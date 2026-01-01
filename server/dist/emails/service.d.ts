@@ -136,6 +136,55 @@ interface TriviaWelcomeEmailData {
     displayName: string;
     email: string;
 }
+interface TriviaProgressEmailData {
+    displayName: string;
+    email: string;
+    questionsAnswered: number;
+    questionsCorrect: number;
+    totalQuestions: number;
+}
+interface JoinLeagueNudgeEmailData {
+    displayName: string;
+    email: string;
+    daysSinceSignup: number;
+    seasonName: string;
+    premiereDate: Date;
+}
+interface PreSeasonHypeEmailData {
+    displayName: string;
+    email: string;
+    seasonName: string;
+    seasonNumber: number;
+    premiereDate: Date;
+    daysUntilPremiere: number;
+    hasLeague: boolean;
+    leagueName?: string;
+}
+interface PostSeasonWrapUpEmailData {
+    displayName: string;
+    email: string;
+    seasonName: string;
+    totalPoints: number;
+    bestRank: number;
+    leaguesPlayed: number;
+    winnerName: string;
+}
+interface PrivateLeagueWelcomeEmailData {
+    displayName: string;
+    email: string;
+    leagueName: string;
+    leagueId: string;
+    commissionerName: string;
+    seasonName: string;
+    memberCount: number;
+    maxMembers: number;
+}
+interface InactivityReminderEmailData {
+    displayName: string;
+    email: string;
+    daysSinceLastActivity: number;
+    missedEpisodes: number;
+}
 export declare class EmailService {
     static sendWelcome(data: WelcomeEmailData): Promise<boolean>;
     static sendTriviaWelcome(data: TriviaWelcomeEmailData): Promise<boolean>;
@@ -154,6 +203,12 @@ export declare class EmailService {
     static sendEliminationAlert(data: EliminationAlertEmailData): Promise<boolean>;
     static sendPaymentRecovery(data: PaymentRecoveryEmailData): Promise<boolean>;
     static sendTorchSnuffed(data: TorchSnuffedEmailData): Promise<boolean>;
+    static sendTriviaProgress(data: TriviaProgressEmailData): Promise<boolean>;
+    static sendJoinLeagueNudge(data: JoinLeagueNudgeEmailData): Promise<boolean>;
+    static sendPreSeasonHype(data: PreSeasonHypeEmailData): Promise<boolean>;
+    static sendPostSeasonWrapUp(data: PostSeasonWrapUpEmailData): Promise<boolean>;
+    static sendPrivateLeagueWelcome(data: PrivateLeagueWelcomeEmailData): Promise<boolean>;
+    static sendInactivityReminder(data: InactivityReminderEmailData): Promise<boolean>;
     static logNotification(userId: string, type: 'email' | 'sms' | 'push', subject: string, body: string): Promise<void>;
 }
 export default EmailService;
