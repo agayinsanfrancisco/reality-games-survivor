@@ -56,7 +56,7 @@ type Priority = 'low' | 'medium' | 'high' | 'urgent';
 interface Announcement {
   id: string;
   title: string;
-  content: string;
+  body: string;
   priority: Priority;
   is_active: boolean;
   created_at: string;
@@ -66,7 +66,7 @@ interface Announcement {
 
 interface AnnouncementForm {
   title: string;
-  content: string;
+  body: string;
   priority: Priority;
   is_active: boolean;
   expires_at: string;
@@ -104,7 +104,7 @@ export function AdminAnnouncements() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<AnnouncementForm>({
     title: '',
-    content: '',
+    body: '',
     priority: 'medium',
     is_active: true,
     expires_at: '',
@@ -186,7 +186,7 @@ export function AdminAnnouncements() {
   const resetForm = () => {
     setForm({
       title: '',
-      content: '',
+      body: '',
       priority: 'medium',
       is_active: true,
       expires_at: '',
@@ -197,7 +197,7 @@ export function AdminAnnouncements() {
     setEditingId(announcement.id);
     setForm({
       title: announcement.title,
-      content: announcement.content,
+      body: announcement.body,
       priority: announcement.priority,
       is_active: announcement.is_active,
       expires_at: announcement.expires_at
@@ -210,8 +210,8 @@ export function AdminAnnouncements() {
     e.preventDefault();
     setError(null);
 
-    if (!form.title.trim() || !form.content.trim()) {
-      setError('Title and content are required');
+    if (!form.title.trim() || !form.body.trim()) {
+      setError('Title and body are required');
       return;
     }
 
@@ -298,13 +298,13 @@ export function AdminAnnouncements() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Content *</label>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Body *</label>
                 <textarea
-                  value={form.content}
-                  onChange={(e) => setForm({ ...form, content: e.target.value })}
+                  value={form.body}
+                  onChange={(e) => setForm({ ...form, body: e.target.value })}
                   rows={3}
                   className="w-full px-4 py-2 border border-cream-200 rounded-lg focus:ring-2 focus:ring-burgundy-500 focus:border-burgundy-500"
-                  placeholder="Announcement content..."
+                  placeholder="Announcement body..."
                 />
               </div>
 
@@ -434,7 +434,7 @@ export function AdminAnnouncements() {
                       </div>
 
                       <h3 className="font-semibold text-neutral-800 mb-1">{announcement.title}</h3>
-                      <p className="text-neutral-600 text-sm mb-3">{announcement.content}</p>
+                      <p className="text-neutral-600 text-sm mb-3">{announcement.body}</p>
 
                       <div className="flex items-center gap-4 text-xs text-neutral-400">
                         <span>

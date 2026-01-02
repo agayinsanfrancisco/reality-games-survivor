@@ -12,27 +12,34 @@ const router = Router();
 interface Announcement {
   id: string;
   title: string;
-  content: string;
+  body: string;
+  type: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   is_active: boolean;
-  created_at: string;
+  starts_at: string | null;
   expires_at: string | null;
   created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface CreateAnnouncementBody {
   title: string;
-  content: string;
+  body: string;
+  type?: string;
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   is_active?: boolean;
+  starts_at?: string | null;
   expires_at?: string | null;
 }
 
 interface UpdateAnnouncementBody {
   title?: string;
-  content?: string;
+  body?: string;
+  type?: string;
   priority?: 'low' | 'medium' | 'high' | 'urgent';
   is_active?: boolean;
+  starts_at?: string | null;
   expires_at?: string | null;
 }
 
@@ -144,28 +151,30 @@ router.get('/:id', async (req: Request, res: Response) => {
  */
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const body = req.body as CreateAnnouncementBody;
+    const reqBody = req.body as CreateAnnouncementBody;
     const userId = (req as any).user?.id;
 
     // Validate required fields
-    if (!body.title || !body.content) {
-      return res.status(400).json({ error: 'Title and content are required' });
+    if (!reqBody.title || !reqBody.body) {
+      return res.status(400).json({ error: 'Title and body are required' });
     }
 
     // Validate priority if provided
     const validPriorities = ['low', 'medium', 'high', 'urgent'];
-    if (body.priority && !validPriorities.includes(body.priority)) {
+    if (reqBody.priority && !validPriorities.includes(reqBody.priority)) {
       return res.status(400).json({ error: 'Invalid priority. Must be: low, medium, high, or urgent' });
     }
 
     const { data, error } = await supabaseAdmin
       .from('announcements')
       .insert({
-        title: body.title,
-        content: body.content,
-        priority: body.priority || 'medium',
-        is_active: body.is_active !== false, // Default to true
-        expires_at: body.expires_at || null,
+        title: reqBody.title,
+        body: reqBody.body,
+        type: reqBody.type || 'info',
+        priority: reqBody.priority || 'medium',
+        is_active: reqBody.is_active !== false, // Default to true
+        starts_at: reqBody.starts_at || null,
+        expires_at: reqBody.expires_at || null,
         created_by: userId,
       })
       .select()
@@ -190,21 +199,23 @@ router.post('/', async (req: Request, res: Response) => {
 router.patch('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const body = req.body as UpdateAnnouncementBody;
+    const reqBody = req.body as UpdateAnnouncementBody;
 
     // Validate priority if provided
     const validPriorities = ['low', 'medium', 'high', 'urgent'];
-    if (body.priority && !validPriorities.includes(body.priority)) {
+    if (reqBody.priority && !validPriorities.includes(reqBody.priority)) {
       return res.status(400).json({ error: 'Invalid priority. Must be: low, medium, high, or urgent' });
     }
 
     // Build update object with only provided fields
     const updateData: Record<string, any> = {};
-    if (body.title !== undefined) updateData.title = body.title;
-    if (body.content !== undefined) updateData.content = body.content;
-    if (body.priority !== undefined) updateData.priority = body.priority;
-    if (body.is_active !== undefined) updateData.is_active = body.is_active;
-    if (body.expires_at !== undefined) updateData.expires_at = body.expires_at;
+    if (reqBody.title !== undefined) updateData.title = reqBody.title;
+    if (reqBody.body !== undefined) updateData.body = reqBody.body;
+    if (reqBody.type !== undefined) updateData.type = reqBody.type;
+    if (reqBody.priority !== undefined) updateData.priority = reqBody.priority;
+    if (reqBody.is_active !== undefined) updateData.is_active = reqBody.is_active;
+    if (reqBody.starts_at !== undefined) updateData.starts_at = reqBody.starts_at;
+    if (reqBody.expires_at !== undefined) updateData.expires_at = reqBody.expires_at;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
