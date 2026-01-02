@@ -242,11 +242,14 @@ export function QuickActionsBar() {
           Force Refresh
         </button>
 
-        {/* Send Blast (placeholder) */}
-        <button className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm bg-neutral-700 hover:bg-neutral-600 text-white transition-colors">
+        {/* Send Blast - Links to announcements page for now */}
+        <a
+          href="/admin/announcements"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm bg-neutral-700 hover:bg-neutral-600 text-white transition-colors"
+        >
           <Bell className="h-4 w-4" />
           Send Blast
-        </button>
+        </a>
 
         {/* Emergency Shutoff */}
         {!showEmergencyConfirm ? (
