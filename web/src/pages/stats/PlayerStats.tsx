@@ -40,6 +40,7 @@ export function PlayerStats() {
     luckiestPlayer,
     unluckiestPlayer,
     curseCarrier,
+    benchwarmerRegret,
     isLoading,
     error,
   } = usePlayerStats();
@@ -207,7 +208,13 @@ export function PlayerStats() {
               icon={<Armchair className="h-5 w-5" />}
             >
               <HorizontalBarChart
-                data={[]}
+                data={
+                  benchwarmerRegret?.leaderboard?.map((e) => ({
+                    label: e.display_name,
+                    value: e.bench_points,
+                    sublabel: `${e.bench_points} pts wasted`,
+                  })) || []
+                }
                 colorScale="red"
                 emptyMessage="Data available after more episodes"
               />

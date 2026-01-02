@@ -140,6 +140,16 @@ interface CurseCarrierResponse {
   leaderboard: CurseCarrierEntry[];
 }
 
+interface BenchwarmerRegretEntry {
+  user_id: string;
+  display_name: string;
+  bench_points: number;
+}
+
+interface BenchwarmerRegretResponse {
+  leaderboard: BenchwarmerRegretEntry[];
+}
+
 export function usePlayerStats() {
   // Stat 13: Most Leagues Joined
   const mostLeaguesQuery = useQuery({
@@ -264,6 +274,17 @@ export function usePlayerStats() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Stat 8: Benchwarmer Regret
+  const benchwarmerRegretQuery = useQuery({
+    queryKey: ['stats', 'benchwarmer-regret'],
+    queryFn: async () => {
+      const response = await api<{ data: BenchwarmerRegretResponse }>('/stats/benchwarmer-regret');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const isLoading =
     mostLeaguesQuery.isLoading ||
     lastMinuteLarryQuery.isLoading ||
@@ -275,7 +296,8 @@ export function usePlayerStats() {
     improvementTrendQuery.isLoading ||
     luckiestPlayerQuery.isLoading ||
     unluckiestPlayerQuery.isLoading ||
-    curseCarrierQuery.isLoading;
+    curseCarrierQuery.isLoading ||
+    benchwarmerRegretQuery.isLoading;
 
   const error =
     mostLeaguesQuery.error?.message ||
@@ -289,6 +311,7 @@ export function usePlayerStats() {
     luckiestPlayerQuery.error?.message ||
     unluckiestPlayerQuery.error?.message ||
     curseCarrierQuery.error?.message ||
+    benchwarmerRegretQuery.error?.message ||
     null;
 
   return {
@@ -303,6 +326,7 @@ export function usePlayerStats() {
     luckiestPlayer: luckiestPlayerQuery.data,
     unluckiestPlayer: unluckiestPlayerQuery.data,
     curseCarrier: curseCarrierQuery.data,
+    benchwarmerRegret: benchwarmerRegretQuery.data,
     isLoading,
     error,
   };

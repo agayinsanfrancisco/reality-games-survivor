@@ -22,8 +22,15 @@ import { StatCard, HorizontalBarChart, BarChart, InsightCard } from '@/component
 import { useLeagueStats } from '@/lib/hooks/stats';
 
 export function LeagueStats() {
-  const { leagueScoring, activityByDay, activityByHour, submissionSpeed, isLoading, error } =
-    useLeagueStats();
+  const {
+    leagueScoring,
+    activityByDay,
+    activityByHour,
+    submissionSpeed,
+    nailBiter,
+    isLoading,
+    error,
+  } = useLeagueStats();
 
   // Day name mapping
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -73,7 +80,16 @@ export function LeagueStats() {
                 subtitle="Most weeks decided by narrow margins"
                 icon={<Sparkles className="h-5 w-5" />}
               >
-                <HorizontalBarChart data={[]} emptyMessage="Data available after more episodes" />
+                <HorizontalBarChart
+                  data={
+                    nailBiter?.leaderboard?.map((l) => ({
+                      label: l.name,
+                      value: l.nail_biter_weeks,
+                      sublabel: `Closest: ${l.closest_margin} pts`,
+                    })) || []
+                  }
+                  emptyMessage="Data available after more episodes"
+                />
               </StatCard>
 
               {/* Stat 22: Highest/Lowest Scoring League */}

@@ -53,6 +53,18 @@ interface SubmissionSpeedResponse {
   leaderboard: SubmissionSpeedEntry[];
 }
 
+interface NailBiterEntry {
+  league_id: string;
+  name: string;
+  nail_biter_weeks: number;
+  total_weeks: number;
+  closest_margin: number;
+}
+
+interface NailBiterResponse {
+  leaderboard: NailBiterEntry[];
+}
+
 export function useLeagueStats() {
   // Stat 22: League Scoring
   const leagueScoringQuery = useQuery({
@@ -98,17 +110,30 @@ export function useLeagueStats() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Stat 21: Nail Biter Leagues
+  const nailBiterQuery = useQuery({
+    queryKey: ['stats', 'nail-biter-leagues'],
+    queryFn: async () => {
+      const response = await api<{ data: NailBiterResponse }>('/stats/nail-biter-leagues');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const isLoading =
     leagueScoringQuery.isLoading ||
     activityByDayQuery.isLoading ||
     activityByHourQuery.isLoading ||
-    submissionSpeedQuery.isLoading;
+    submissionSpeedQuery.isLoading ||
+    nailBiterQuery.isLoading;
 
   const error =
     leagueScoringQuery.error?.message ||
     activityByDayQuery.error?.message ||
     activityByHourQuery.error?.message ||
     submissionSpeedQuery.error?.message ||
+    nailBiterQuery.error?.message ||
     null;
 
   return {
@@ -116,6 +141,7 @@ export function useLeagueStats() {
     activityByDay: activityByDayQuery.data,
     activityByHour: activityByHourQuery.data,
     submissionSpeed: submissionSpeedQuery.data,
+    nailBiter: nailBiterQuery.data,
     isLoading,
     error,
   };
