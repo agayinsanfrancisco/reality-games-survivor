@@ -201,7 +201,7 @@ export function Navigation() {
                 {/* TRIVIA - Highlighted with animation */}
                 <Link
                   to="/trivia"
-                  className="trivia-pulse ml-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-semibold rounded-full text-sm flex items-center gap-2 hover:from-purple-600 hover:to-indigo-600 transition-all shadow-md"
+                  className="trivia-pulse ml-2 px-4 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-full text-sm flex items-center gap-2 hover:from-teal-600 hover:to-teal-700 transition-all shadow-md"
                 >
                   <Lightbulb className="w-4 h-4" />
                   Trivia
@@ -312,7 +312,7 @@ export function Navigation() {
                 <Link
                   to="/trivia"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="mx-4 mt-3 mb-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold rounded-lg flex items-center justify-center gap-2 uppercase tracking-wide"
+                  className="mx-4 mt-3 mb-2 px-4 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-bold rounded-lg flex items-center justify-center gap-2 uppercase tracking-wide"
                 >
                   <Lightbulb className="w-5 h-5" />
                   Play Trivia
