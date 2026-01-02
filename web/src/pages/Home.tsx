@@ -63,13 +63,13 @@ export function Home() {
             >
               How It Works
             </Link>
-            <Link
-              to="/trivia"
+            <a
+              href="mailto:trivia@realitygamesfantasyleague.com?subject=Sign%20Up%20for%20Trivia"
               className="bg-white hover:bg-cream-100 text-neutral-800 px-8 py-4 rounded-xl font-semibold text-lg border-2 border-cream-200 hover:border-cream-300 transition-all inline-flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <Mail className="h-5 w-5" />
               Sign Up for Trivia
-            </Link>
+            </a>
           </div>
         </div>
       </main>

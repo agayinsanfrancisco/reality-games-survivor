@@ -1,8 +1,9 @@
 /**
  * Trivia Page - 24 Questions with 24h Lockout
  *
- * Users must be logged in or submit email to play.
+ * Users must be logged in to play.
  * Shows leaderboard when user gets wrong answer or completes all 24.
+ * 24 torches light up for each correct answer.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -11,8 +12,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { Loader2, AlertCircle, Mail, LogIn, Trophy, CheckCircle, Lightbulb } from 'lucide-react';
-import { apiWithAuth, api } from '@/lib/api';
+import { Loader2, AlertCircle, Mail, LogIn, Trophy } from 'lucide-react';
+import { apiWithAuth } from '@/lib/api';
 import {
   TriviaRulesCard,
   TriviaTorchProgress,
@@ -59,16 +60,6 @@ interface ProgressData {
   lockedUntil: string | null;
   isComplete: boolean;
   daysToComplete: number | null;
-}
-
-interface TriviaQuestionWithAnswer {
-  id: string;
-  questionNumber: number;
-  question: string;
-  options: string[];
-  correctIndex: number;
-  correctAnswer: string;
-  funFact: string | null;
 }
 
 const WRONG_MESSAGES = [
@@ -148,20 +139,6 @@ export function Trivia() {
     },
     enabled: !!user && !!session?.access_token && gameStarted,
     retry: false,
-  });
-
-  // Fetch all questions (public - no auth required) for study guide
-  const { data: allQuestionsData } = useQuery<{ questions: TriviaQuestionWithAnswer[] }>({
-    queryKey: ['trivia', 'all-questions'],
-    queryFn: async () => {
-      const response = await api<{ data: { questions: TriviaQuestionWithAnswer[] } }>(
-        '/trivia/questions'
-      );
-      if (response.error) throw new Error(response.error);
-      if (!response.data?.data?.questions) throw new Error('No data returned');
-      return { questions: response.data.data.questions };
-    },
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });
 
   // Reset question state when a new question loads (but DON'T start timer yet)
@@ -382,76 +359,6 @@ export function Trivia() {
               Your progress is saved to your account so you can continue anytime.
             </p>
           </div>
-
-          {/* All Questions Section - Always expanded */}
-          {allQuestionsData?.questions && (
-            <div>
-              <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200 mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
-                    <Lightbulb className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-lg font-semibold text-neutral-800">
-                      All 24 Trivia Questions
-                    </h3>
-                    <p className="text-sm text-neutral-500">Study up before you play!</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {allQuestionsData.questions.map((q) => (
-                  <div
-                    key={q.id}
-                    className="bg-white rounded-xl shadow-sm border border-cream-200 overflow-hidden p-4"
-                  >
-                    <div className="flex items-start gap-3 mb-4">
-                      <span className="flex-shrink-0 w-8 h-8 bg-burgundy-100 text-burgundy-700 rounded-full flex items-center justify-center font-bold text-sm">
-                        {q.questionNumber}
-                      </span>
-                      <p className="text-neutral-800 font-medium flex-1">{q.question}</p>
-                    </div>
-
-                    <div className="space-y-2 mb-4 ml-11">
-                      {q.options.map((option, idx) => (
-                        <div
-                          key={idx}
-                          className={`p-3 rounded-lg flex items-center gap-2 ${
-                            idx === q.correctIndex
-                              ? 'bg-green-50 border border-green-200'
-                              : 'bg-neutral-50 border border-neutral-100'
-                          }`}
-                        >
-                          {idx === q.correctIndex && (
-                            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                          )}
-                          <span
-                            className={
-                              idx === q.correctIndex
-                                ? 'text-green-800 font-medium'
-                                : 'text-neutral-600'
-                            }
-                          >
-                            {option}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {q.funFact && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 ml-11">
-                        <div className="flex items-start gap-2">
-                          <Lightbulb className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-amber-800">{q.funFact}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </main>
         <Footer />
       </div>
@@ -558,96 +465,14 @@ export function Trivia() {
           />
         )}
 
-        {/* No Question Available - Show all questions as study guide */}
-        {gameStarted &&
-          !isLocked &&
-          !isComplete &&
-          !question &&
-          !questionLoading &&
-          allQuestionsData?.questions && (
-            <div className="space-y-4">
-              <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
-                    <Lightbulb className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-neutral-800">
-                      All 24 Trivia Questions
-                    </h3>
-                    <p className="text-sm text-neutral-500">Study up before you play!</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {allQuestionsData.questions.map((q) => (
-                  <div
-                    key={q.id}
-                    className="bg-white rounded-xl shadow-sm border border-cream-200 overflow-hidden p-4"
-                  >
-                    <div className="flex items-start gap-3 mb-4">
-                      <span className="flex-shrink-0 w-8 h-8 bg-burgundy-100 text-burgundy-700 rounded-full flex items-center justify-center font-bold text-sm">
-                        {q.questionNumber}
-                      </span>
-                      <p className="text-neutral-800 font-medium flex-1">{q.question}</p>
-                    </div>
-
-                    <div className="space-y-2 mb-4 ml-11">
-                      {q.options.map((option, idx) => (
-                        <div
-                          key={idx}
-                          className={`p-3 rounded-lg flex items-center gap-2 ${
-                            idx === q.correctIndex
-                              ? 'bg-green-50 border border-green-200'
-                              : 'bg-neutral-50 border border-neutral-100'
-                          }`}
-                        >
-                          {idx === q.correctIndex && (
-                            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                          )}
-                          <span
-                            className={
-                              idx === q.correctIndex
-                                ? 'text-green-800 font-medium'
-                                : 'text-neutral-600'
-                            }
-                          >
-                            {option}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {q.funFact && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 ml-11">
-                        <div className="flex items-start gap-2">
-                          <Lightbulb className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-amber-800">{q.funFact}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-        {/* No questions at all */}
-        {gameStarted &&
-          !isLocked &&
-          !isComplete &&
-          !question &&
-          !questionLoading &&
-          !allQuestionsData?.questions && (
-            <div className="bg-white rounded-2xl shadow-card p-12 border border-cream-200 text-center">
-              <AlertCircle className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-neutral-800 mb-2">
-                No Questions Available
-              </h3>
-              <p className="text-neutral-500">Check back later for trivia questions!</p>
-            </div>
-          )}
+        {/* No questions available */}
+        {gameStarted && !isLocked && !isComplete && !question && !questionLoading && (
+          <div className="bg-white rounded-2xl shadow-card p-12 border border-cream-200 text-center">
+            <AlertCircle className="h-12 w-12 text-neutral-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-neutral-800 mb-2">No Questions Available</h3>
+            <p className="text-neutral-500">Check back later for trivia questions!</p>
+          </div>
+        )}
 
         {/* CTA Card */}
         {!isComplete && <TriviaCTACard />}
