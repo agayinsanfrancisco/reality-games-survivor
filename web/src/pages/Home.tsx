@@ -5,19 +5,51 @@
  * Redirects logged-in users to the dashboard.
  */
 
+import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { Flame, Mail } from 'lucide-react';
+import { Flame, Mail, Loader2, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { api } from '@/lib/api';
 
 export function Home() {
   const { user, loading } = useAuth();
+  const [triviaEmail, setTriviaEmail] = useState('');
+  const [triviaSubmitting, setTriviaSubmitting] = useState(false);
+  const [triviaSuccess, setTriviaSuccess] = useState(false);
+  const [triviaError, setTriviaError] = useState('');
 
   // Redirect logged-in users to dashboard
   if (!loading && user) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  const handleTriviaSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!triviaEmail || triviaSubmitting) return;
+
+    setTriviaSubmitting(true);
+    setTriviaError('');
+
+    try {
+      const response = await api<{ success: boolean }>('/trivia/signup', {
+        method: 'POST',
+        body: JSON.stringify({ email: triviaEmail }),
+      });
+
+      if (response.error) {
+        setTriviaError(response.error);
+      } else {
+        setTriviaSuccess(true);
+        setTriviaEmail('');
+      }
+    } catch {
+      setTriviaError('Something went wrong. Please try again.');
+    } finally {
+      setTriviaSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-cream-50">
@@ -49,7 +81,7 @@ export function Home() {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-10">
             <Link
               to="/signup"
               className="bg-burgundy-600 hover:bg-burgundy-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl inline-flex items-center justify-center gap-2 w-full sm:w-auto"
@@ -63,13 +95,44 @@ export function Home() {
             >
               How It Works
             </Link>
-            <a
-              href="mailto:trivia@realitygamesfantasyleague.com?subject=Sign%20Up%20for%20Trivia"
-              className="bg-white hover:bg-cream-100 text-neutral-800 px-8 py-4 rounded-xl font-semibold text-lg border-2 border-cream-200 hover:border-cream-300 transition-all inline-flex items-center justify-center gap-2 w-full sm:w-auto"
-            >
-              <Mail className="h-5 w-5" />
-              Sign Up for Trivia
-            </a>
+          </div>
+
+          {/* Trivia Email Signup */}
+          <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200 max-w-md mx-auto">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Mail className="h-5 w-5 text-burgundy-600" />
+              <h3 className="font-semibold text-neutral-800">Sign Up for Free Trivia</h3>
+            </div>
+            <p className="text-sm text-neutral-600 mb-4">
+              Get access to our 24-question Survivor trivia challenge!
+            </p>
+
+            {triviaSuccess ? (
+              <div className="flex items-center justify-center gap-2 text-green-600 py-2">
+                <CheckCircle className="h-5 w-5" />
+                <span className="font-medium">You're signed up! Check your email.</span>
+              </div>
+            ) : (
+              <form onSubmit={handleTriviaSignup} className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="email"
+                  value={triviaEmail}
+                  onChange={(e) => setTriviaEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                  className="flex-1 px-4 py-3 rounded-lg border border-cream-200 focus:outline-none focus:ring-2 focus:ring-burgundy-500 focus:border-transparent"
+                />
+                <button
+                  type="submit"
+                  disabled={triviaSubmitting || !triviaEmail}
+                  className="bg-burgundy-600 hover:bg-burgundy-700 disabled:bg-burgundy-400 text-white px-6 py-3 rounded-lg font-semibold transition-all inline-flex items-center justify-center gap-2"
+                >
+                  {triviaSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign Up'}
+                </button>
+              </form>
+            )}
+
+            {triviaError && <p className="text-red-600 text-sm mt-2">{triviaError}</p>}
           </div>
         </div>
       </main>

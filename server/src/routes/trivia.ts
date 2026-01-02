@@ -396,4 +396,59 @@ router.get('/leaderboard', authenticate, async (req: AuthenticatedRequest, res: 
   }
 });
 
+// POST /api/trivia/signup - Sign up for trivia with email (public, no auth required)
+router.post('/signup', async (req, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || typeof email !== 'string') {
+      return sendValidationError(res, 'Email is required');
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return sendValidationError(res, 'Please enter a valid email address');
+    }
+
+    // Check if email already exists in trivia signups
+    const { data: existing } = await supabaseAdmin
+      .from('trivia_signups')
+      .select('id')
+      .eq('email', email.toLowerCase())
+      .single();
+
+    if (existing) {
+      // Already signed up - still return success to avoid leaking info
+      return sendSuccess(res, { success: true, message: 'Signed up for trivia' });
+    }
+
+    // Insert new signup
+    const { error: insertError } = await supabaseAdmin.from('trivia_signups').insert({
+      email: email.toLowerCase(),
+      signed_up_at: new Date().toISOString(),
+    });
+
+    if (insertError) {
+      console.error('Trivia signup insert error:', insertError);
+      return sendInternalError(res, 'Failed to sign up');
+    }
+
+    // Send welcome email
+    try {
+      await EmailService.sendTriviaSignupWelcome({
+        email: email.toLowerCase(),
+      });
+    } catch (emailErr) {
+      console.error('Failed to send trivia signup email:', emailErr);
+      // Don't fail the request if email fails
+    }
+
+    return sendSuccess(res, { success: true, message: 'Signed up for trivia' });
+  } catch (error) {
+    console.error('Trivia signup error:', error);
+    return sendInternalError(res, 'Failed to sign up for trivia');
+  }
+});
+
 export default router;

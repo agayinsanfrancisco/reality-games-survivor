@@ -180,6 +180,10 @@ interface TriviaProgressEmailData {
   totalQuestions: number;
 }
 
+interface TriviaSignupWelcomeEmailData {
+  email: string;
+}
+
 interface JoinLeagueNudgeEmailData {
   displayName: string;
   email: string;
@@ -597,6 +601,31 @@ function triviaWelcomeEmailTemplate({ displayName }: TriviaWelcomeEmailData): st
   `, 'Welcome to Reality Games: Survivor');
 }
 
+function triviaSignupWelcomeEmailTemplate(_data: TriviaSignupWelcomeEmailData): string {
+  return emailWrapper(`
+    ${heading('You\'re Signed Up for Survivor Trivia!')}
+    ${paragraph(`Hey Survivor Fan,`)}
+    ${paragraph(`You're now on the list for our 24-question Survivor trivia challenge! Here's what to expect:`)}
+    ${divider()}
+    ${card(`
+      ${heading('How Trivia Works', 2)}
+      ${paragraph(`<strong>24 Questions</strong> — Test your Survivor knowledge with trivia spanning all 50 seasons`)}
+      ${paragraph(`<strong>20 Seconds Each</strong> — Think fast! You have 20 seconds per question`)}
+      ${paragraph(`<strong>24-Hour Lockout</strong> — Get one wrong? Come back tomorrow to try again`)}
+      ${paragraph(`<strong>Leaderboard Glory</strong> — Complete all 24 to earn your spot among the Survivor elite`)}
+    `)}
+    ${button('Create Account to Play', `${BASE_URL}/signup`)}
+    ${divider()}
+    ${card(`
+      <div style="text-align: center;">
+        ${heading('Ready for More?', 2)}
+        ${paragraph(`Love trivia? You'll love our fantasy leagues even more! Draft castaways, make weekly picks, and compete with other superfans throughout the season.`)}
+      </div>
+    `)}
+    ${paragraph(`<em style="color: #8A7654;">Outwit. Outplay. Outlast.</em>`)}
+  `, 'You\'re signed up for Survivor Trivia');
+}
+
 // ============================================
 // NEW LIFECYCLE EMAIL TEMPLATES
 // ============================================
@@ -773,6 +802,16 @@ export class EmailService {
     return sendEmail({
       to: data.email,
       subject: 'Welcome, Survivor Fan - Here\'s How to Play',
+      html,
+    });
+  }
+
+  // Send trivia signup welcome email (for homepage signup form)
+  static async sendTriviaSignupWelcome(data: TriviaSignupWelcomeEmailData): Promise<boolean> {
+    const html = triviaSignupWelcomeEmailTemplate(data);
+    return sendEmail({
+      to: data.email,
+      subject: "You're Signed Up for Survivor Trivia!",
       html,
     });
   }
