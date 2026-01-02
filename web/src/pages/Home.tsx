@@ -9,20 +9,31 @@ import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import {
+  CheckCircle,
+  Loader2,
+  Trophy,
+  Users,
+  Zap,
+  Target,
+  Calendar,
+  Star,
+  Flame,
+  Crown,
+} from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 export function Home() {
   const { user, loading } = useAuth();
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Redirect logged-in users to dashboard
   if (!loading && user) {
     return <Navigate to="/dashboard" replace />;
   }
-  const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,6 +163,146 @@ export function Home() {
               {error && <p className="text-red-500 text-sm mt-2 text-left">{error}</p>}
             </form>
           )}
+        </div>
+
+        {/* MIDDLE SECTION - Why Play */}
+        <div className="mt-20 mb-16">
+          {/* Section Header */}
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Not Your Average Fantasy Game
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Forget luck-based predictions. This is strategy, knowledge, and knowing the game
+              better than anyone else.
+            </p>
+          </div>
+
+          {/* Feature Cards */}
+          <div className="grid md:grid-cols-3 gap-6 mb-16">
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mb-4">
+                <Target className="h-6 w-6 text-red-700" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">100+ Scoring Rules</h3>
+              <p className="text-gray-600">
+                Every confessional, challenge win, idol play, and blindside counts. We track it all
+                so you get rewarded for actually watching.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-4">
+                <Users className="h-6 w-6 text-amber-700" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Draft Your Dream Team</h3>
+              <p className="text-gray-600">
+                Pick 5 castaways before the premiere. Make weekly lineup decisions. Manage your
+                bench. Outplay your friends.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                <Trophy className="h-6 w-6 text-green-700" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Compete & Climb</h3>
+              <p className="text-gray-600">
+                Create private leagues with friends or join public competitions. Watch your ranking
+                rise as you prove your Survivor IQ.
+              </p>
+            </div>
+          </div>
+
+          {/* How It Works Timeline */}
+          <div className="bg-gradient-to-r from-red-800 to-red-900 rounded-3xl p-8 md:p-10 text-white mb-16">
+            <h3 className="text-2xl md:text-3xl font-bold text-center mb-8">
+              <Flame className="inline-block h-8 w-8 mr-2 -mt-1" />
+              How Season 50 Works
+            </h3>
+            <div className="grid md:grid-cols-4 gap-6">
+              <div className="text-center">
+                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Calendar className="h-7 w-7" />
+                </div>
+                <div className="text-3xl font-bold mb-1">1</div>
+                <h4 className="font-semibold mb-1">Sign Up Now</h4>
+                <p className="text-red-100 text-sm">Create your free account and join leagues</p>
+              </div>
+              <div className="text-center">
+                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Users className="h-7 w-7" />
+                </div>
+                <div className="text-3xl font-bold mb-1">2</div>
+                <h4 className="font-semibold mb-1">Draft Castaways</h4>
+                <p className="text-red-100 text-sm">Pick your 5 players before Feb 26</p>
+              </div>
+              <div className="text-center">
+                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Zap className="h-7 w-7" />
+                </div>
+                <div className="text-3xl font-bold mb-1">3</div>
+                <h4 className="font-semibold mb-1">Set Your Lineup</h4>
+                <p className="text-red-100 text-sm">Choose 3 starters each week</p>
+              </div>
+              <div className="text-center">
+                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Crown className="h-7 w-7" />
+                </div>
+                <div className="text-3xl font-bold mb-1">4</div>
+                <h4 className="font-semibold mb-1">Win Glory</h4>
+                <p className="text-red-100 text-sm">Outscore, outwit, outlast your competition</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Social Proof / Stats */}
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+              <Star className="h-4 w-4" />
+              Season 50: The Biggest Season Yet
+            </div>
+            <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
+              <div>
+                <div className="text-4xl md:text-5xl font-bold text-gray-900">18</div>
+                <div className="text-gray-600">New Castaways</div>
+              </div>
+              <div>
+                <div className="text-4xl md:text-5xl font-bold text-red-800">100+</div>
+                <div className="text-gray-600">Scoring Events</div>
+              </div>
+              <div>
+                <div className="text-4xl md:text-5xl font-bold text-gray-900">13</div>
+                <div className="text-gray-600">Episodes</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Final CTA */}
+          <div className="text-center bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100">
+            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+              Ready to Prove You Know Survivor?
+            </h3>
+            <p className="text-gray-600 text-lg mb-6 max-w-xl mx-auto">
+              Season 50 premieres February 26, 2026. Draft opens now. Don't get left on Exile
+              Island.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                to="/signup"
+                className="bg-red-800 hover:bg-red-900 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl inline-flex items-center justify-center gap-2"
+              >
+                <Flame className="h-5 w-5" />
+                Join Season 50 Free
+              </Link>
+              <Link
+                to="/trivia"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-8 py-4 rounded-xl font-semibold text-lg transition-all inline-flex items-center justify-center gap-2"
+              >
+                Try Free Trivia First
+              </Link>
+            </div>
+          </div>
         </div>
       </main>
 
