@@ -22,7 +22,6 @@ import {
   LeagueCard,
   SeasonInfoCard,
   WeeklyTimelineCard,
-  QuickLinksCard,
   TriviaCalloutCard,
   AnnouncementsCard,
 } from '@/components/dashboard';
@@ -447,7 +446,6 @@ export function Dashboard() {
         <div className="space-y-4">
           {activeSeason && <SeasonInfoCard season={activeSeason} />}
           <WeeklyTimelineCard />
-          <QuickLinksCard />
         </div>
       </div>
     </div>

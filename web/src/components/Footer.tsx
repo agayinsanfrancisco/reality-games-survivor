@@ -10,7 +10,7 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <img src="/logo.png" alt="RGFL" className="h-10 w-auto" />
+              <img src="/logo.png" alt="RGFL" className="h-10 w-auto brightness-0 invert" />
             </Link>
             <p className="text-neutral-400 text-sm">
               Fantasy Survivor for people who actually watch Survivor.
