@@ -303,15 +303,6 @@ export default function Contact() {
             </button>
           </form>
         </div>
-
-        {/* Terms of Service */}
-        <div className="mt-6 bg-white rounded-2xl shadow-card p-5 border border-cream-200">
-          <h3 className="font-semibold text-neutral-800 mb-3">Terms of Service</h3>
-          <ul className="space-y-2 text-neutral-600 text-sm">
-            <li>• No refunds once payment has been made</li>
-            <li>• Prize distribution is at the sole discretion of the site owners</li>
-          </ul>
-        </div>
       </div>
       <Footer />
     </div>
