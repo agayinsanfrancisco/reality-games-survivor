@@ -15,7 +15,7 @@ import {
   AlertCircle,
   RefreshCw,
 } from 'lucide-react';
-import { AdminNavigation } from '@/components/AdminNavigation';
+import { Navigation } from '@/components/Navigation';
 import { apiWithAuth } from '@/lib/api';
 
 interface EmailTemplate {
@@ -205,7 +205,7 @@ export function AdminContent() {
 
   return (
     <div className="min-h-screen bg-cream-50">
-      <AdminNavigation />
+      <Navigation />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}

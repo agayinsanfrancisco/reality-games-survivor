@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { apiWithAuth } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { AdminNavigation } from '@/components/AdminNavigation';
+import { Navigation } from '@/components/Navigation';
 
 type UserRole = 'player' | 'commissioner' | 'admin';
 type UserSegment = 'power' | 'casual' | 'dormant' | 'churned' | 'new';
@@ -249,7 +249,7 @@ export function AdminUsers() {
   if (fetchError) {
     return (
       <>
-        <AdminNavigation />
+        <Navigation />
         <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-card p-8 border border-red-200 text-center max-w-md">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -271,7 +271,7 @@ export function AdminUsers() {
 
   return (
     <>
-      <AdminNavigation />
+      <Navigation />
       <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">

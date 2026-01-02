@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AdminNavigation } from '@/components/AdminNavigation';
+import { Navigation } from '@/components/Navigation';
 import { supabase } from '@/lib/supabase';
 import {
   Shuffle,
@@ -149,7 +149,7 @@ export function AdminDrafts() {
 
   return (
     <div className="min-h-screen bg-neutral-900">
-      <AdminNavigation />
+      <Navigation />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

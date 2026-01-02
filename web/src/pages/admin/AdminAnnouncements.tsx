@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { apiWithAuth } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { AdminNavigation } from '@/components/AdminNavigation';
+import { Navigation } from '@/components/Navigation';
 import { formatDistanceToNow, format } from 'date-fns';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
@@ -253,7 +253,7 @@ export function AdminAnnouncements() {
 
   return (
     <div className="min-h-screen bg-cream-50">
-      <AdminNavigation />
+      <Navigation />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Header */}

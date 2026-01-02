@@ -12,7 +12,7 @@ import {
   Star,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { AdminNavigation } from '@/components/AdminNavigation';
+import { Navigation } from '@/components/Navigation';
 
 export function AdminGlobal() {
   // Fetch global league
@@ -89,7 +89,7 @@ export function AdminGlobal() {
   if (isLoading) {
     return (
       <>
-        <AdminNavigation />
+        <Navigation />
         <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
           <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
         </div>
@@ -100,7 +100,7 @@ export function AdminGlobal() {
   if (!globalLeague) {
     return (
       <>
-        <AdminNavigation />
+        <Navigation />
         <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
           <div className="flex items-center gap-3 mb-6">
             <Link
@@ -129,7 +129,7 @@ export function AdminGlobal() {
 
   return (
     <>
-      <AdminNavigation />
+      <Navigation />
       <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AdminNavigation } from '@/components/AdminNavigation';
+import { Navigation } from '@/components/Navigation';
 import { SystemStatusPanel } from '@/components/admin/command-center/SystemStatusPanel';
 import { ActiveWindowPanel } from '@/components/admin/command-center/ActiveWindowPanel';
 import { IncidentPanel } from '@/components/admin/command-center/IncidentPanel';
@@ -126,7 +126,7 @@ export function AdminCommandCenter() {
 
   return (
     <div className={`min-h-screen ${isIncidentMode ? 'bg-red-950' : 'bg-neutral-900'}`}>
-      <AdminNavigation />
+      <Navigation />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}

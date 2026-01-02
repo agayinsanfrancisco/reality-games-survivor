@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { apiWithAuth } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { AdminNavigation } from '@/components/AdminNavigation';
+import { Navigation } from '@/components/Navigation';
 import {
   ArrowLeft,
   Loader2,
@@ -210,7 +210,7 @@ export function AdminAnalytics() {
 
   return (
     <>
-      <AdminNavigation />
+      <Navigation />
       <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
