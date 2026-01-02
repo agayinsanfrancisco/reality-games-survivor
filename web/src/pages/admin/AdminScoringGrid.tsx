@@ -45,7 +45,6 @@ import {
   AlertCircle,
   X,
 } from 'lucide-react';
-import { ScoringRulesReference } from '@/components/admin/scoring';
 import {
   useAdminProfile,
   useActiveSeasonForScoring,
@@ -54,6 +53,7 @@ import {
   useScoringRulesForScoring,
   useExistingScores,
   useScoringStatus,
+  getMostCommonRules,
 } from '@/lib/hooks';
 
 // Grid scores map: { [castawayId]: { [ruleId]: quantity } }
@@ -84,17 +84,21 @@ export function AdminScoringGrid() {
   const { data: existingScores } = useExistingScores(selectedEpisodeId);
   const { data: scoringStatus } = useScoringStatus(selectedEpisodeId);
 
-  // Get unique categories
+  // Get most scored rules
+  const mostScoredRules = useMemo(() => getMostCommonRules(scoringRules), [scoringRules]);
+
+  // Get unique categories with "Most Scored Rules" first
   const categories = useMemo(() => {
     const cats = new Set(scoringRules?.map((r) => r.category || 'Other'));
-    return Array.from(cats);
+    return ['Most Scored Rules', ...Array.from(cats)];
   }, [scoringRules]);
 
   // Filter rules by selected category
   const filteredRules = useMemo(() => {
     if (!selectedCategory) return scoringRules || [];
+    if (selectedCategory === 'Most Scored Rules') return mostScoredRules;
     return scoringRules?.filter((r) => (r.category || 'Other') === selectedCategory) || [];
-  }, [scoringRules, selectedCategory]);
+  }, [scoringRules, selectedCategory, mostScoredRules]);
 
   // Filter to only active castaways
   const activeCastaways = useMemo(() => {
@@ -292,9 +296,6 @@ export function AdminScoringGrid() {
             </button>
           </div>
         )}
-
-        {/* Scoring Rules Reference */}
-        <ScoringRulesReference />
 
         {/* Controls */}
         <div className="bg-white rounded-2xl shadow-elevated p-5 mb-6">

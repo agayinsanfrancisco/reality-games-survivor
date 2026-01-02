@@ -16,7 +16,6 @@ import {
   FinalizeResultModal,
   CastawayList,
   CastawayHeader,
-  ScoringRulesReference,
 } from '@/components/admin/scoring';
 import {
   useAdminProfile,
@@ -74,7 +73,7 @@ export function AdminScoring() {
   const [isSaving, setIsSaving] = useState(false);
   const [skipNextScoreReset, setSkipNextScoreReset] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
-    'Most Common': true,
+    'Most Scored Rules': true,
   });
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
   const [finalizeResult, setFinalizeResult] = useState<{
@@ -268,9 +267,6 @@ export function AdminScoring() {
       <Navigation />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Scoring Rules Reference */}
-        <ScoringRulesReference />
-
         {/* Header */}
         <ScoringHeader
           scoringStatus={scoringStatus || null}
@@ -333,14 +329,14 @@ export function AdminScoring() {
                   lastSavedAt={lastSavedAt}
                 />
 
-                {/* Most Common Rules */}
+                {/* Most Scored Rules */}
                 {mostCommonRules.length > 0 && (
                   <ScoringCategoryAccordion
-                    category="Most Common"
+                    category="Most Scored Rules"
                     rules={mostCommonRules}
                     scores={scores}
-                    isExpanded={expandedCategories['Most Common'] ?? true}
-                    onToggle={() => toggleCategory('Most Common')}
+                    isExpanded={expandedCategories['Most Scored Rules'] ?? true}
+                    onToggle={() => toggleCategory('Most Scored Rules')}
                     onUpdateScore={updateScore}
                     isFeatured
                   />
