@@ -1177,4 +1177,336 @@ router.get('/improvement-trend', async (_req: Request, res: Response) => {
   }
 });
 
+/**
+ * Stat 2: Luckiest Player
+ * GET /api/stats/luckiest-player
+ * 
+ * Most points earned from castaways in their final episode before elimination
+ */
+router.get('/luckiest-player', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get eliminated castaways
+    const { data: castaways, error: castawaysError } = await supabase
+      .from('castaways')
+      .select('id, name, eliminated_episode_id')
+      .eq('season_id', season.id)
+      .eq('status', 'eliminated')
+      .not('eliminated_episode_id', 'is', null);
+    
+    if (castawaysError) throw castawaysError;
+
+    // Build map of castaway to elimination episode
+    const eliminationEpisodes: Record<string, string> = {};
+    (castaways || []).forEach((c) => {
+      if (c.eliminated_episode_id) {
+        eliminationEpisodes[c.id] = c.eliminated_episode_id;
+      }
+    });
+
+    if (Object.keys(eliminationEpisodes).length === 0) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get all episode scores for eliminated castaways
+    const { data: scores, error: scoresError } = await supabase
+      .from('episode_scores')
+      .select('episode_id, castaway_id, points');
+    
+    if (scoresError) throw scoresError;
+
+    // Calculate final episode points per castaway
+    const finalEpisodePoints: Record<string, number> = {};
+    (scores || []).forEach((s) => {
+      const elimEp = eliminationEpisodes[s.castaway_id];
+      if (elimEp === s.episode_id) {
+        finalEpisodePoints[s.castaway_id] = (finalEpisodePoints[s.castaway_id] || 0) + Number(s.points);
+      }
+    });
+
+    // Get picks where user had the eliminated castaway in their final episode
+    const { data: picks, error: picksError } = await supabase
+      .from('weekly_picks')
+      .select(`
+        user_id,
+        episode_id,
+        castaway_id,
+        users!inner(display_name)
+      `)
+      .not('castaway_id', 'is', null);
+    
+    if (picksError) throw picksError;
+
+    // Calculate luck points per user
+    const userStats: Record<string, { 
+      user_id: string; 
+      display_name: string; 
+      luck_points: number;
+      castaways_count: number;
+    }> = {};
+
+    (picks || []).forEach((pick: any) => {
+      if (!pick.castaway_id) return;
+      
+      const elimEp = eliminationEpisodes[pick.castaway_id];
+      if (elimEp !== pick.episode_id) return; // Only count if this was the elimination episode
+
+      const points = finalEpisodePoints[pick.castaway_id] || 0;
+
+      if (!userStats[pick.user_id]) {
+        userStats[pick.user_id] = {
+          user_id: pick.user_id,
+          display_name: pick.users?.display_name || 'Unknown',
+          luck_points: 0,
+          castaways_count: 0,
+        };
+      }
+
+      userStats[pick.user_id].luck_points += points;
+      userStats[pick.user_id].castaways_count++;
+    });
+
+    const leaderboard = Object.values(userStats)
+      .filter((u) => u.castaways_count > 0)
+      .sort((a, b) => b.luck_points - a.luck_points)
+      .slice(0, 10);
+
+    res.json({ data: { leaderboard } });
+  } catch (err) {
+    console.error('Error fetching luckiest-player stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
+/**
+ * Stat 3: Unluckiest Player
+ * GET /api/stats/unluckiest-player
+ * 
+ * Most potential points lost due to castaways being eliminated right after being drafted/added
+ */
+router.get('/unluckiest-player', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get episodes in order
+    const { data: episodes, error: episodesError } = await supabase
+      .from('episodes')
+      .select('id, number')
+      .eq('season_id', season.id)
+      .order('number', { ascending: true });
+    
+    if (episodesError) throw episodesError;
+
+    const episodeNumbers: Record<string, number> = {};
+    (episodes || []).forEach((e) => {
+      episodeNumbers[e.id] = e.number;
+    });
+
+    // Get eliminated castaways
+    const { data: castaways, error: castawaysError } = await supabase
+      .from('castaways')
+      .select('id, name, eliminated_episode_id')
+      .eq('season_id', season.id)
+      .eq('status', 'eliminated')
+      .not('eliminated_episode_id', 'is', null);
+    
+    if (castawaysError) throw castawaysError;
+
+    // Map castaway to elimination episode number
+    const eliminationNumbers: Record<string, number> = {};
+    (castaways || []).forEach((c) => {
+      if (c.eliminated_episode_id && episodeNumbers[c.eliminated_episode_id]) {
+        eliminationNumbers[c.id] = episodeNumbers[c.eliminated_episode_id];
+      }
+    });
+
+    // Get all rosters (draft picks)
+    const { data: rosters, error: rostersError } = await supabase
+      .from('rosters')
+      .select(`
+        user_id,
+        castaway_id,
+        acquired_at,
+        users!inner(display_name)
+      `);
+    
+    if (rostersError) throw rostersError;
+
+    // Calculate missed points (assume average of 10 points per episode remaining)
+    const userStats: Record<string, { 
+      user_id: string; 
+      display_name: string; 
+      missed_points: number;
+      eliminations_count: number;
+    }> = {};
+
+    const totalEpisodes = episodes?.length || 14;
+
+    (rosters || []).forEach((roster: any) => {
+      if (!roster.castaway_id) return;
+      
+      const elimNumber = eliminationNumbers[roster.castaway_id];
+      if (!elimNumber) return; // Castaway not eliminated
+
+      // Estimate missed potential points: ~10 points per episode remaining
+      const episodesRemaining = totalEpisodes - elimNumber;
+      const missedPoints = Math.max(0, episodesRemaining * 10);
+
+      if (!userStats[roster.user_id]) {
+        userStats[roster.user_id] = {
+          user_id: roster.user_id,
+          display_name: roster.users?.display_name || 'Unknown',
+          missed_points: 0,
+          eliminations_count: 0,
+        };
+      }
+
+      userStats[roster.user_id].missed_points += missedPoints;
+      userStats[roster.user_id].eliminations_count++;
+    });
+
+    const leaderboard = Object.values(userStats)
+      .filter((u) => u.eliminations_count > 0)
+      .sort((a, b) => b.missed_points - a.missed_points)
+      .slice(0, 10);
+
+    res.json({ data: { leaderboard } });
+  } catch (err) {
+    console.error('Error fetching unluckiest-player stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
+/**
+ * Stat 9: Curse Carrier
+ * GET /api/stats/curse-carrier
+ * 
+ * Users whose newly added castaways get eliminated most frequently
+ */
+router.get('/curse-carrier', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get episodes in order
+    const { data: episodes, error: episodesError } = await supabase
+      .from('episodes')
+      .select('id, number')
+      .eq('season_id', season.id)
+      .order('number', { ascending: true });
+    
+    if (episodesError) throw episodesError;
+
+    const episodeNumbers: Record<string, number> = {};
+    (episodes || []).forEach((e) => {
+      episodeNumbers[e.id] = e.number;
+    });
+
+    // Get eliminated castaways
+    const { data: castaways, error: castawaysError } = await supabase
+      .from('castaways')
+      .select('id, name, eliminated_episode_id')
+      .eq('season_id', season.id)
+      .eq('status', 'eliminated')
+      .not('eliminated_episode_id', 'is', null);
+    
+    if (castawaysError) throw castawaysError;
+
+    // Map castaway to elimination episode number
+    const eliminationNumbers: Record<string, number> = {};
+    (castaways || []).forEach((c) => {
+      if (c.eliminated_episode_id && episodeNumbers[c.eliminated_episode_id]) {
+        eliminationNumbers[c.id] = episodeNumbers[c.eliminated_episode_id];
+      }
+    });
+
+    // Get all rosters
+    const { data: rosters, error: rostersError } = await supabase
+      .from('rosters')
+      .select(`
+        user_id,
+        castaway_id,
+        draft_round,
+        users!inner(display_name)
+      `);
+    
+    if (rostersError) throw rostersError;
+
+    // Track cursed castaways per user (eliminated within 2 episodes of being drafted)
+    const userStats: Record<string, { 
+      user_id: string; 
+      display_name: string; 
+      cursed_castaways: number;
+      total_castaways: number;
+    }> = {};
+
+    (rosters || []).forEach((roster: any) => {
+      if (!roster.castaway_id) return;
+
+      if (!userStats[roster.user_id]) {
+        userStats[roster.user_id] = {
+          user_id: roster.user_id,
+          display_name: roster.users?.display_name || 'Unknown',
+          cursed_castaways: 0,
+          total_castaways: 0,
+        };
+      }
+
+      userStats[roster.user_id].total_castaways++;
+
+      const elimNumber = eliminationNumbers[roster.castaway_id];
+      if (!elimNumber) return; // Not eliminated
+
+      // Consider "cursed" if eliminated in first 3 episodes after draft
+      // Since draft happens before episode 1, eliminated in eps 1-3 = cursed
+      if (elimNumber <= 3) {
+        userStats[roster.user_id].cursed_castaways++;
+      }
+    });
+
+    const leaderboard = Object.values(userStats)
+      .filter((u) => u.total_castaways >= 2)
+      .map((u) => ({
+        ...u,
+        curse_rate: u.total_castaways > 0 
+          ? Math.round((u.cursed_castaways / u.total_castaways) * 100) 
+          : 0,
+      }))
+      .sort((a, b) => b.cursed_castaways - a.cursed_castaways)
+      .slice(0, 10);
+
+    res.json({ data: { leaderboard } });
+  } catch (err) {
+    console.error('Error fetching curse-carrier stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
 export default router;

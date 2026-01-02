@@ -106,6 +106,40 @@ interface ImprovementTrendResponse {
   most_declined: ImprovementEntry[];
 }
 
+interface LuckiestPlayerEntry {
+  user_id: string;
+  display_name: string;
+  luck_points: number;
+  castaways_count: number;
+}
+
+interface LuckiestPlayerResponse {
+  leaderboard: LuckiestPlayerEntry[];
+}
+
+interface UnluckiestPlayerEntry {
+  user_id: string;
+  display_name: string;
+  missed_points: number;
+  eliminations_count: number;
+}
+
+interface UnluckiestPlayerResponse {
+  leaderboard: UnluckiestPlayerEntry[];
+}
+
+interface CurseCarrierEntry {
+  user_id: string;
+  display_name: string;
+  cursed_castaways: number;
+  total_castaways: number;
+  curse_rate: number;
+}
+
+interface CurseCarrierResponse {
+  leaderboard: CurseCarrierEntry[];
+}
+
 export function usePlayerStats() {
   // Stat 13: Most Leagues Joined
   const mostLeaguesQuery = useQuery({
@@ -197,6 +231,39 @@ export function usePlayerStats() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Stat 2: Luckiest Player
+  const luckiestPlayerQuery = useQuery({
+    queryKey: ['stats', 'luckiest-player'],
+    queryFn: async () => {
+      const response = await api<{ data: LuckiestPlayerResponse }>('/stats/luckiest-player');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Stat 3: Unluckiest Player
+  const unluckiestPlayerQuery = useQuery({
+    queryKey: ['stats', 'unluckiest-player'],
+    queryFn: async () => {
+      const response = await api<{ data: UnluckiestPlayerResponse }>('/stats/unluckiest-player');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Stat 9: Curse Carrier
+  const curseCarrierQuery = useQuery({
+    queryKey: ['stats', 'curse-carrier'],
+    queryFn: async () => {
+      const response = await api<{ data: CurseCarrierResponse }>('/stats/curse-carrier');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const isLoading =
     mostLeaguesQuery.isLoading ||
     lastMinuteLarryQuery.isLoading ||
@@ -205,7 +272,10 @@ export function usePlayerStats() {
     submissionTimingQuery.isLoading ||
     successfulPickRatioQuery.isLoading ||
     mostActiveQuery.isLoading ||
-    improvementTrendQuery.isLoading;
+    improvementTrendQuery.isLoading ||
+    luckiestPlayerQuery.isLoading ||
+    unluckiestPlayerQuery.isLoading ||
+    curseCarrierQuery.isLoading;
 
   const error =
     mostLeaguesQuery.error?.message ||
@@ -216,6 +286,9 @@ export function usePlayerStats() {
     successfulPickRatioQuery.error?.message ||
     mostActiveQuery.error?.message ||
     improvementTrendQuery.error?.message ||
+    luckiestPlayerQuery.error?.message ||
+    unluckiestPlayerQuery.error?.message ||
+    curseCarrierQuery.error?.message ||
     null;
 
   return {
@@ -227,6 +300,9 @@ export function usePlayerStats() {
     successfulPickRatio: successfulPickRatioQuery.data,
     mostActive: mostActiveQuery.data,
     improvementTrend: improvementTrendQuery.data,
+    luckiestPlayer: luckiestPlayerQuery.data,
+    unluckiestPlayer: unluckiestPlayerQuery.data,
+    curseCarrier: curseCarrierQuery.data,
     isLoading,
     error,
   };

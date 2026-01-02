@@ -37,6 +37,9 @@ export function PlayerStats() {
     successfulPickRatio,
     mostActive,
     improvementTrend,
+    luckiestPlayer,
+    unluckiestPlayer,
+    curseCarrier,
     isLoading,
     error,
   } = usePlayerStats();
@@ -104,7 +107,13 @@ export function PlayerStats() {
               icon={<Clover className="h-5 w-5" />}
             >
               <HorizontalBarChart
-                data={[]}
+                data={
+                  luckiestPlayer?.leaderboard?.map((e) => ({
+                    label: e.display_name,
+                    value: e.luck_points,
+                    sublabel: `${e.castaways_count} elimination(s)`,
+                  })) || []
+                }
                 colorScale="green"
                 emptyMessage="Data available after eliminations"
               />
@@ -117,7 +126,13 @@ export function PlayerStats() {
               icon={<Cloud className="h-5 w-5" />}
             >
               <HorizontalBarChart
-                data={[]}
+                data={
+                  unluckiestPlayer?.leaderboard?.map((e) => ({
+                    label: e.display_name,
+                    value: e.missed_points,
+                    sublabel: `${e.eliminations_count} castaway(s)`,
+                  })) || []
+                }
                 colorScale="red"
                 emptyMessage="Data available after eliminations"
               />
@@ -205,7 +220,13 @@ export function PlayerStats() {
               icon={<Ghost className="h-5 w-5" />}
             >
               <HorizontalBarChart
-                data={[]}
+                data={
+                  curseCarrier?.leaderboard?.map((e) => ({
+                    label: e.display_name,
+                    value: e.cursed_castaways,
+                    sublabel: `${e.curse_rate}% curse rate`,
+                  })) || []
+                }
                 colorScale="red"
                 emptyMessage="Data available after eliminations"
               />
