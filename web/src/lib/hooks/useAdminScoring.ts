@@ -207,16 +207,18 @@ export function groupRulesByCategory(
  * Most commonly used scoring rule codes
  */
 export const MOST_COMMON_CODES = [
-  'SURVIVED_EPISODE',
-  'VOTE_CORRECT',
-  'VOTE_RECEIVED',
-  'WON_IMMUNITY_IND',
-  'WON_IMMUNITY_TRIBE',
-  'WON_REWARD',
-  'FOUND_IDOL',
-  'PLAYED_IDOL_SELF',
-  'ELIMINATED',
-  'CONFESSIONAL',
+  'RAND_CONFESSIONAL', // Shown in Confessional
+  'PRE_SURVIVE_TRIBAL', // Survive Tribal (Pre-Merge)
+  'POST_SURVIVE_TRIBAL', // Survive Tribal (Post-Merge)
+  'PRE_NO_TRIBAL', // Avoid Tribal Council (Pre-Merge)
+  'POST_NO_TRIBAL', // Avoid Tribal Council (Post-Merge)
+  'PRE_TEAM_IMMUNITY_WIN', // Team Wins Immunity (Pre-Merge)
+  'POST_IND_IMMUNITY_WIN', // Win Individual Immunity
+  'IDOL_FIND', // Find Hidden Immunity Idol
+  'PRE_SNUFFED', // Torch Snuffed (Pre-Merge)
+  'POST_SNUFFED', // Torch Snuffed (Post-Merge)
+  'PRE_VOTE_RECEIVED_COUNT', // Vote Received Counts (Pre-Merge)
+  'POST_VOTE_RECEIVED_COUNT', // Vote Received Counts (Post-Merge)
 ];
 
 /**
