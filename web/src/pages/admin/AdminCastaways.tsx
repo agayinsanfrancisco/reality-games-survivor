@@ -10,7 +10,6 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { apiWithAuth } from '@/lib/api';
 import { Navigation } from '@/components/Navigation';
 import {
   CastawayGrid,
@@ -20,6 +19,30 @@ import {
   type EditFormData,
 } from '@/components/admin/castaways';
 import type { Castaway, UserProfile, Episode } from '@/types';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
+
+async function apiWithAuth(endpoint: string, options?: RequestInit) {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      ...options?.headers,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
 
 export function AdminCastaways() {
   const { user } = useAuth();
@@ -106,21 +129,10 @@ export function AdminCastaways() {
       episodeId: string;
       placement?: number;
     }) => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Not authenticated');
-
-      const response = await apiWithAuth<{ castaway: Castaway }>(
-        `/admin/castaways/${castawayId}/eliminate`,
-        session.access_token,
-        {
-          method: 'POST',
-          body: JSON.stringify({ episode_id: episodeId, placement }),
-        }
-      );
-      if (response.error) throw new Error(response.error);
-      return response.data;
+      return apiWithAuth(`/api/admin/castaways/${castawayId}/eliminate`, {
+        method: 'POST',
+        body: JSON.stringify({ episode_id: episodeId, placement }),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['castaways'] });
@@ -132,25 +144,14 @@ export function AdminCastaways() {
   // Reactivate castaway - uses backend API for proper authorization
   const reactivateMutation = useMutation({
     mutationFn: async (castawayId: string) => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Not authenticated');
-
-      const response = await apiWithAuth<{ castaway: Castaway }>(
-        `/admin/castaways/${castawayId}`,
-        session.access_token,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({
-            status: 'active',
-            eliminated_episode_id: null,
-            placement: null,
-          }),
-        }
-      );
-      if (response.error) throw new Error(response.error);
-      return response.data;
+      return apiWithAuth(`/api/admin/castaways/${castawayId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: 'active',
+          eliminated_episode_id: null,
+          placement: null,
+        }),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['castaways'] });
@@ -160,21 +161,10 @@ export function AdminCastaways() {
   // Update castaway - uses backend API for proper authorization
   const updateMutation = useMutation({
     mutationFn: async ({ castawayId, data }: { castawayId: string; data: Partial<Castaway> }) => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Not authenticated');
-
-      const response = await apiWithAuth<{ castaway: Castaway }>(
-        `/admin/castaways/${castawayId}`,
-        session.access_token,
-        {
-          method: 'PATCH',
-          body: JSON.stringify(data),
-        }
-      );
-      if (response.error) throw new Error(response.error);
-      return response.data;
+      return apiWithAuth(`/api/admin/castaways/${castawayId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['castaways'] });
@@ -247,10 +237,6 @@ export function AdminCastaways() {
   const autoPopulatePhotosMutation = useMutation({
     mutationFn: async () => {
       if (!castaways) return { updated: 0 };
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Not authenticated');
 
       const updates = castaways
         .filter((c) => !c.photo_url)
@@ -260,15 +246,10 @@ export function AdminCastaways() {
         }));
 
       for (const update of updates) {
-        const response = await apiWithAuth<{ castaway: Castaway }>(
-          `/admin/castaways/${update.id}`,
-          session.access_token,
-          {
-            method: 'PATCH',
-            body: JSON.stringify({ photo_url: update.photo_url }),
-          }
-        );
-        if (response.error) throw new Error(response.error);
+        await apiWithAuth(`/api/admin/castaways/${update.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ photo_url: update.photo_url }),
+        });
       }
 
       return { updated: updates.length };

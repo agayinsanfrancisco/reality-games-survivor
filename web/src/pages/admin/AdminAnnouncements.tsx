@@ -23,10 +23,33 @@ import {
   Save,
   Clock,
 } from 'lucide-react';
-import { apiWithAuth } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 import { Navigation } from '@/components/Navigation';
 import { formatDistanceToNow, format } from 'date-fns';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
+
+async function apiWithAuth(endpoint: string, options?: RequestInit) {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      ...options?.headers,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
@@ -76,7 +99,6 @@ const getPriorityIcon = (priority: Priority) => {
 
 export function AdminAnnouncements() {
   const queryClient = useQueryClient();
-  const { session } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -92,38 +114,21 @@ export function AdminAnnouncements() {
   const { data, isLoading } = useQuery({
     queryKey: ['admin-announcements'],
     queryFn: async () => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-
-      const response = await apiWithAuth<{ announcements: Announcement[]; total: number }>(
-        '/admin/announcements',
-        session.access_token
-      );
-
-      if (response.error) throw new Error(response.error);
-      return response.data;
+      const response = await apiWithAuth('/api/admin/announcements');
+      return response as { announcements: Announcement[]; total: number };
     },
-    enabled: !!session?.access_token,
   });
 
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: AnnouncementForm) => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-
-      const response = await apiWithAuth<{ announcement: Announcement }>(
-        '/admin/announcements',
-        session.access_token,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            ...data,
-            expires_at: data.expires_at || null,
-          }),
-        }
-      );
-
-      if (response.error) throw new Error(response.error);
-      return response.data;
+      return apiWithAuth('/api/admin/announcements', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...data,
+          expires_at: data.expires_at || null,
+        }),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-announcements'] });
@@ -137,22 +142,13 @@ export function AdminAnnouncements() {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<AnnouncementForm> }) => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-
-      const response = await apiWithAuth<{ announcement: Announcement }>(
-        `/admin/announcements/${id}`,
-        session.access_token,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({
-            ...data,
-            expires_at: data.expires_at || null,
-          }),
-        }
-      );
-
-      if (response.error) throw new Error(response.error);
-      return response.data;
+      return apiWithAuth(`/api/admin/announcements/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          ...data,
+          expires_at: data.expires_at || null,
+        }),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-announcements'] });
@@ -166,16 +162,7 @@ export function AdminAnnouncements() {
   // Toggle mutation
   const toggleMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-
-      const response = await apiWithAuth<{ announcement: Announcement }>(
-        `/admin/announcements/${id}/toggle`,
-        session.access_token,
-        { method: 'POST' }
-      );
-
-      if (response.error) throw new Error(response.error);
-      return response.data;
+      return apiWithAuth(`/api/admin/announcements/${id}/toggle`, { method: 'POST' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-announcements'] });
@@ -187,14 +174,7 @@ export function AdminAnnouncements() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-
-      const response = await apiWithAuth(`/admin/announcements/${id}`, session.access_token, {
-        method: 'DELETE',
-      });
-
-      if (response.error) throw new Error(response.error);
-      return response.data;
+      return apiWithAuth(`/api/admin/announcements/${id}`, { method: 'DELETE' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-announcements'] });

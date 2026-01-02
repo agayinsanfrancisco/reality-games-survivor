@@ -10,8 +10,31 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { apiWithAuth } from '@/lib/api';
 import { Navigation } from '@/components/Navigation';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
+
+async function apiWithAuth(endpoint: string, options?: RequestInit) {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      ...options?.headers,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
 import {
   Loader2,
   Save,
@@ -104,11 +127,6 @@ export function AdminScoringGrid() {
     setIsSaving(true);
     setSaveError(null);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Not authenticated');
-
       const scoresArray: Array<{ castaway_id: string; scoring_rule_id: string; quantity: number }> =
         [];
       Object.entries(gridScores).forEach(([castawayId, castawayScores]) => {
@@ -119,13 +137,10 @@ export function AdminScoringGrid() {
         });
       });
 
-      const result = await apiWithAuth<{ saved: number }>(
-        `/episodes/${selectedEpisodeId}/scoring/save`,
-        session.access_token,
-        { method: 'POST', body: JSON.stringify({ scores: scoresArray }) }
-      );
-
-      if (result.error) throw new Error(result.error);
+      await apiWithAuth(`/api/episodes/${selectedEpisodeId}/scoring/save`, {
+        method: 'POST',
+        body: JSON.stringify({ scores: scoresArray }),
+      });
 
       setLastSavedAt(new Date());
       setIsDirty(false);

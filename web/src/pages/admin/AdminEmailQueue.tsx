@@ -17,7 +17,30 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Navigation } from '@/components/Navigation';
-import { apiWithAuth } from '@/lib/api';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
+
+async function apiWithAuth(endpoint: string, options?: RequestInit) {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      ...options?.headers,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
 
 interface FailedEmail {
   id: string;
@@ -50,29 +73,14 @@ export function AdminEmailQueue() {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['admin-email-stats'],
     queryFn: async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
-      const response = await apiWithAuth<QueueStats>(
-        '/admin/email-queue/stats',
-        session.access_token
-      );
-
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      return (
-        response.data || {
-          pending: 0,
-          processing: 0,
-          failed_today: 0,
-          sent_today: 0,
-          total_sent: 0,
-        }
-      );
+      const response = await apiWithAuth('/api/admin/email-queue/stats');
+      return (response || {
+        pending: 0,
+        processing: 0,
+        failed_today: 0,
+        sent_today: 0,
+        total_sent: 0,
+      }) as QueueStats;
     },
     refetchInterval: 30000,
   });
@@ -85,21 +93,11 @@ export function AdminEmailQueue() {
   } = useQuery({
     queryKey: ['admin-failed-emails'],
     queryFn: async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
-      const response = await apiWithAuth<{ failed_emails: FailedEmail[]; total: number }>(
-        '/admin/failed-emails',
-        session.access_token
-      );
-
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      return response.data || { failed_emails: [], total: 0 };
+      const response = await apiWithAuth('/api/admin/failed-emails');
+      return (response || { failed_emails: [], total: 0 }) as {
+        failed_emails: FailedEmail[];
+        total: number;
+      };
     },
     refetchInterval: 30000,
   });
@@ -107,22 +105,7 @@ export function AdminEmailQueue() {
   // Retry email mutation
   const retryMutation = useMutation({
     mutationFn: async (emailId: string) => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
-      const response = await apiWithAuth<{ retry_success: boolean; message: string }>(
-        `/admin/failed-emails/${emailId}/retry`,
-        session.access_token,
-        { method: 'POST' }
-      );
-
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      return response.data;
+      return apiWithAuth(`/api/admin/failed-emails/${emailId}/retry`, { method: 'POST' });
     },
     onMutate: (emailId) => {
       setRetryingId(emailId);

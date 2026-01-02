@@ -11,8 +11,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { apiWithAuth } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 import {
   AlertTriangle,
   CheckCircle,
@@ -23,6 +22,28 @@ import {
   Mail,
   Clock,
 } from 'lucide-react';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
+
+async function apiWithAuth(endpoint: string) {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
 
 interface HealthCheck {
   database: {
@@ -49,8 +70,6 @@ interface SystemHealthResponse {
 }
 
 export function AdminSystemHealth() {
-  const { session } = useAuth();
-
   const {
     data: health,
     isLoading,
@@ -58,26 +77,14 @@ export function AdminSystemHealth() {
     refetch,
   } = useQuery({
     queryKey: ['admin', 'system-health'],
-    queryFn: async () => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-      const response = await apiWithAuth(
-        '/api/admin/dashboard/system-health',
-        session.access_token
-      );
-      return response as SystemHealthResponse;
-    },
-    enabled: !!session?.access_token,
+    queryFn: () =>
+      apiWithAuth('/api/admin/dashboard/system-health') as Promise<SystemHealthResponse>,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const { data: operationsData } = useQuery({
     queryKey: ['admin', 'analytics', 'operations'],
-    queryFn: async () => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-      const response = await apiWithAuth('/api/admin/analytics/operations', session.access_token);
-      return response;
-    },
-    enabled: !!session?.access_token,
+    queryFn: () => apiWithAuth('/api/admin/analytics/operations'),
     refetchInterval: 60000, // Refresh every minute
   });
 

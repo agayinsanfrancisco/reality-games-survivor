@@ -15,9 +15,32 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { apiWithAuth } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 import { Navigation } from '@/components/Navigation';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
+
+async function apiWithAuth(endpoint: string, options?: RequestInit) {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      ...options?.headers,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
 
 type SortField = 'created' | 'name' | 'members' | 'revenue';
 
@@ -43,7 +66,6 @@ interface League {
 }
 
 export function AdminLeagues() {
-  const { session } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -57,7 +79,6 @@ export function AdminLeagues() {
   const { data: leaguesData, isLoading } = useQuery({
     queryKey: ['admin-leagues-enhanced', statusFilter, typeFilter, sortField],
     queryFn: async () => {
-      if (!session?.access_token) throw new Error('Not authenticated');
       const params = new URLSearchParams({
         limit: '100',
         sort: sortField,
@@ -66,27 +87,15 @@ export function AdminLeagues() {
       if (typeFilter === 'paid') params.append('type', 'paid');
       if (typeFilter === 'free') params.append('type', 'free');
 
-      const response = await apiWithAuth<{ leagues: League[]; total: number }>(
-        `/admin/leagues?${params.toString()}`,
-        session.access_token
-      );
-      if (response.error) throw new Error(response.error);
-      return response.data;
+      const response = await apiWithAuth(`/api/admin/leagues?${params.toString()}`);
+      return response as { leagues: League[]; total: number };
     },
-    enabled: !!session?.access_token,
   });
 
   // Delete league mutation
   const deleteLeague = useMutation({
     mutationFn: async (leagueId: string) => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-      const response = await apiWithAuth<{ success: boolean }>(
-        `/admin/leagues/${leagueId}`,
-        session.access_token,
-        { method: 'DELETE' }
-      );
-      if (response.error) throw new Error(response.error);
-      return response.data;
+      return apiWithAuth(`/api/admin/leagues/${leagueId}`, { method: 'DELETE' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-leagues-enhanced'] });

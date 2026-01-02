@@ -16,7 +16,30 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
-import { apiWithAuth } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
+
+async function apiWithAuth(endpoint: string, options?: RequestInit) {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      ...options?.headers,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
 
 interface EmailTemplate {
   id: string;
@@ -69,7 +92,7 @@ export function AdminContent() {
       const response = await apiWithAuth(
         `/api/admin/content/email-templates?category=${categoryFilter}`
       );
-      return response.data?.data || [];
+      return response.data || [];
     },
   });
 
@@ -78,7 +101,7 @@ export function AdminContent() {
     queryKey: ['admin', 'site-copy', _pageFilter],
     queryFn: async () => {
       const response = await apiWithAuth(`/api/admin/content/site-copy?page=${_pageFilter}`);
-      return response.data || { data: [], grouped: {} };
+      return response || { data: [], grouped: {} };
     },
   });
 
@@ -90,11 +113,10 @@ export function AdminContent() {
       html_body: string;
       is_active: boolean;
     }) => {
-      const response = await apiWithAuth(`/api/admin/content/email-templates/${data.slug}`, {
+      return apiWithAuth(`/api/admin/content/email-templates/${data.slug}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       });
-      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'email-templates'] });
@@ -105,14 +127,10 @@ export function AdminContent() {
   // Update site copy mutation
   const updateCopy = useMutation({
     mutationFn: async (data: { key: string; content: string; is_active: boolean }) => {
-      const response = await apiWithAuth(
-        `/api/admin/content/site-copy/${encodeURIComponent(data.key)}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify(data),
-        }
-      );
-      return response.data;
+      return apiWithAuth(`/api/admin/content/site-copy/${encodeURIComponent(data.key)}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'site-copy'] });
@@ -123,24 +141,22 @@ export function AdminContent() {
   // Send test email mutation
   const sendTestEmail = useMutation({
     mutationFn: async ({ slug, email }: { slug: string; email: string }) => {
-      const response = await apiWithAuth(`/api/admin/content/email-templates/${slug}/send-test`, {
+      return apiWithAuth(`/api/admin/content/email-templates/${slug}/send-test`, {
         method: 'POST',
         body: JSON.stringify({
           email,
           variables: getSampleVariables(selectedTemplate?.available_variables || []),
         }),
       });
-      return response.data;
     },
   });
 
   // Clear template cache mutation
   const clearCache = useMutation({
     mutationFn: async () => {
-      const response = await apiWithAuth('/api/admin/content/clear-cache', {
+      return apiWithAuth('/api/admin/content/clear-cache', {
         method: 'POST',
       });
-      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'email-templates'] });

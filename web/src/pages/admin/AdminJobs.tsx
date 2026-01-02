@@ -15,7 +15,30 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Navigation } from '@/components/Navigation';
-import { apiWithAuth } from '@/lib/api';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
+
+async function apiWithAuth(endpoint: string, options?: RequestInit) {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      ...options?.headers,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
 
 interface Job {
   name: string;
@@ -96,24 +119,14 @@ export function AdminJobs() {
   } = useQuery({
     queryKey: ['admin-jobs'],
     queryFn: async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
-      const response = await apiWithAuth<{ jobs: any[] }>('/admin/jobs', session.access_token);
-
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      return response.data?.jobs || [];
+      const response = await apiWithAuth('/api/admin/jobs');
+      return response.jobs || [];
     },
   });
 
   // Merge API data with local state
   const jobs: Job[] = defaultJobs.map((job) => {
-    const apiJob = apiJobs?.find((j: any) => j.name === job.name);
+    const apiJob = apiJobs?.find((j: Job) => j.name === job.name);
     const result = jobResults[job.name];
     return {
       ...job,
@@ -127,22 +140,7 @@ export function AdminJobs() {
   // Run job mutation - calls real API
   const runJobMutation = useMutation({
     mutationFn: async (jobName: string) => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
-      const response = await apiWithAuth<{ job: string; result: any }>(
-        `/admin/jobs/${jobName}/run`,
-        session.access_token,
-        { method: 'POST' }
-      );
-
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      return response.data;
+      return apiWithAuth(`/api/admin/jobs/${jobName}/run`, { method: 'POST' });
     },
     onMutate: (jobName) => {
       setRunningJob(jobName);

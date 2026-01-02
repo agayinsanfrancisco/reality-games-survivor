@@ -18,7 +18,6 @@ import {
   CastawayHeader,
   ScoringRulesReference,
 } from '@/components/admin/scoring';
-import { apiWithAuth } from '@/lib/api';
 import {
   useAdminProfile,
   useActiveSeasonForScoring,
@@ -30,6 +29,30 @@ import {
   groupRulesByCategory,
   getMostCommonRules,
 } from '@/lib/hooks';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
+
+async function apiWithAuth(endpoint: string, options?: RequestInit) {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      ...options?.headers,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
 
 // Sub-components
 import { EpisodeSelector } from '@/components/admin/scoring/EpisodeSelector';
@@ -120,11 +143,6 @@ export function AdminScoring() {
     async (castawayId: string, scoresToSave: Record<string, number>) => {
       if (!selectedEpisodeId || !castawayId || !user?.id) return;
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Not authenticated');
-
       const scoresArray = Object.entries(scoresToSave)
         .filter(([_, quantity]) => quantity > 0)
         .map(([ruleId, quantity]) => ({
@@ -133,13 +151,10 @@ export function AdminScoring() {
           quantity,
         }));
 
-      const result = await apiWithAuth<{ saved: number }>(
-        `/episodes/${selectedEpisodeId}/scoring/save`,
-        session.access_token,
-        { method: 'POST', body: JSON.stringify({ scores: scoresArray }) }
-      );
-
-      if (result.error) throw new Error(result.error);
+      await apiWithAuth(`/api/episodes/${selectedEpisodeId}/scoring/save`, {
+        method: 'POST',
+        body: JSON.stringify({ scores: scoresArray }),
+      });
 
       setLastSavedAt(new Date());
       setIsDirty(false);
@@ -155,21 +170,13 @@ export function AdminScoring() {
     mutationFn: async () => {
       if (!selectedEpisodeId) throw new Error('No episode selected');
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Not authenticated');
-
-      const result = await apiWithAuth<{
+      return apiWithAuth(`/api/episodes/${selectedEpisodeId}/scoring/finalize`, {
+        method: 'POST',
+      }) as Promise<{
         finalized: boolean;
         eliminated: string[];
         standings_updated: boolean;
-      }>(`/episodes/${selectedEpisodeId}/scoring/finalize`, session.access_token, {
-        method: 'POST',
-      });
-
-      if (result.error) throw new Error(result.error);
-      return result.data;
+      }>;
     },
     onSuccess: (data) => {
       setFinalizeResult({ success: true, eliminated: data?.eliminated || [] });

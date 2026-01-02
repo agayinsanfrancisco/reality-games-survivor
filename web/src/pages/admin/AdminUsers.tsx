@@ -21,9 +21,32 @@ import {
   Clock,
   AlertTriangle,
 } from 'lucide-react';
-import { apiWithAuth } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 import { Navigation } from '@/components/Navigation';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
+
+async function apiWithAuth(endpoint: string, options?: RequestInit) {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      ...options?.headers,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
 
 type UserRole = 'player' | 'commissioner' | 'admin';
 type UserSegment = 'power' | 'casual' | 'dormant' | 'churned' | 'new';
@@ -47,7 +70,6 @@ interface User {
 
 export function AdminUsers() {
   const queryClient = useQueryClient();
-  const { session } = useAuth();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [segmentFilter, setSegmentFilter] = useState<string>('all');
@@ -65,39 +87,21 @@ export function AdminUsers() {
   } = useQuery({
     queryKey: ['admin-users-enhanced', segmentFilter, healthFilter],
     queryFn: async () => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-
       const params = new URLSearchParams({ limit: '1000' });
       if (segmentFilter !== 'all') params.append('segment', segmentFilter);
       if (healthFilter !== 'all') params.append('status', healthFilter);
 
-      const response = await apiWithAuth<{ users: User[]; total: number }>(
-        `/admin/users?${params.toString()}`,
-        session.access_token
-      );
-
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      return response.data;
+      const response = await apiWithAuth(`/api/admin/users?${params.toString()}`);
+      return response as { users: User[]; total: number };
     },
-    enabled: !!session?.access_token,
   });
 
   // Impersonate mutation
   const impersonate = useMutation({
     mutationFn: async (userId: string) => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-      const response = await apiWithAuth<{ impersonationUrl: string; targetUser: User }>(
-        `/admin/users/${userId}/impersonate`,
-        session.access_token,
-        { method: 'POST' }
-      );
-      if (response.error) throw new Error(response.error);
-      return response.data;
+      return apiWithAuth(`/api/admin/users/${userId}/impersonate`, { method: 'POST' });
     },
-    onSuccess: (data) => {
+    onSuccess: (data: { impersonationUrl?: string }) => {
       if (data?.impersonationUrl) {
         window.open(data.impersonationUrl, '_blank');
       }
@@ -111,14 +115,10 @@ export function AdminUsers() {
   // Update role mutation
   const updateRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: UserRole }) => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-      const response = await apiWithAuth<{ user: User }>(
-        `/admin/users/${userId}`,
-        session.access_token,
-        { method: 'PATCH', body: JSON.stringify({ role }) }
-      );
-      if (response.error) throw new Error(response.error);
-      return response.data;
+      return apiWithAuth(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ role }),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users-enhanced'] });
@@ -131,14 +131,7 @@ export function AdminUsers() {
   // Reset password mutation
   const resetPassword = useMutation({
     mutationFn: async (userId: string) => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-      const response = await apiWithAuth<{ success: boolean }>(
-        `/admin/users/${userId}/reset-password`,
-        session.access_token,
-        { method: 'POST' }
-      );
-      if (response.error) throw new Error(response.error);
-      return response.data;
+      return apiWithAuth(`/api/admin/users/${userId}/reset-password`, { method: 'POST' });
     },
     onSuccess: () => {
       setError(null);

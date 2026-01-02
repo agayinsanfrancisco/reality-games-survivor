@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { apiWithAuth } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 import { Navigation } from '@/components/Navigation';
 import {
   ArrowLeft,
@@ -23,6 +22,28 @@ import {
   Target,
   Calendar,
 } from 'lucide-react';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
+
+async function apiWithAuth(endpoint: string) {
+  const session = await supabase.auth.getSession();
+  const token = session.data.session?.access_token;
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
 
 type Tab = 'executive' | 'engagement' | 'operations';
 
@@ -134,7 +155,6 @@ interface OperationsData {
 }
 
 export function AdminAnalytics() {
-  const { session } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('executive');
 
   // Executive data
@@ -144,16 +164,8 @@ export function AdminAnalytics() {
     refetch: refetchExecutive,
   } = useQuery<ExecutiveData>({
     queryKey: ['admin-analytics-executive'],
-    queryFn: async () => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-      const response = await apiWithAuth<ExecutiveData>(
-        '/admin/analytics/executive',
-        session.access_token
-      );
-      if (response.error) throw new Error(response.error);
-      return response.data!;
-    },
-    enabled: !!session?.access_token && activeTab === 'executive',
+    queryFn: () => apiWithAuth('/api/admin/analytics/executive') as Promise<ExecutiveData>,
+    enabled: activeTab === 'executive',
     staleTime: 5 * 60 * 1000,
   });
 
@@ -164,16 +176,8 @@ export function AdminAnalytics() {
     refetch: refetchEngagement,
   } = useQuery<EngagementData>({
     queryKey: ['admin-analytics-engagement'],
-    queryFn: async () => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-      const response = await apiWithAuth<EngagementData>(
-        '/admin/analytics/engagement',
-        session.access_token
-      );
-      if (response.error) throw new Error(response.error);
-      return response.data!;
-    },
-    enabled: !!session?.access_token && activeTab === 'engagement',
+    queryFn: () => apiWithAuth('/api/admin/analytics/engagement') as Promise<EngagementData>,
+    enabled: activeTab === 'engagement',
     staleTime: 5 * 60 * 1000,
   });
 
@@ -184,16 +188,8 @@ export function AdminAnalytics() {
     refetch: refetchOperations,
   } = useQuery<OperationsData>({
     queryKey: ['admin-analytics-operations'],
-    queryFn: async () => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-      const response = await apiWithAuth<OperationsData>(
-        '/admin/analytics/operations',
-        session.access_token
-      );
-      if (response.error) throw new Error(response.error);
-      return response.data!;
-    },
-    enabled: !!session?.access_token && activeTab === 'operations',
+    queryFn: () => apiWithAuth('/api/admin/analytics/operations') as Promise<OperationsData>,
+    enabled: activeTab === 'operations',
     staleTime: 30 * 1000,
   });
 
