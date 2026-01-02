@@ -1509,4 +1509,299 @@ router.get('/curse-carrier', async (_req: Request, res: Response) => {
   }
 });
 
+/**
+ * Stat 16: Biggest Bust (Castaway)
+ * GET /api/stats/biggest-bust
+ * 
+ * Castaway with highest average draft position but lowest points per game
+ */
+router.get('/biggest-bust', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get castaways
+    const { data: castaways, error: castawaysError } = await supabase
+      .from('castaways')
+      .select('id, name')
+      .eq('season_id', season.id);
+    
+    if (castawaysError) throw castawaysError;
+
+    // Get draft picks to calculate average draft position
+    const { data: rosters, error: rostersError } = await supabase
+      .from('rosters')
+      .select('castaway_id, draft_pick');
+    
+    if (rostersError) throw rostersError;
+
+    // Calculate average draft position per castaway
+    const draftStats: Record<string, { totalPick: number; count: number }> = {};
+    (rosters || []).forEach((r) => {
+      if (!r.castaway_id || !r.draft_pick) return;
+      if (!draftStats[r.castaway_id]) {
+        draftStats[r.castaway_id] = { totalPick: 0, count: 0 };
+      }
+      draftStats[r.castaway_id].totalPick += r.draft_pick;
+      draftStats[r.castaway_id].count++;
+    });
+
+    // Get episode scores
+    const { data: scores, error: scoresError } = await supabase
+      .from('episode_scores')
+      .select('castaway_id, episode_id, points');
+    
+    if (scoresError) throw scoresError;
+
+    // Calculate points per episode per castaway
+    const pointStats: Record<string, { total: number; episodes: Set<string> }> = {};
+    (scores || []).forEach((s) => {
+      if (!pointStats[s.castaway_id]) {
+        pointStats[s.castaway_id] = { total: 0, episodes: new Set() };
+      }
+      pointStats[s.castaway_id].total += Number(s.points) || 0;
+      pointStats[s.castaway_id].episodes.add(s.episode_id);
+    });
+
+    // Calculate bust score for each castaway
+    const leaderboard = (castaways || [])
+      .map((c) => {
+        const draft = draftStats[c.id];
+        const points = pointStats[c.id];
+        
+        if (!draft || draft.count === 0) return null;
+        if (!points || points.episodes.size === 0) return null;
+
+        const avgDraftPosition = draft.totalPick / draft.count;
+        const pointsPerEpisode = points.total / points.episodes.size;
+        
+        // Bust score: lower = bigger bust (high draft position, low PPE)
+        // We want to highlight high picks who underperformed
+        // Only consider early picks (top 12) as potential busts
+        if (avgDraftPosition > 12) return null;
+        
+        const bustScore = pointsPerEpisode / avgDraftPosition;
+
+        return {
+          castaway_id: c.id,
+          name: c.name,
+          avg_draft_position: Math.round(avgDraftPosition * 10) / 10,
+          points_per_episode: Math.round(pointsPerEpisode * 10) / 10,
+          bust_score: Math.round(bustScore * 100) / 100,
+        };
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== null)
+      .sort((a, b) => a.bust_score - b.bust_score) // Lower = bigger bust
+      .slice(0, 10);
+
+    res.json({ data: { leaderboard } });
+  } catch (err) {
+    console.error('Error fetching biggest-bust stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
+/**
+ * Stat 17: Biggest Steal (Castaway)
+ * GET /api/stats/biggest-steal
+ * 
+ * Castaway with lowest average draft position but highest points per game
+ */
+router.get('/biggest-steal', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get castaways
+    const { data: castaways, error: castawaysError } = await supabase
+      .from('castaways')
+      .select('id, name')
+      .eq('season_id', season.id);
+    
+    if (castawaysError) throw castawaysError;
+
+    // Get draft picks to calculate average draft position
+    const { data: rosters, error: rostersError } = await supabase
+      .from('rosters')
+      .select('castaway_id, draft_pick');
+    
+    if (rostersError) throw rostersError;
+
+    // Calculate average draft position per castaway
+    const draftStats: Record<string, { totalPick: number; count: number }> = {};
+    (rosters || []).forEach((r) => {
+      if (!r.castaway_id || !r.draft_pick) return;
+      if (!draftStats[r.castaway_id]) {
+        draftStats[r.castaway_id] = { totalPick: 0, count: 0 };
+      }
+      draftStats[r.castaway_id].totalPick += r.draft_pick;
+      draftStats[r.castaway_id].count++;
+    });
+
+    // Get episode scores
+    const { data: scores, error: scoresError } = await supabase
+      .from('episode_scores')
+      .select('castaway_id, episode_id, points');
+    
+    if (scoresError) throw scoresError;
+
+    // Calculate points per episode per castaway
+    const pointStats: Record<string, { total: number; episodes: Set<string> }> = {};
+    (scores || []).forEach((s) => {
+      if (!pointStats[s.castaway_id]) {
+        pointStats[s.castaway_id] = { total: 0, episodes: new Set() };
+      }
+      pointStats[s.castaway_id].total += Number(s.points) || 0;
+      pointStats[s.castaway_id].episodes.add(s.episode_id);
+    });
+
+    // Calculate steal score for each castaway
+    const leaderboard = (castaways || [])
+      .map((c) => {
+        const draft = draftStats[c.id];
+        const points = pointStats[c.id];
+        
+        if (!draft || draft.count === 0) return null;
+        if (!points || points.episodes.size === 0) return null;
+
+        const avgDraftPosition = draft.totalPick / draft.count;
+        const pointsPerEpisode = points.total / points.episodes.size;
+        
+        // Steal score: higher = bigger steal (late draft position, high PPE)
+        // Only consider late picks (pick 10+) as potential steals
+        if (avgDraftPosition < 10) return null;
+        
+        const stealScore = pointsPerEpisode / avgDraftPosition;
+
+        return {
+          castaway_id: c.id,
+          name: c.name,
+          avg_draft_position: Math.round(avgDraftPosition * 10) / 10,
+          points_per_episode: Math.round(pointsPerEpisode * 10) / 10,
+          steal_score: Math.round(stealScore * 100) / 100,
+        };
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== null)
+      .sort((a, b) => b.steal_score - a.steal_score) // Higher = bigger steal
+      .slice(0, 10);
+
+    res.json({ data: { leaderboard } });
+  } catch (err) {
+    console.error('Error fetching biggest-steal stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
+/**
+ * Stat 18: Most Consistent / Most Volatile (Castaway)
+ * GET /api/stats/consistency
+ * 
+ * Standard deviation of weekly scores
+ */
+router.get('/consistency', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { most_consistent: [], most_volatile: [] } });
+    }
+
+    // Get castaways
+    const { data: castaways, error: castawaysError } = await supabase
+      .from('castaways')
+      .select('id, name')
+      .eq('season_id', season.id);
+    
+    if (castawaysError) throw castawaysError;
+
+    // Get scored episodes
+    const { data: episodes, error: episodesError } = await supabase
+      .from('episodes')
+      .select('id')
+      .eq('season_id', season.id)
+      .eq('is_scored', true);
+    
+    if (episodesError) throw episodesError;
+    const scoredEpisodeIds = new Set((episodes || []).map((e) => e.id));
+
+    // Get episode scores
+    const { data: scores, error: scoresError } = await supabase
+      .from('episode_scores')
+      .select('castaway_id, episode_id, points');
+    
+    if (scoresError) throw scoresError;
+
+    // Group scores by castaway and episode
+    const castawayEpisodePoints: Record<string, Record<string, number>> = {};
+    (scores || []).forEach((s) => {
+      if (!scoredEpisodeIds.has(s.episode_id)) return;
+      if (!castawayEpisodePoints[s.castaway_id]) {
+        castawayEpisodePoints[s.castaway_id] = {};
+      }
+      if (!castawayEpisodePoints[s.castaway_id][s.episode_id]) {
+        castawayEpisodePoints[s.castaway_id][s.episode_id] = 0;
+      }
+      castawayEpisodePoints[s.castaway_id][s.episode_id] += Number(s.points) || 0;
+    });
+
+    // Calculate standard deviation for each castaway
+    const castawayStats = (castaways || [])
+      .map((c) => {
+        const episodeScores = castawayEpisodePoints[c.id];
+        if (!episodeScores) return null;
+        
+        const values = Object.values(episodeScores);
+        if (values.length < 2) return null; // Need at least 2 episodes
+
+        const mean = values.reduce((a, b) => a + b, 0) / values.length;
+        const squaredDiffs = values.map((v) => Math.pow(v - mean, 2));
+        const variance = squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
+        const stdDev = Math.sqrt(variance);
+
+        return {
+          castaway_id: c.id,
+          name: c.name,
+          avg_points: Math.round(mean * 10) / 10,
+          std_dev: Math.round(stdDev * 10) / 10,
+          episodes_played: values.length,
+        };
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== null);
+
+    const most_consistent = [...castawayStats]
+      .sort((a, b) => a.std_dev - b.std_dev) // Lower std dev = more consistent
+      .slice(0, 5);
+
+    const most_volatile = [...castawayStats]
+      .sort((a, b) => b.std_dev - a.std_dev) // Higher std dev = more volatile
+      .slice(0, 5);
+
+    res.json({ data: { most_consistent, most_volatile } });
+  } catch (err) {
+    console.error('Error fetching consistency stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
 export default router;

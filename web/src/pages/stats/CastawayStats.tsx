@@ -21,7 +21,15 @@ import { StatCard, HorizontalBarChart, TwoColumnLeaderboard } from '@/components
 import { useCastawayStats } from '@/lib/hooks/stats';
 
 export function CastawayStats() {
-  const { scoringEfficiency, tribeScoring, isLoading, error } = useCastawayStats();
+  const {
+    scoringEfficiency,
+    tribeScoring,
+    biggestBust,
+    biggestSteal,
+    consistency,
+    isLoading,
+    error,
+  } = useCastawayStats();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex flex-col">
@@ -65,7 +73,14 @@ export function CastawayStats() {
               icon={<TrendingDown className="h-5 w-5" />}
             >
               <HorizontalBarChart
-                data={[]}
+                data={
+                  biggestBust?.leaderboard?.map((e) => ({
+                    label: e.name,
+                    value: e.points_per_episode,
+                    sublabel: `Avg pick #${e.avg_draft_position}`,
+                  })) || []
+                }
+                valueFormatter={(v) => `${v.toFixed(1)} PPE`}
                 colorScale="red"
                 emptyMessage="Data available after more episodes"
               />
@@ -78,7 +93,14 @@ export function CastawayStats() {
               icon={<TrendingUp className="h-5 w-5" />}
             >
               <HorizontalBarChart
-                data={[]}
+                data={
+                  biggestSteal?.leaderboard?.map((e) => ({
+                    label: e.name,
+                    value: e.points_per_episode,
+                    sublabel: `Avg pick #${e.avg_draft_position}`,
+                  })) || []
+                }
+                valueFormatter={(v) => `${v.toFixed(1)} PPE`}
                 colorScale="green"
                 emptyMessage="Data available after more episodes"
               />
@@ -92,11 +114,26 @@ export function CastawayStats() {
             >
               <TwoColumnLeaderboard
                 leftTitle="Most Reliable"
-                leftEntries={[]}
+                leftEntries={
+                  consistency?.most_consistent?.map((e) => ({
+                    id: e.castaway_id,
+                    name: e.name,
+                    value: e.std_dev,
+                    sublabel: `Avg ${e.avg_points} pts`,
+                  })) || []
+                }
                 leftColor="green"
                 rightTitle="Wild Cards"
-                rightEntries={[]}
+                rightEntries={
+                  consistency?.most_volatile?.map((e) => ({
+                    id: e.castaway_id,
+                    name: e.name,
+                    value: e.std_dev,
+                    sublabel: `Avg ${e.avg_points} pts`,
+                  })) || []
+                }
                 rightColor="red"
+                valueFormatter={(v) => `±${v}`}
                 emptyMessage="Data available after more episodes"
               />
             </StatCard>

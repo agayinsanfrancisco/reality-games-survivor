@@ -32,6 +32,32 @@ interface TribeScoringResponse {
   tribes: TribeScoringEntry[];
 }
 
+interface BustStealEntry {
+  castaway_id: string;
+  name: string;
+  avg_draft_position: number;
+  points_per_episode: number;
+  bust_score?: number;
+  steal_score?: number;
+}
+
+interface BustStealResponse {
+  leaderboard: BustStealEntry[];
+}
+
+interface ConsistencyEntry {
+  castaway_id: string;
+  name: string;
+  avg_points: number;
+  std_dev: number;
+  episodes_played: number;
+}
+
+interface ConsistencyResponse {
+  most_consistent: ConsistencyEntry[];
+  most_volatile: ConsistencyEntry[];
+}
+
 export function useCastawayStats() {
   // Stat 19: Scoring Efficiency
   const scoringEfficiencyQuery = useQuery({
@@ -55,12 +81,60 @@ export function useCastawayStats() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const isLoading = scoringEfficiencyQuery.isLoading || tribeScoringQuery.isLoading;
-  const error = scoringEfficiencyQuery.error?.message || tribeScoringQuery.error?.message || null;
+  // Stat 16: Biggest Bust
+  const biggestBustQuery = useQuery({
+    queryKey: ['stats', 'biggest-bust'],
+    queryFn: async () => {
+      const response = await api<{ data: BustStealResponse }>('/stats/biggest-bust');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Stat 17: Biggest Steal
+  const biggestStealQuery = useQuery({
+    queryKey: ['stats', 'biggest-steal'],
+    queryFn: async () => {
+      const response = await api<{ data: BustStealResponse }>('/stats/biggest-steal');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Stat 18: Consistency
+  const consistencyQuery = useQuery({
+    queryKey: ['stats', 'consistency'],
+    queryFn: async () => {
+      const response = await api<{ data: ConsistencyResponse }>('/stats/consistency');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const isLoading =
+    scoringEfficiencyQuery.isLoading ||
+    tribeScoringQuery.isLoading ||
+    biggestBustQuery.isLoading ||
+    biggestStealQuery.isLoading ||
+    consistencyQuery.isLoading;
+
+  const error =
+    scoringEfficiencyQuery.error?.message ||
+    tribeScoringQuery.error?.message ||
+    biggestBustQuery.error?.message ||
+    biggestStealQuery.error?.message ||
+    consistencyQuery.error?.message ||
+    null;
 
   return {
     scoringEfficiency: scoringEfficiencyQuery.data,
     tribeScoring: tribeScoringQuery.data,
+    biggestBust: biggestBustQuery.data,
+    biggestSteal: biggestStealQuery.data,
+    consistency: consistencyQuery.data,
     isLoading,
     error,
   };
