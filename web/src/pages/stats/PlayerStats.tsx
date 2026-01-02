@@ -34,7 +34,9 @@ export function PlayerStats() {
     mostLeagues,
     lastMinuteLarry,
     earlyBird,
-    // submissionSpeed used in LeagueStats page instead
+    successfulPickRatio,
+    mostActive,
+    improvementTrend,
     isLoading,
     error,
   } = usePlayerStats();
@@ -83,7 +85,13 @@ export function PlayerStats() {
               icon={<Target className="h-5 w-5" />}
             >
               <HorizontalBarChart
-                data={[]}
+                data={
+                  successfulPickRatio?.leaderboard?.map((e) => ({
+                    label: e.display_name,
+                    value: e.ratio,
+                    sublabel: `${e.successful_picks}/${e.total_picks} picks`,
+                  })) || []
+                }
                 valueFormatter={(v) => `${v}%`}
                 emptyMessage="Data available after more episodes"
               />
@@ -261,7 +269,16 @@ export function PlayerStats() {
               subtitle="Composite engagement score"
               icon={<Zap className="h-5 w-5" />}
             >
-              <HorizontalBarChart data={[]} emptyMessage="Data available after more activity" />
+              <HorizontalBarChart
+                data={
+                  mostActive?.leaderboard?.map((e) => ({
+                    label: e.display_name,
+                    value: e.composite_score,
+                    sublabel: `${e.picks_count} picks, ${e.messages_count} msgs`,
+                  })) || []
+                }
+                emptyMessage="Data available after more activity"
+              />
             </StatCard>
 
             {/* Stat 15: Most Improved / Declined */}
@@ -272,9 +289,26 @@ export function PlayerStats() {
             >
               <TwoColumnLeaderboard
                 leftTitle="Rising Stars"
-                leftEntries={[]}
+                leftEntries={
+                  improvementTrend?.most_improved?.map((e) => ({
+                    id: e.user_id,
+                    name: e.display_name,
+                    value: e.improvement || 0,
+                    sublabel: `${e.first_half_avg} → ${e.second_half_avg}`,
+                  })) || []
+                }
+                leftColor="green"
                 rightTitle="Slumping"
-                rightEntries={[]}
+                rightEntries={
+                  improvementTrend?.most_declined?.map((e) => ({
+                    id: e.user_id,
+                    name: e.display_name,
+                    value: e.decline || Math.abs(e.improvement || 0),
+                    sublabel: `${e.first_half_avg} → ${e.second_half_avg}`,
+                  })) || []
+                }
+                rightColor="red"
+                valueFormatter={(v) => (v >= 0 ? `+${v}` : `${v}`)}
                 emptyMessage="Data available after more episodes"
               />
             </StatCard>

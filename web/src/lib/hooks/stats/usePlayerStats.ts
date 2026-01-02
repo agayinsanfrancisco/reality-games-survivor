@@ -68,6 +68,44 @@ interface SubmissionTimingResponse {
   procrastinators: SubmissionTimingEntry[];
 }
 
+interface SuccessfulPickRatioEntry {
+  user_id: string;
+  display_name: string;
+  successful_picks: number;
+  total_picks: number;
+  ratio: number;
+}
+
+interface SuccessfulPickRatioResponse {
+  leaderboard: SuccessfulPickRatioEntry[];
+}
+
+interface MostActiveEntry {
+  user_id: string;
+  display_name: string;
+  picks_count: number;
+  messages_count: number;
+  composite_score: number;
+}
+
+interface MostActiveResponse {
+  leaderboard: MostActiveEntry[];
+}
+
+interface ImprovementEntry {
+  user_id: string;
+  display_name: string;
+  first_half_avg: number;
+  second_half_avg: number;
+  improvement?: number;
+  decline?: number;
+}
+
+interface ImprovementTrendResponse {
+  most_improved: ImprovementEntry[];
+  most_declined: ImprovementEntry[];
+}
+
 export function usePlayerStats() {
   // Stat 13: Most Leagues Joined
   const mostLeaguesQuery = useQuery({
@@ -124,12 +162,50 @@ export function usePlayerStats() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Stat 1: Successful Pick Ratio
+  const successfulPickRatioQuery = useQuery({
+    queryKey: ['stats', 'successful-pick-ratio'],
+    queryFn: async () => {
+      const response = await api<{ data: SuccessfulPickRatioResponse }>(
+        '/stats/successful-pick-ratio'
+      );
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Stat 14: Most Active Player
+  const mostActiveQuery = useQuery({
+    queryKey: ['stats', 'most-active'],
+    queryFn: async () => {
+      const response = await api<{ data: MostActiveResponse }>('/stats/most-active');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Stat 15: Improvement Trend
+  const improvementTrendQuery = useQuery({
+    queryKey: ['stats', 'improvement-trend'],
+    queryFn: async () => {
+      const response = await api<{ data: ImprovementTrendResponse }>('/stats/improvement-trend');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const isLoading =
     mostLeaguesQuery.isLoading ||
     lastMinuteLarryQuery.isLoading ||
     earlyBirdQuery.isLoading ||
     submissionSpeedQuery.isLoading ||
-    submissionTimingQuery.isLoading;
+    submissionTimingQuery.isLoading ||
+    successfulPickRatioQuery.isLoading ||
+    mostActiveQuery.isLoading ||
+    improvementTrendQuery.isLoading;
 
   const error =
     mostLeaguesQuery.error?.message ||
@@ -137,6 +213,9 @@ export function usePlayerStats() {
     earlyBirdQuery.error?.message ||
     submissionSpeedQuery.error?.message ||
     submissionTimingQuery.error?.message ||
+    successfulPickRatioQuery.error?.message ||
+    mostActiveQuery.error?.message ||
+    improvementTrendQuery.error?.message ||
     null;
 
   return {
@@ -145,6 +224,9 @@ export function usePlayerStats() {
     earlyBird: earlyBirdQuery.data,
     submissionSpeed: submissionSpeedQuery.data,
     submissionTiming: submissionTimingQuery.data,
+    successfulPickRatio: successfulPickRatioQuery.data,
+    mostActive: mostActiveQuery.data,
+    improvementTrend: improvementTrendQuery.data,
     isLoading,
     error,
   };

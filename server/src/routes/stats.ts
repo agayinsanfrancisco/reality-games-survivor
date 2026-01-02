@@ -812,4 +812,369 @@ router.get('/submission-timing', async (_req: Request, res: Response) => {
   }
 });
 
+/**
+ * Stat 1: Successful Pick Ratio
+ * GET /api/stats/successful-pick-ratio
+ * 
+ * Percentage of picks where the started castaway scored above episode average
+ */
+router.get('/successful-pick-ratio', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get scored episodes
+    const { data: episodes, error: episodesError } = await supabase
+      .from('episodes')
+      .select('id')
+      .eq('season_id', season.id)
+      .eq('is_scored', true);
+    
+    if (episodesError) throw episodesError;
+    const scoredEpisodeIds = new Set((episodes || []).map((e) => e.id));
+    if (scoredEpisodeIds.size === 0) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get all episode scores to calculate averages
+    const { data: scores, error: scoresError } = await supabase
+      .from('episode_scores')
+      .select('episode_id, castaway_id, points');
+    
+    if (scoresError) throw scoresError;
+
+    // Calculate total points per castaway per episode
+    const castawayEpisodePoints: Record<string, Record<string, number>> = {};
+    (scores || []).forEach((s) => {
+      if (!scoredEpisodeIds.has(s.episode_id)) return;
+      if (!castawayEpisodePoints[s.episode_id]) {
+        castawayEpisodePoints[s.episode_id] = {};
+      }
+      if (!castawayEpisodePoints[s.episode_id][s.castaway_id]) {
+        castawayEpisodePoints[s.episode_id][s.castaway_id] = 0;
+      }
+      castawayEpisodePoints[s.episode_id][s.castaway_id] += Number(s.points) || 0;
+    });
+
+    // Calculate episode averages
+    const episodeAverages: Record<string, number> = {};
+    Object.entries(castawayEpisodePoints).forEach(([episodeId, castaways]) => {
+      const values = Object.values(castaways);
+      episodeAverages[episodeId] = values.length > 0 
+        ? values.reduce((a, b) => a + b, 0) / values.length 
+        : 0;
+    });
+
+    // Get all picks with user info
+    const { data: picks, error: picksError } = await supabase
+      .from('weekly_picks')
+      .select(`
+        user_id,
+        episode_id,
+        castaway_id,
+        users!inner(display_name)
+      `)
+      .not('castaway_id', 'is', null);
+    
+    if (picksError) throw picksError;
+
+    // Calculate success per user
+    const userStats: Record<string, { 
+      user_id: string; 
+      display_name: string; 
+      successful: number; 
+      total: number 
+    }> = {};
+
+    (picks || []).forEach((pick: any) => {
+      if (!scoredEpisodeIds.has(pick.episode_id)) return;
+      if (!pick.castaway_id) return;
+
+      const castawayPoints = castawayEpisodePoints[pick.episode_id]?.[pick.castaway_id] || 0;
+      const avgPoints = episodeAverages[pick.episode_id] || 0;
+      const isSuccessful = castawayPoints >= avgPoints;
+
+      if (!userStats[pick.user_id]) {
+        userStats[pick.user_id] = {
+          user_id: pick.user_id,
+          display_name: pick.users?.display_name || 'Unknown',
+          successful: 0,
+          total: 0,
+        };
+      }
+
+      userStats[pick.user_id].total++;
+      if (isSuccessful) {
+        userStats[pick.user_id].successful++;
+      }
+    });
+
+    const leaderboard = Object.values(userStats)
+      .filter((u) => u.total >= 3)
+      .map((u) => ({
+        user_id: u.user_id,
+        display_name: u.display_name,
+        successful_picks: u.successful,
+        total_picks: u.total,
+        ratio: u.total > 0 ? Math.round((u.successful / u.total) * 100) : 0,
+      }))
+      .sort((a, b) => b.ratio - a.ratio)
+      .slice(0, 10);
+
+    res.json({ data: { leaderboard } });
+  } catch (err) {
+    console.error('Error fetching successful-pick-ratio stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
+/**
+ * Stat 14: Most Active Player
+ * GET /api/stats/most-active
+ * 
+ * Composite engagement score from picks, messages, and activity
+ */
+router.get('/most-active', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get pick counts per user
+    const { data: picks, error: picksError } = await supabase
+      .from('weekly_picks')
+      .select(`
+        user_id,
+        users!inner(display_name)
+      `);
+    
+    if (picksError) throw picksError;
+
+    // Get message counts per user
+    const { data: messages, error: messagesError } = await supabase
+      .from('league_messages')
+      .select('user_id');
+    
+    if (messagesError) throw messagesError;
+
+    // Get chat message counts per user  
+    const { data: chatMessages, error: chatError } = await supabase
+      .from('chat_messages')
+      .select('user_id');
+    
+    if (chatError) throw chatError;
+
+    // Aggregate activity
+    const userActivity: Record<string, { 
+      user_id: string; 
+      display_name: string; 
+      picks: number;
+      messages: number;
+    }> = {};
+
+    (picks || []).forEach((p: any) => {
+      if (!userActivity[p.user_id]) {
+        userActivity[p.user_id] = {
+          user_id: p.user_id,
+          display_name: p.users?.display_name || 'Unknown',
+          picks: 0,
+          messages: 0,
+        };
+      }
+      userActivity[p.user_id].picks++;
+    });
+
+    (messages || []).forEach((m) => {
+      if (userActivity[m.user_id]) {
+        userActivity[m.user_id].messages++;
+      }
+    });
+
+    (chatMessages || []).forEach((m) => {
+      if (userActivity[m.user_id]) {
+        userActivity[m.user_id].messages++;
+      }
+    });
+
+    // Calculate composite score (weighted)
+    const leaderboard = Object.values(userActivity)
+      .map((u) => ({
+        user_id: u.user_id,
+        display_name: u.display_name,
+        picks_count: u.picks,
+        messages_count: u.messages,
+        // Picks count more (x3) than messages (x1)
+        composite_score: (u.picks * 3) + u.messages,
+      }))
+      .filter((u) => u.composite_score > 0)
+      .sort((a, b) => b.composite_score - a.composite_score)
+      .slice(0, 10);
+
+    res.json({ data: { leaderboard } });
+  } catch (err) {
+    console.error('Error fetching most-active stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
+/**
+ * Stat 15: Most Improved / Most Declined
+ * GET /api/stats/improvement-trend
+ * 
+ * Week over week point trends
+ */
+router.get('/improvement-trend', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { most_improved: [], most_declined: [] } });
+    }
+
+    // Get scored episodes in order
+    const { data: episodes, error: episodesError } = await supabase
+      .from('episodes')
+      .select('id, number')
+      .eq('season_id', season.id)
+      .eq('is_scored', true)
+      .order('number', { ascending: true });
+    
+    if (episodesError) throw episodesError;
+
+    if (!episodes || episodes.length < 4) {
+      return res.json({ data: { most_improved: [], most_declined: [] } });
+    }
+
+    const episodeIds = episodes.map((e) => e.id);
+    const midpoint = Math.floor(episodeIds.length / 2);
+    const firstHalfIds = new Set(episodeIds.slice(0, midpoint));
+    const secondHalfIds = new Set(episodeIds.slice(midpoint));
+
+    // Get all episode scores
+    const { data: scores, error: scoresError } = await supabase
+      .from('episode_scores')
+      .select('episode_id, castaway_id, points');
+    
+    if (scoresError) throw scoresError;
+
+    // Calculate castaway points per episode
+    const castawayEpisodePoints: Record<string, Record<string, number>> = {};
+    (scores || []).forEach((s) => {
+      if (!castawayEpisodePoints[s.episode_id]) {
+        castawayEpisodePoints[s.episode_id] = {};
+      }
+      if (!castawayEpisodePoints[s.episode_id][s.castaway_id]) {
+        castawayEpisodePoints[s.episode_id][s.castaway_id] = 0;
+      }
+      castawayEpisodePoints[s.episode_id][s.castaway_id] += Number(s.points) || 0;
+    });
+
+    // Get all picks with user info
+    const { data: picks, error: picksError } = await supabase
+      .from('weekly_picks')
+      .select(`
+        user_id,
+        episode_id,
+        castaway_id,
+        users!inner(display_name)
+      `)
+      .not('castaway_id', 'is', null);
+    
+    if (picksError) throw picksError;
+
+    // Calculate points per half for each user
+    const userStats: Record<string, { 
+      user_id: string; 
+      display_name: string;
+      first_half_total: number;
+      first_half_count: number;
+      second_half_total: number;
+      second_half_count: number;
+    }> = {};
+
+    (picks || []).forEach((pick: any) => {
+      if (!pick.castaway_id) return;
+      
+      const isFirstHalf = firstHalfIds.has(pick.episode_id);
+      const isSecondHalf = secondHalfIds.has(pick.episode_id);
+      if (!isFirstHalf && !isSecondHalf) return;
+
+      const points = castawayEpisodePoints[pick.episode_id]?.[pick.castaway_id] || 0;
+
+      if (!userStats[pick.user_id]) {
+        userStats[pick.user_id] = {
+          user_id: pick.user_id,
+          display_name: pick.users?.display_name || 'Unknown',
+          first_half_total: 0,
+          first_half_count: 0,
+          second_half_total: 0,
+          second_half_count: 0,
+        };
+      }
+
+      if (isFirstHalf) {
+        userStats[pick.user_id].first_half_total += points;
+        userStats[pick.user_id].first_half_count++;
+      } else {
+        userStats[pick.user_id].second_half_total += points;
+        userStats[pick.user_id].second_half_count++;
+      }
+    });
+
+    // Calculate improvement
+    const allUsers = Object.values(userStats)
+      .filter((u) => u.first_half_count >= 2 && u.second_half_count >= 2)
+      .map((u) => {
+        const firstHalfAvg = u.first_half_count > 0 ? u.first_half_total / u.first_half_count : 0;
+        const secondHalfAvg = u.second_half_count > 0 ? u.second_half_total / u.second_half_count : 0;
+        return {
+          user_id: u.user_id,
+          display_name: u.display_name,
+          first_half_avg: Math.round(firstHalfAvg * 10) / 10,
+          second_half_avg: Math.round(secondHalfAvg * 10) / 10,
+          improvement: Math.round((secondHalfAvg - firstHalfAvg) * 10) / 10,
+        };
+      });
+
+    const most_improved = allUsers
+      .filter((u) => u.improvement > 0)
+      .sort((a, b) => b.improvement - a.improvement)
+      .slice(0, 5);
+
+    const most_declined = allUsers
+      .filter((u) => u.improvement < 0)
+      .sort((a, b) => a.improvement - b.improvement) // Most negative first
+      .slice(0, 5)
+      .map((u) => ({
+        ...u,
+        decline: Math.abs(u.improvement),
+      }));
+
+    res.json({ data: { most_improved, most_declined } });
+  } catch (err) {
+    console.error('Error fetching improvement-trend stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
 export default router;
