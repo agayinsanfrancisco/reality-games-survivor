@@ -1804,4 +1804,1038 @@ router.get('/consistency', async (_req: Request, res: Response) => {
   }
 });
 
+/**
+ * Stat 6: Indecisive Award
+ * GET /api/stats/indecisive
+ * 
+ * Most lineup changes made after initial submission but before lock
+ */
+router.get('/indecisive', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get all picks where updated_at differs from created_at (indicating changes)
+    const { data: picks, error: picksError } = await supabase
+      .from('weekly_picks')
+      .select(`
+        user_id,
+        episode_id,
+        created_at,
+        updated_at,
+        users!inner(display_name)
+      `);
+    
+    if (picksError) throw picksError;
+
+    // Count changes per user (where updated_at > created_at + 1 minute)
+    const userStats: Record<string, { 
+      user_id: string; 
+      display_name: string; 
+      total_changes: number;
+      episodes_changed: Set<string>;
+    }> = {};
+
+    (picks || []).forEach((pick: any) => {
+      if (!pick.created_at || !pick.updated_at) return;
+      
+      const createdAt = new Date(pick.created_at);
+      const updatedAt = new Date(pick.updated_at);
+      // Consider it a change if updated more than 1 minute after creation
+      const timeDiff = (updatedAt.getTime() - createdAt.getTime()) / 60000;
+      
+      if (timeDiff <= 1) return; // No meaningful change
+
+      if (!userStats[pick.user_id]) {
+        userStats[pick.user_id] = {
+          user_id: pick.user_id,
+          display_name: pick.users?.display_name || 'Unknown',
+          total_changes: 0,
+          episodes_changed: new Set(),
+        };
+      }
+
+      userStats[pick.user_id].total_changes++;
+      userStats[pick.user_id].episodes_changed.add(pick.episode_id);
+    });
+
+    const leaderboard = Object.values(userStats)
+      .map((u) => ({
+        user_id: u.user_id,
+        display_name: u.display_name,
+        total_changes: u.total_changes,
+        episodes_changed: u.episodes_changed.size,
+      }))
+      .sort((a, b) => b.total_changes - a.total_changes)
+      .slice(0, 10);
+
+    res.json({ data: { leaderboard } });
+  } catch (err) {
+    console.error('Error fetching indecisive stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
+/**
+ * Stat 7: Set It and Forget It
+ * GET /api/stats/set-and-forget
+ * 
+ * Users who never changed their lineup after initial submission all season
+ */
+router.get('/set-and-forget', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { users: [] } });
+    }
+
+    // Get all picks
+    const { data: picks, error: picksError } = await supabase
+      .from('weekly_picks')
+      .select(`
+        user_id,
+        episode_id,
+        created_at,
+        updated_at,
+        submitted_at,
+        users!inner(display_name)
+      `);
+    
+    if (picksError) throw picksError;
+
+    // Track users who have made changes vs those who haven't
+    const userPickStats: Record<string, { 
+      user_id: string; 
+      display_name: string; 
+      total_picks: number;
+      changes: number;
+      total_submission_hours: number;
+    }> = {};
+
+    (picks || []).forEach((pick: any) => {
+      if (!userPickStats[pick.user_id]) {
+        userPickStats[pick.user_id] = {
+          user_id: pick.user_id,
+          display_name: pick.users?.display_name || 'Unknown',
+          total_picks: 0,
+          changes: 0,
+          total_submission_hours: 0,
+        };
+      }
+
+      userPickStats[pick.user_id].total_picks++;
+
+      // Check if they made changes
+      if (pick.created_at && pick.updated_at) {
+        const createdAt = new Date(pick.created_at);
+        const updatedAt = new Date(pick.updated_at);
+        const timeDiff = (updatedAt.getTime() - createdAt.getTime()) / 60000;
+        if (timeDiff > 1) {
+          userPickStats[pick.user_id].changes++;
+        }
+      }
+    });
+
+    // Filter to users with 0 changes and at least 3 picks
+    const users = Object.values(userPickStats)
+      .filter((u) => u.changes === 0 && u.total_picks >= 3)
+      .map((u) => ({
+        user_id: u.user_id,
+        display_name: u.display_name,
+        episodes_played: u.total_picks,
+      }))
+      .sort((a, b) => b.episodes_played - a.episodes_played)
+      .slice(0, 10);
+
+    res.json({ data: { users } });
+  } catch (err) {
+    console.error('Error fetching set-and-forget stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
+/**
+ * Stat 8: Benchwarmer Regret
+ * GET /api/stats/benchwarmer-regret
+ * 
+ * Most points left on bench across the season
+ * Note: Since we don't have starter/bench distinction, we calculate
+ * potential points from rostered castaways NOT picked for each episode
+ */
+router.get('/benchwarmer-regret', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get scored episodes
+    const { data: episodes, error: episodesError } = await supabase
+      .from('episodes')
+      .select('id')
+      .eq('season_id', season.id)
+      .eq('is_scored', true);
+    
+    if (episodesError) throw episodesError;
+    const scoredEpisodeIds = new Set((episodes || []).map((e) => e.id));
+
+    if (scoredEpisodeIds.size === 0) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get all episode scores
+    const { data: scores, error: scoresError } = await supabase
+      .from('episode_scores')
+      .select('episode_id, castaway_id, points');
+    
+    if (scoresError) throw scoresError;
+
+    // Build castaway points per episode
+    const castawayEpisodePoints: Record<string, Record<string, number>> = {};
+    (scores || []).forEach((s) => {
+      if (!scoredEpisodeIds.has(s.episode_id)) return;
+      if (!castawayEpisodePoints[s.episode_id]) {
+        castawayEpisodePoints[s.episode_id] = {};
+      }
+      if (!castawayEpisodePoints[s.episode_id][s.castaway_id]) {
+        castawayEpisodePoints[s.episode_id][s.castaway_id] = 0;
+      }
+      castawayEpisodePoints[s.episode_id][s.castaway_id] += Number(s.points) || 0;
+    });
+
+    // Get user rosters (all castaways they own)
+    const { data: rosters, error: rostersError } = await supabase
+      .from('rosters')
+      .select(`
+        user_id,
+        castaway_id,
+        users!inner(display_name)
+      `);
+    
+    if (rostersError) throw rostersError;
+
+    // Get picks (who they actually started)
+    const { data: picks, error: picksError } = await supabase
+      .from('weekly_picks')
+      .select('user_id, episode_id, castaway_id');
+    
+    if (picksError) throw picksError;
+
+    // Build map of user's picks per episode
+    const userEpisodePicks: Record<string, Record<string, string>> = {};
+    (picks || []).forEach((p) => {
+      if (!p.castaway_id) return;
+      if (!userEpisodePicks[p.user_id]) {
+        userEpisodePicks[p.user_id] = {};
+      }
+      userEpisodePicks[p.user_id][p.episode_id] = p.castaway_id;
+    });
+
+    // Build user roster map
+    const userRosters: Record<string, { castaways: string[]; display_name: string }> = {};
+    (rosters || []).forEach((r: any) => {
+      if (!userRosters[r.user_id]) {
+        userRosters[r.user_id] = {
+          castaways: [],
+          display_name: r.users?.display_name || 'Unknown',
+        };
+      }
+      userRosters[r.user_id].castaways.push(r.castaway_id);
+    });
+
+    // Calculate bench points per user
+    const userBenchPoints: Record<string, { 
+      user_id: string; 
+      display_name: string; 
+      bench_points: number;
+      best_bench_week: number;
+    }> = {};
+
+    Object.entries(userRosters).forEach(([userId, roster]) => {
+      let totalBenchPoints = 0;
+      let bestBenchWeek = 0;
+
+      scoredEpisodeIds.forEach((episodeId) => {
+        const pickedCastaway = userEpisodePicks[userId]?.[episodeId];
+        const episodePoints = castawayEpisodePoints[episodeId] || {};
+        
+        // Sum points from rostered castaways that weren't picked this episode
+        let episodeBenchPoints = 0;
+        roster.castaways.forEach((castawayId) => {
+          if (castawayId !== pickedCastaway) {
+            episodeBenchPoints += episodePoints[castawayId] || 0;
+          }
+        });
+
+        totalBenchPoints += episodeBenchPoints;
+        bestBenchWeek = Math.max(bestBenchWeek, episodeBenchPoints);
+      });
+
+      if (totalBenchPoints > 0) {
+        userBenchPoints[userId] = {
+          user_id: userId,
+          display_name: roster.display_name,
+          bench_points: Math.round(totalBenchPoints * 10) / 10,
+          best_bench_week: Math.round(bestBenchWeek * 10) / 10,
+        };
+      }
+    });
+
+    const leaderboard = Object.values(userBenchPoints)
+      .sort((a, b) => b.bench_points - a.bench_points)
+      .slice(0, 10);
+
+    res.json({ data: { leaderboard } });
+  } catch (err) {
+    console.error('Error fetching benchwarmer-regret stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
+/**
+ * Stat 10: Waiver Wire Wonder
+ * GET /api/stats/waiver-wonder
+ * 
+ * Most points scored by castaways who went undrafted
+ */
+router.get('/waiver-wonder', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get all castaways for this season
+    const { data: castaways, error: castawaysError } = await supabase
+      .from('castaways')
+      .select('id')
+      .eq('season_id', season.id);
+    
+    if (castawaysError) throw castawaysError;
+    const allCastawayIds = new Set((castaways || []).map((c) => c.id));
+
+    // Get all draft picks to find who was drafted
+    const { data: draftPicks, error: draftError } = await supabase
+      .from('rosters')
+      .select('castaway_id')
+      .not('draft_pick', 'is', null);
+    
+    if (draftError) throw draftError;
+
+    // Find undrafted castaways
+    const draftedIds = new Set((draftPicks || []).map((d) => d.castaway_id));
+    const undraftedIds = new Set(
+      [...allCastawayIds].filter((id) => !draftedIds.has(id))
+    );
+
+    if (undraftedIds.size === 0) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get scored episodes
+    const { data: episodes, error: episodesError } = await supabase
+      .from('episodes')
+      .select('id')
+      .eq('season_id', season.id)
+      .eq('is_scored', true);
+    
+    if (episodesError) throw episodesError;
+    const scoredEpisodeIds = new Set((episodes || []).map((e) => e.id));
+
+    // Get all episode scores for undrafted castaways
+    const { data: scores, error: scoresError } = await supabase
+      .from('episode_scores')
+      .select('episode_id, castaway_id, points');
+    
+    if (scoresError) throw scoresError;
+
+    // Build undrafted castaway points per episode
+    const undraftedPoints: Record<string, Record<string, number>> = {};
+    (scores || []).forEach((s) => {
+      if (!scoredEpisodeIds.has(s.episode_id)) return;
+      if (!undraftedIds.has(s.castaway_id)) return;
+      
+      if (!undraftedPoints[s.episode_id]) {
+        undraftedPoints[s.episode_id] = {};
+      }
+      if (!undraftedPoints[s.episode_id][s.castaway_id]) {
+        undraftedPoints[s.episode_id][s.castaway_id] = 0;
+      }
+      undraftedPoints[s.episode_id][s.castaway_id] += Number(s.points) || 0;
+    });
+
+    // Get all picks where user picked an undrafted castaway
+    const { data: picks, error: picksError } = await supabase
+      .from('weekly_picks')
+      .select(`
+        user_id,
+        episode_id,
+        castaway_id,
+        users!inner(display_name)
+      `)
+      .not('castaway_id', 'is', null);
+    
+    if (picksError) throw picksError;
+
+    // Calculate waiver wire points per user
+    const userStats: Record<string, { 
+      user_id: string; 
+      display_name: string; 
+      waiver_points: number;
+      undrafted_castaways: Set<string>;
+    }> = {};
+
+    (picks || []).forEach((pick: any) => {
+      if (!pick.castaway_id) return;
+      if (!undraftedIds.has(pick.castaway_id)) return;
+      if (!scoredEpisodeIds.has(pick.episode_id)) return;
+
+      const points = undraftedPoints[pick.episode_id]?.[pick.castaway_id] || 0;
+
+      if (!userStats[pick.user_id]) {
+        userStats[pick.user_id] = {
+          user_id: pick.user_id,
+          display_name: pick.users?.display_name || 'Unknown',
+          waiver_points: 0,
+          undrafted_castaways: new Set(),
+        };
+      }
+
+      userStats[pick.user_id].waiver_points += points;
+      userStats[pick.user_id].undrafted_castaways.add(pick.castaway_id);
+    });
+
+    const leaderboard = Object.values(userStats)
+      .filter((u) => u.waiver_points > 0)
+      .map((u) => ({
+        user_id: u.user_id,
+        display_name: u.display_name,
+        waiver_points: Math.round(u.waiver_points * 10) / 10,
+        undrafted_castaways: u.undrafted_castaways.size,
+      }))
+      .sort((a, b) => b.waiver_points - a.waiver_points)
+      .slice(0, 10);
+
+    res.json({ data: { leaderboard } });
+  } catch (err) {
+    console.error('Error fetching waiver-wonder stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
+/**
+ * Stat 11: Comeback King/Queen
+ * GET /api/stats/comeback-royalty
+ * 
+ * Largest point deficit overcome to win the league
+ */
+router.get('/comeback-royalty', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get all leagues for this season
+    const { data: leagues, error: leaguesError } = await supabase
+      .from('leagues')
+      .select('id, name')
+      .eq('season_id', season.id);
+    
+    if (leaguesError) throw leaguesError;
+
+    // Get league members with their current standings
+    const { data: members, error: membersError } = await supabase
+      .from('league_members')
+      .select(`
+        league_id,
+        user_id,
+        total_points,
+        rank,
+        users!inner(display_name)
+      `);
+    
+    if (membersError) throw membersError;
+
+    // Get scored episodes in order
+    const { data: episodes, error: episodesError } = await supabase
+      .from('episodes')
+      .select('id, number')
+      .eq('season_id', season.id)
+      .eq('is_scored', true)
+      .order('number', { ascending: true });
+    
+    if (episodesError) throw episodesError;
+
+    if (!episodes || episodes.length < 3) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get all picks with points
+    const { data: picks, error: picksError } = await supabase
+      .from('weekly_picks')
+      .select('user_id, league_id, episode_id, points_earned');
+    
+    if (picksError) throw picksError;
+
+    // Build cumulative points per user per league per episode
+    const userLeagueEpisodePoints: Record<string, Record<string, Record<string, number>>> = {};
+    
+    (picks || []).forEach((p) => {
+      if (!userLeagueEpisodePoints[p.league_id]) {
+        userLeagueEpisodePoints[p.league_id] = {};
+      }
+      if (!userLeagueEpisodePoints[p.league_id][p.user_id]) {
+        userLeagueEpisodePoints[p.league_id][p.user_id] = {};
+      }
+      userLeagueEpisodePoints[p.league_id][p.user_id][p.episode_id] = p.points_earned || 0;
+    });
+
+    // Find comebacks
+    const comebacks: Array<{
+      user_id: string;
+      display_name: string;
+      league_name: string;
+      max_deficit: number;
+      deficit_week: number;
+    }> = [];
+
+    // Map league IDs to names
+    const leagueNames: Record<string, string> = {};
+    (leagues || []).forEach((l) => {
+      leagueNames[l.id] = l.name;
+    });
+
+    // Group members by league
+    const leagueMembers: Record<string, Array<{ user_id: string; display_name: string; rank: number; total_points: number }>> = {};
+    (members || []).forEach((m: any) => {
+      if (!leagueMembers[m.league_id]) {
+        leagueMembers[m.league_id] = [];
+      }
+      leagueMembers[m.league_id].push({
+        user_id: m.user_id,
+        display_name: m.users?.display_name || 'Unknown',
+        rank: m.rank || 999,
+        total_points: m.total_points || 0,
+      });
+    });
+
+    // For each league, find the winner and their max deficit
+    Object.entries(leagueMembers).forEach(([leagueId, membersList]) => {
+      if (membersList.length < 2) return;
+
+      // Find current leader (rank 1 or highest points)
+      const sortedMembers = [...membersList].sort((a, b) => 
+        a.rank !== b.rank ? a.rank - b.rank : b.total_points - a.total_points
+      );
+      const winner = sortedMembers[0];
+      if (!winner || winner.rank !== 1) return; // No clear winner yet
+
+      const leaguePoints = userLeagueEpisodePoints[leagueId] || {};
+      
+      // Calculate cumulative points at each episode
+      const episodeOrder = episodes.map((e) => e.id);
+      let maxDeficit = 0;
+      let deficitWeek = 0;
+
+      episodeOrder.forEach((epId, epIndex) => {
+        // Calculate cumulative points for all users up to this episode
+        const cumulativePoints: Record<string, number> = {};
+        
+        membersList.forEach((member) => {
+          let cumulative = 0;
+          for (let i = 0; i <= epIndex; i++) {
+            cumulative += leaguePoints[member.user_id]?.[episodeOrder[i]] || 0;
+          }
+          cumulativePoints[member.user_id] = cumulative;
+        });
+
+        // Find max points at this episode
+        const maxPoints = Math.max(...Object.values(cumulativePoints));
+        const winnerPoints = cumulativePoints[winner.user_id] || 0;
+        const deficit = maxPoints - winnerPoints;
+
+        if (deficit > maxDeficit) {
+          maxDeficit = deficit;
+          deficitWeek = epIndex + 1;
+        }
+      });
+
+      if (maxDeficit > 0) {
+        comebacks.push({
+          user_id: winner.user_id,
+          display_name: winner.display_name,
+          league_name: leagueNames[leagueId] || 'Unknown League',
+          max_deficit: Math.round(maxDeficit * 10) / 10,
+          deficit_week: deficitWeek,
+        });
+      }
+    });
+
+    const leaderboard = comebacks
+      .sort((a, b) => b.max_deficit - a.max_deficit)
+      .slice(0, 10);
+
+    res.json({ data: { leaderboard } });
+  } catch (err) {
+    console.error('Error fetching comeback-royalty stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
+/**
+ * Stat 12: Choke Artist
+ * GET /api/stats/choke-artist
+ * 
+ * Largest lead blown (led at some point but didn't win)
+ */
+router.get('/choke-artist', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get all leagues for this season
+    const { data: leagues, error: leaguesError } = await supabase
+      .from('leagues')
+      .select('id, name')
+      .eq('season_id', season.id);
+    
+    if (leaguesError) throw leaguesError;
+
+    // Get league members with their current standings
+    const { data: members, error: membersError } = await supabase
+      .from('league_members')
+      .select(`
+        league_id,
+        user_id,
+        total_points,
+        rank,
+        users!inner(display_name)
+      `);
+    
+    if (membersError) throw membersError;
+
+    // Get scored episodes in order
+    const { data: episodes, error: episodesError } = await supabase
+      .from('episodes')
+      .select('id, number')
+      .eq('season_id', season.id)
+      .eq('is_scored', true)
+      .order('number', { ascending: true });
+    
+    if (episodesError) throw episodesError;
+
+    if (!episodes || episodes.length < 3) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get all picks with points
+    const { data: picks, error: picksError } = await supabase
+      .from('weekly_picks')
+      .select('user_id, league_id, episode_id, points_earned');
+    
+    if (picksError) throw picksError;
+
+    // Build cumulative points per user per league per episode
+    const userLeagueEpisodePoints: Record<string, Record<string, Record<string, number>>> = {};
+    
+    (picks || []).forEach((p) => {
+      if (!userLeagueEpisodePoints[p.league_id]) {
+        userLeagueEpisodePoints[p.league_id] = {};
+      }
+      if (!userLeagueEpisodePoints[p.league_id][p.user_id]) {
+        userLeagueEpisodePoints[p.league_id][p.user_id] = {};
+      }
+      userLeagueEpisodePoints[p.league_id][p.user_id][p.episode_id] = p.points_earned || 0;
+    });
+
+    // Find chokes
+    const chokes: Array<{
+      user_id: string;
+      display_name: string;
+      league_name: string;
+      max_lead: number;
+      lead_week: number;
+      final_position: number;
+    }> = [];
+
+    // Map league IDs to names
+    const leagueNames: Record<string, string> = {};
+    (leagues || []).forEach((l) => {
+      leagueNames[l.id] = l.name;
+    });
+
+    // Group members by league
+    const leagueMembers: Record<string, Array<{ user_id: string; display_name: string; rank: number; total_points: number }>> = {};
+    (members || []).forEach((m: any) => {
+      if (!leagueMembers[m.league_id]) {
+        leagueMembers[m.league_id] = [];
+      }
+      leagueMembers[m.league_id].push({
+        user_id: m.user_id,
+        display_name: m.users?.display_name || 'Unknown',
+        rank: m.rank || 999,
+        total_points: m.total_points || 0,
+      });
+    });
+
+    // For each league, find users who led but didn't win
+    Object.entries(leagueMembers).forEach(([leagueId, membersList]) => {
+      if (membersList.length < 2) return;
+
+      const leaguePoints = userLeagueEpisodePoints[leagueId] || {};
+      const episodeOrder = episodes.map((e) => e.id);
+
+      // Track max lead for each user
+      const userMaxLeads: Record<string, { lead: number; week: number }> = {};
+
+      episodeOrder.forEach((epId, epIndex) => {
+        // Calculate cumulative points for all users up to this episode
+        const cumulativePoints: Record<string, number> = {};
+        
+        membersList.forEach((member) => {
+          let cumulative = 0;
+          for (let i = 0; i <= epIndex; i++) {
+            cumulative += leaguePoints[member.user_id]?.[episodeOrder[i]] || 0;
+          }
+          cumulativePoints[member.user_id] = cumulative;
+        });
+
+        // Find who's leading this week
+        let maxPoints = 0;
+        let leaderId: string | null = null;
+        
+        Object.entries(cumulativePoints).forEach(([userId, points]) => {
+          if (points > maxPoints) {
+            maxPoints = points;
+            leaderId = userId;
+          }
+        });
+
+        if (leaderId) {
+          // Calculate lead over second place
+          const sortedPoints = Object.values(cumulativePoints).sort((a, b) => b - a);
+          const lead = sortedPoints[0] - (sortedPoints[1] || 0);
+          
+          if (!userMaxLeads[leaderId] || lead > userMaxLeads[leaderId].lead) {
+            userMaxLeads[leaderId] = { lead, week: epIndex + 1 };
+          }
+        }
+      });
+
+      // Find users who had a lead but didn't win (rank > 1)
+      membersList.forEach((member) => {
+        if (member.rank === 1) return; // They won, not a choke
+        
+        const maxLead = userMaxLeads[member.user_id];
+        if (maxLead && maxLead.lead > 0) {
+          chokes.push({
+            user_id: member.user_id,
+            display_name: member.display_name,
+            league_name: leagueNames[leagueId] || 'Unknown League',
+            max_lead: Math.round(maxLead.lead * 10) / 10,
+            lead_week: maxLead.week,
+            final_position: member.rank,
+          });
+        }
+      });
+    });
+
+    const leaderboard = chokes
+      .sort((a, b) => b.max_lead - a.max_lead)
+      .slice(0, 10);
+
+    res.json({ data: { leaderboard } });
+  } catch (err) {
+    console.error('Error fetching choke-artist stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
+/**
+ * Stat 20: Skill-Correlated Picks
+ * GET /api/stats/skill-correlated-picks
+ * 
+ * Which castaways top players roster vs bottom players
+ */
+router.get('/skill-correlated-picks', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { smart_picks: [], trap_picks: [] } });
+    }
+
+    // Get all league members with total points
+    const { data: members, error: membersError } = await supabase
+      .from('league_members')
+      .select('user_id, total_points');
+    
+    if (membersError) throw membersError;
+
+    // Aggregate points per user across all leagues
+    const userTotalPoints: Record<string, number> = {};
+    (members || []).forEach((m) => {
+      userTotalPoints[m.user_id] = (userTotalPoints[m.user_id] || 0) + (m.total_points || 0);
+    });
+
+    const sortedUsers = Object.entries(userTotalPoints)
+      .sort(([, a], [, b]) => b - a);
+
+    if (sortedUsers.length < 8) {
+      return res.json({ data: { smart_picks: [], trap_picks: [] } });
+    }
+
+    // Get top 25% and bottom 25% users
+    const quarterSize = Math.max(2, Math.floor(sortedUsers.length / 4));
+    const topUsers = new Set(sortedUsers.slice(0, quarterSize).map(([id]) => id));
+    const bottomUsers = new Set(sortedUsers.slice(-quarterSize).map(([id]) => id));
+
+    // Get castaways
+    const { data: castaways, error: castawaysError } = await supabase
+      .from('castaways')
+      .select('id, name')
+      .eq('season_id', season.id);
+    
+    if (castawaysError) throw castawaysError;
+
+    // Get all picks
+    const { data: picks, error: picksError } = await supabase
+      .from('weekly_picks')
+      .select('user_id, castaway_id')
+      .not('castaway_id', 'is', null);
+    
+    if (picksError) throw picksError;
+
+    // Count picks per castaway by user tier
+    const castawayStats: Record<string, { 
+      top_picks: number; 
+      bottom_picks: number;
+      total_picks: number;
+    }> = {};
+
+    (picks || []).forEach((p) => {
+      if (!p.castaway_id) return;
+      
+      if (!castawayStats[p.castaway_id]) {
+        castawayStats[p.castaway_id] = { top_picks: 0, bottom_picks: 0, total_picks: 0 };
+      }
+
+      castawayStats[p.castaway_id].total_picks++;
+      if (topUsers.has(p.user_id)) {
+        castawayStats[p.castaway_id].top_picks++;
+      }
+      if (bottomUsers.has(p.user_id)) {
+        castawayStats[p.castaway_id].bottom_picks++;
+      }
+    });
+
+    // Build castaway name map
+    const castawayNames: Record<string, string> = {};
+    (castaways || []).forEach((c) => {
+      castawayNames[c.id] = c.name;
+    });
+
+    // Calculate differential and ownership percentages
+    const castawayResults = Object.entries(castawayStats)
+      .filter(([, stats]) => stats.total_picks >= 3) // Minimum picks threshold
+      .map(([castawayId, stats]) => {
+        const topOwnership = quarterSize > 0 ? Math.round((stats.top_picks / quarterSize) * 100) : 0;
+        const bottomOwnership = quarterSize > 0 ? Math.round((stats.bottom_picks / quarterSize) * 100) : 0;
+        const differential = topOwnership - bottomOwnership;
+
+        return {
+          castaway_id: castawayId,
+          name: castawayNames[castawayId] || 'Unknown',
+          top_player_ownership: topOwnership,
+          bottom_player_ownership: bottomOwnership,
+          differential,
+        };
+      });
+
+    // Smart picks: higher ownership by top players
+    const smart_picks = [...castawayResults]
+      .filter((c) => c.differential > 0)
+      .sort((a, b) => b.differential - a.differential)
+      .slice(0, 5);
+
+    // Trap picks: higher ownership by bottom players
+    const trap_picks = [...castawayResults]
+      .filter((c) => c.differential < 0)
+      .sort((a, b) => a.differential - b.differential)
+      .slice(0, 5);
+
+    res.json({ data: { smart_picks, trap_picks } });
+  } catch (err) {
+    console.error('Error fetching skill-correlated-picks stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
+/**
+ * Stat 21: Nail Biter League
+ * GET /api/stats/nail-biter-leagues
+ * 
+ * League with most weeks decided by narrow margins
+ */
+router.get('/nail-biter-leagues', async (_req: Request, res: Response) => {
+  try {
+    // Get active season
+    const { data: season } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('is_active', true)
+      .single();
+    
+    if (!season) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get all leagues for this season
+    const { data: leagues, error: leaguesError } = await supabase
+      .from('leagues')
+      .select('id, name')
+      .eq('season_id', season.id);
+    
+    if (leaguesError) throw leaguesError;
+
+    // Get scored episodes
+    const { data: episodes, error: episodesError } = await supabase
+      .from('episodes')
+      .select('id, number')
+      .eq('season_id', season.id)
+      .eq('is_scored', true)
+      .order('number', { ascending: true });
+    
+    if (episodesError) throw episodesError;
+
+    if (!episodes || episodes.length === 0) {
+      return res.json({ data: { leaderboard: [] } });
+    }
+
+    // Get all picks with points per episode
+    const { data: picks, error: picksError } = await supabase
+      .from('weekly_picks')
+      .select('user_id, league_id, episode_id, points_earned');
+    
+    if (picksError) throw picksError;
+
+    // Map league IDs to names
+    const leagueNames: Record<string, string> = {};
+    (leagues || []).forEach((l) => {
+      leagueNames[l.id] = l.name;
+    });
+
+    // Build weekly points per user per league
+    const leagueWeeklyPoints: Record<string, Record<string, Record<string, number>>> = {};
+    
+    (picks || []).forEach((p) => {
+      if (!leagueWeeklyPoints[p.league_id]) {
+        leagueWeeklyPoints[p.league_id] = {};
+      }
+      if (!leagueWeeklyPoints[p.league_id][p.episode_id]) {
+        leagueWeeklyPoints[p.league_id][p.episode_id] = {};
+      }
+      leagueWeeklyPoints[p.league_id][p.episode_id][p.user_id] = p.points_earned || 0;
+    });
+
+    // Calculate nail-biter weeks per league
+    const leagueStats: Record<string, { nail_biter_weeks: number; total_weeks: number; closest_margin: number }> = {};
+
+    Object.entries(leagueWeeklyPoints).forEach(([leagueId, episodePoints]) => {
+      let nailBiterWeeks = 0;
+      let totalWeeks = 0;
+      let closestMargin = Infinity;
+
+      Object.entries(episodePoints).forEach(([, userPoints]) => {
+        const pointValues = Object.values(userPoints);
+        if (pointValues.length < 2) return;
+
+        totalWeeks++;
+        
+        // Sort to find margin between 1st and 2nd
+        const sorted = [...pointValues].sort((a, b) => b - a);
+        const margin = sorted[0] - sorted[1];
+
+        // Consider "nail biter" if margin is 10 points or less
+        if (margin <= 10) {
+          nailBiterWeeks++;
+        }
+        
+        closestMargin = Math.min(closestMargin, margin);
+      });
+
+      if (totalWeeks > 0) {
+        leagueStats[leagueId] = {
+          nail_biter_weeks: nailBiterWeeks,
+          total_weeks: totalWeeks,
+          closest_margin: closestMargin === Infinity ? 0 : Math.round(closestMargin * 10) / 10,
+        };
+      }
+    });
+
+    const leaderboard = Object.entries(leagueStats)
+      .map(([leagueId, stats]) => ({
+        league_id: leagueId,
+        name: leagueNames[leagueId] || 'Unknown League',
+        nail_biter_weeks: stats.nail_biter_weeks,
+        total_weeks: stats.total_weeks,
+        closest_margin: stats.closest_margin,
+      }))
+      .filter((l) => l.nail_biter_weeks > 0)
+      .sort((a, b) => b.nail_biter_weeks - a.nail_biter_weeks)
+      .slice(0, 10);
+
+    res.json({ data: { leaderboard } });
+  } catch (err) {
+    console.error('Error fetching nail-biter-leagues stat:', err);
+    res.status(500).json({ error: 'Failed to fetch stat' });
+  }
+});
+
 export default router;

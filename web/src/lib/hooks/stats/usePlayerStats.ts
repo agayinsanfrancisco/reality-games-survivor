@@ -144,10 +144,68 @@ interface BenchwarmerRegretEntry {
   user_id: string;
   display_name: string;
   bench_points: number;
+  best_bench_week?: number;
 }
 
 interface BenchwarmerRegretResponse {
   leaderboard: BenchwarmerRegretEntry[];
+}
+
+interface IndecisiveEntry {
+  user_id: string;
+  display_name: string;
+  total_changes: number;
+  episodes_changed: number;
+}
+
+interface IndecisiveResponse {
+  leaderboard: IndecisiveEntry[];
+}
+
+interface SetAndForgetEntry {
+  user_id: string;
+  display_name: string;
+  episodes_played: number;
+}
+
+interface SetAndForgetResponse {
+  users: SetAndForgetEntry[];
+}
+
+interface WaiverWonderEntry {
+  user_id: string;
+  display_name: string;
+  waiver_points: number;
+  undrafted_castaways: number;
+}
+
+interface WaiverWonderResponse {
+  leaderboard: WaiverWonderEntry[];
+}
+
+interface ComebackRoyaltyEntry {
+  user_id: string;
+  display_name: string;
+  league_name: string;
+  max_deficit: number;
+  deficit_week: number;
+}
+
+interface ComebackRoyaltyResponse {
+  leaderboard: ComebackRoyaltyEntry[];
+}
+
+interface ChokeArtistEntry {
+  user_id: string;
+  display_name: string;
+  league_name: string;
+  max_lead: number;
+  lead_week: number;
+  final_position: number;
+}
+
+interface ChokeArtistResponse {
+  leaderboard: ChokeArtistEntry[];
 }
 
 export function usePlayerStats() {
@@ -285,6 +343,61 @@ export function usePlayerStats() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Stat 6: Indecisive Award
+  const indecisiveQuery = useQuery({
+    queryKey: ['stats', 'indecisive'],
+    queryFn: async () => {
+      const response = await api<{ data: IndecisiveResponse }>('/stats/indecisive');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Stat 7: Set It and Forget It
+  const setAndForgetQuery = useQuery({
+    queryKey: ['stats', 'set-and-forget'],
+    queryFn: async () => {
+      const response = await api<{ data: SetAndForgetResponse }>('/stats/set-and-forget');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Stat 10: Waiver Wire Wonder
+  const waiverWonderQuery = useQuery({
+    queryKey: ['stats', 'waiver-wonder'],
+    queryFn: async () => {
+      const response = await api<{ data: WaiverWonderResponse }>('/stats/waiver-wonder');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Stat 11: Comeback King/Queen
+  const comebackRoyaltyQuery = useQuery({
+    queryKey: ['stats', 'comeback-royalty'],
+    queryFn: async () => {
+      const response = await api<{ data: ComebackRoyaltyResponse }>('/stats/comeback-royalty');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Stat 12: Choke Artist
+  const chokeArtistQuery = useQuery({
+    queryKey: ['stats', 'choke-artist'],
+    queryFn: async () => {
+      const response = await api<{ data: ChokeArtistResponse }>('/stats/choke-artist');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const isLoading =
     mostLeaguesQuery.isLoading ||
     lastMinuteLarryQuery.isLoading ||
@@ -297,7 +410,12 @@ export function usePlayerStats() {
     luckiestPlayerQuery.isLoading ||
     unluckiestPlayerQuery.isLoading ||
     curseCarrierQuery.isLoading ||
-    benchwarmerRegretQuery.isLoading;
+    benchwarmerRegretQuery.isLoading ||
+    indecisiveQuery.isLoading ||
+    setAndForgetQuery.isLoading ||
+    waiverWonderQuery.isLoading ||
+    comebackRoyaltyQuery.isLoading ||
+    chokeArtistQuery.isLoading;
 
   const error =
     mostLeaguesQuery.error?.message ||
@@ -312,6 +430,11 @@ export function usePlayerStats() {
     unluckiestPlayerQuery.error?.message ||
     curseCarrierQuery.error?.message ||
     benchwarmerRegretQuery.error?.message ||
+    indecisiveQuery.error?.message ||
+    setAndForgetQuery.error?.message ||
+    waiverWonderQuery.error?.message ||
+    comebackRoyaltyQuery.error?.message ||
+    chokeArtistQuery.error?.message ||
     null;
 
   return {
@@ -327,6 +450,11 @@ export function usePlayerStats() {
     unluckiestPlayer: unluckiestPlayerQuery.data,
     curseCarrier: curseCarrierQuery.data,
     benchwarmerRegret: benchwarmerRegretQuery.data,
+    indecisive: indecisiveQuery.data,
+    setAndForget: setAndForgetQuery.data,
+    waiverWonder: waiverWonderQuery.data,
+    comebackRoyalty: comebackRoyaltyQuery.data,
+    chokeArtist: chokeArtistQuery.data,
     isLoading,
     error,
   };

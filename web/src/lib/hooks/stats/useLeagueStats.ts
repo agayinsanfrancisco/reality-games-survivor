@@ -65,6 +65,20 @@ interface NailBiterResponse {
   leaderboard: NailBiterEntry[];
 }
 
+interface SubmissionTimingEntry {
+  user_id: string;
+  display_name: string;
+  first_hour_picks?: number;
+  last_hour_picks?: number;
+  total_picks: number;
+  ratio: number;
+}
+
+interface SubmissionTimingResponse {
+  early_birds: SubmissionTimingEntry[];
+  procrastinators: SubmissionTimingEntry[];
+}
+
 export function useLeagueStats() {
   // Stat 22: League Scoring
   const leagueScoringQuery = useQuery({
@@ -121,12 +135,24 @@ export function useLeagueStats() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Stat 24: Submission Timing
+  const submissionTimingQuery = useQuery({
+    queryKey: ['stats', 'submission-timing'],
+    queryFn: async () => {
+      const response = await api<{ data: SubmissionTimingResponse }>('/stats/submission-timing');
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const isLoading =
     leagueScoringQuery.isLoading ||
     activityByDayQuery.isLoading ||
     activityByHourQuery.isLoading ||
     submissionSpeedQuery.isLoading ||
-    nailBiterQuery.isLoading;
+    nailBiterQuery.isLoading ||
+    submissionTimingQuery.isLoading;
 
   const error =
     leagueScoringQuery.error?.message ||
@@ -134,6 +160,7 @@ export function useLeagueStats() {
     activityByHourQuery.error?.message ||
     submissionSpeedQuery.error?.message ||
     nailBiterQuery.error?.message ||
+    submissionTimingQuery.error?.message ||
     null;
 
   return {
@@ -142,6 +169,7 @@ export function useLeagueStats() {
     activityByHour: activityByHourQuery.data,
     submissionSpeed: submissionSpeedQuery.data,
     nailBiter: nailBiterQuery.data,
+    submissionTiming: submissionTimingQuery.data,
     isLoading,
     error,
   };

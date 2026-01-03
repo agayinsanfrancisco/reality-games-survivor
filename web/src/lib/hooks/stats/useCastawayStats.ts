@@ -58,6 +58,19 @@ interface ConsistencyResponse {
   most_volatile: ConsistencyEntry[];
 }
 
+interface SkillCorrelatedEntry {
+  castaway_id: string;
+  name: string;
+  top_player_ownership: number;
+  bottom_player_ownership: number;
+  differential: number;
+}
+
+interface SkillCorrelatedResponse {
+  smart_picks: SkillCorrelatedEntry[];
+  trap_picks: SkillCorrelatedEntry[];
+}
+
 export function useCastawayStats() {
   // Stat 19: Scoring Efficiency
   const scoringEfficiencyQuery = useQuery({
@@ -114,12 +127,26 @@ export function useCastawayStats() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Stat 20: Skill-Correlated Picks
+  const skillCorrelatedQuery = useQuery({
+    queryKey: ['stats', 'skill-correlated-picks'],
+    queryFn: async () => {
+      const response = await api<{ data: SkillCorrelatedResponse }>(
+        '/stats/skill-correlated-picks'
+      );
+      if (response.error) throw new Error(response.error);
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const isLoading =
     scoringEfficiencyQuery.isLoading ||
     tribeScoringQuery.isLoading ||
     biggestBustQuery.isLoading ||
     biggestStealQuery.isLoading ||
-    consistencyQuery.isLoading;
+    consistencyQuery.isLoading ||
+    skillCorrelatedQuery.isLoading;
 
   const error =
     scoringEfficiencyQuery.error?.message ||
@@ -127,6 +154,7 @@ export function useCastawayStats() {
     biggestBustQuery.error?.message ||
     biggestStealQuery.error?.message ||
     consistencyQuery.error?.message ||
+    skillCorrelatedQuery.error?.message ||
     null;
 
   return {
@@ -135,6 +163,7 @@ export function useCastawayStats() {
     biggestBust: biggestBustQuery.data,
     biggestSteal: biggestStealQuery.data,
     consistency: consistencyQuery.data,
+    skillCorrelated: skillCorrelatedQuery.data,
     isLoading,
     error,
   };

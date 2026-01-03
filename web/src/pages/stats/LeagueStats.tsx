@@ -18,7 +18,13 @@ import {
   Zap,
   Loader2,
 } from 'lucide-react';
-import { StatCard, HorizontalBarChart, BarChart, InsightCard } from '@/components/stats';
+import {
+  StatCard,
+  HorizontalBarChart,
+  BarChart,
+  InsightCard,
+  TwoColumnLeaderboard,
+} from '@/components/stats';
 import { useLeagueStats } from '@/lib/hooks/stats';
 
 export function LeagueStats() {
@@ -28,6 +34,7 @@ export function LeagueStats() {
     activityByHour,
     submissionSpeed,
     nailBiter,
+    submissionTiming,
     isLoading,
     error,
   } = useLeagueStats();
@@ -119,7 +126,30 @@ export function LeagueStats() {
                 subtitle="Picks in first vs last hour of window"
                 icon={<Clock className="h-5 w-5" />}
               >
-                <HorizontalBarChart data={[]} emptyMessage="Data available after more picks" />
+                <TwoColumnLeaderboard
+                  leftTitle="Early Birds"
+                  leftEntries={
+                    submissionTiming?.early_birds?.map((e) => ({
+                      id: e.user_id,
+                      name: e.display_name,
+                      value: e.ratio,
+                      sublabel: `${e.first_hour_picks || 0}/${e.total_picks} picks`,
+                    })) || []
+                  }
+                  leftColor="green"
+                  rightTitle="Procrastinators"
+                  rightEntries={
+                    submissionTiming?.procrastinators?.map((e) => ({
+                      id: e.user_id,
+                      name: e.display_name,
+                      value: e.ratio,
+                      sublabel: `${e.last_hour_picks || 0}/${e.total_picks} picks`,
+                    })) || []
+                  }
+                  rightColor="red"
+                  valueFormatter={(v) => `${v}%`}
+                  emptyMessage="Data available after more picks"
+                />
               </StatCard>
 
               {/* Stat 27: Fastest/Slowest to Submit */}

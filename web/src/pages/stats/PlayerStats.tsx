@@ -41,6 +41,11 @@ export function PlayerStats() {
     unluckiestPlayer,
     curseCarrier,
     benchwarmerRegret,
+    indecisive,
+    setAndForget,
+    waiverWonder,
+    comebackRoyalty,
+    chokeArtist,
     isLoading,
     error,
   } = usePlayerStats();
@@ -184,7 +189,16 @@ export function PlayerStats() {
               subtitle="Most lineup changes before lock"
               icon={<Shuffle className="h-5 w-5" />}
             >
-              <HorizontalBarChart data={[]} emptyMessage="Data available after more picks" />
+              <HorizontalBarChart
+                data={
+                  indecisive?.leaderboard?.map((e) => ({
+                    label: e.display_name,
+                    value: e.total_changes,
+                    sublabel: `${e.episodes_changed} episode(s)`,
+                  })) || []
+                }
+                emptyMessage="Data available after more picks"
+              />
             </StatCard>
 
             {/* Stat 7: Set It and Forget It */}
@@ -195,7 +209,13 @@ export function PlayerStats() {
             >
               <AwardList
                 title=""
-                recipients={[]}
+                recipients={
+                  setAndForget?.users?.map((u) => ({
+                    id: u.user_id,
+                    name: u.display_name,
+                    sublabel: `${u.episodes_played} episodes`,
+                  })) || []
+                }
                 icon="star"
                 emptyMessage="Data available after more picks"
               />
@@ -246,7 +266,13 @@ export function PlayerStats() {
               icon={<Sparkles className="h-5 w-5" />}
             >
               <HorizontalBarChart
-                data={[]}
+                data={
+                  waiverWonder?.leaderboard?.map((e) => ({
+                    label: e.display_name,
+                    value: e.waiver_points,
+                    sublabel: `${e.undrafted_castaways} castaway(s)`,
+                  })) || []
+                }
                 colorScale="green"
                 emptyMessage="Data available after waivers"
               />
@@ -258,7 +284,17 @@ export function PlayerStats() {
               subtitle="Largest deficit overcome to win"
               icon={<Crown className="h-5 w-5" />}
             >
-              <HorizontalBarChart data={[]} emptyMessage="Data available after season ends" />
+              <HorizontalBarChart
+                data={
+                  comebackRoyalty?.leaderboard?.map((e) => ({
+                    label: e.display_name,
+                    value: e.max_deficit,
+                    sublabel: `Week ${e.deficit_week} - ${e.league_name}`,
+                  })) || []
+                }
+                colorScale="green"
+                emptyMessage="Data available after more episodes"
+              />
             </StatCard>
 
             {/* Stat 12: Choke Artist */}
@@ -268,9 +304,15 @@ export function PlayerStats() {
               icon={<TrendingDown className="h-5 w-5" />}
             >
               <HorizontalBarChart
-                data={[]}
+                data={
+                  chokeArtist?.leaderboard?.map((e) => ({
+                    label: e.display_name,
+                    value: e.max_lead,
+                    sublabel: `Week ${e.lead_week} - #${e.final_position} in ${e.league_name}`,
+                  })) || []
+                }
                 colorScale="red"
-                emptyMessage="Data available after season ends"
+                emptyMessage="Data available after more episodes"
               />
             </StatCard>
 

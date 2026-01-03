@@ -27,6 +27,7 @@ export function CastawayStats() {
     biggestBust,
     biggestSteal,
     consistency,
+    skillCorrelated,
     isLoading,
     error,
   } = useCastawayStats();
@@ -165,11 +166,26 @@ export function CastawayStats() {
             >
               <TwoColumnLeaderboard
                 leftTitle="Smart Picks"
-                leftEntries={[]}
+                leftEntries={
+                  skillCorrelated?.smart_picks?.map((e) => ({
+                    id: e.castaway_id,
+                    name: e.name,
+                    value: e.differential,
+                    sublabel: `Top: ${e.top_player_ownership}% / Bot: ${e.bottom_player_ownership}%`,
+                  })) || []
+                }
                 leftColor="green"
                 rightTitle="Trap Picks"
-                rightEntries={[]}
+                rightEntries={
+                  skillCorrelated?.trap_picks?.map((e) => ({
+                    id: e.castaway_id,
+                    name: e.name,
+                    value: Math.abs(e.differential),
+                    sublabel: `Top: ${e.top_player_ownership}% / Bot: ${e.bottom_player_ownership}%`,
+                  })) || []
+                }
                 rightColor="red"
+                valueFormatter={(v) => `+${v}%`}
                 emptyMessage="Data available after more picks"
               />
             </StatCard>
