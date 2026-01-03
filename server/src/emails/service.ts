@@ -601,7 +601,7 @@ function triviaSignupWelcomeEmailTemplate(_data: TriviaSignupWelcomeEmailData): 
       ${paragraph(`<strong>Season 50 draft deadline:</strong> Monday, March 3, 2025 at 5:00 PM PT`)}
     `)}
     ${paragraph(`<strong style="color: #8B0000;">Prove you know your Survivor.</strong>`)}
-  `, 'You\\'re signed up for Survivor Trivia');
+  `, "You're signed up for Survivor Trivia");
 }
 
 // ============================================
