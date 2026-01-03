@@ -14,6 +14,8 @@ import {
   Check,
   AlertCircle,
   RefreshCw,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { supabase } from '@/lib/supabase';
@@ -78,6 +80,7 @@ export function AdminContent() {
   const [selectedCopy, setSelectedCopy] = useState<SiteCopy | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [createMode, setCreateMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [_pageFilter, _setPageFilter] = useState<string>('all');
@@ -121,6 +124,47 @@ export function AdminContent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'email-templates'] });
       setEditMode(false);
+    },
+  });
+
+  // Create template mutation
+  const createTemplate = useMutation({
+    mutationFn: async (data: {
+      slug: string;
+      name: string;
+      description: string;
+      category: string;
+      subject: string;
+      html_body: string;
+      text_body?: string;
+      available_variables: string[];
+      trigger_type?: string;
+      is_active: boolean;
+    }) => {
+      return apiWithAuth('/api/admin/content/email-templates', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'email-templates'] });
+      setCreateMode(false);
+      if (response?.data) {
+        setSelectedTemplate(response.data);
+      }
+    },
+  });
+
+  // Delete template mutation
+  const deleteTemplate = useMutation({
+    mutationFn: async (slug: string) => {
+      return apiWithAuth(`/api/admin/content/email-templates/${slug}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'email-templates'] });
+      setSelectedTemplate(null);
     },
   });
 
@@ -241,39 +285,56 @@ export function AdminContent() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => {
-              setActiveTab('emails');
-              setSelectedTemplate(null);
-              setSelectedCopy(null);
-              setEditMode(false);
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
-              activeTab === 'emails'
-                ? 'bg-burgundy-500 text-white'
-                : 'bg-white text-neutral-700 hover:bg-cream-100'
-            }`}
-          >
-            <Mail className="h-4 w-4" />
-            Email Templates
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('site-copy');
-              setSelectedTemplate(null);
-              setSelectedCopy(null);
-              setEditMode(false);
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
-              activeTab === 'site-copy'
-                ? 'bg-burgundy-500 text-white'
-                : 'bg-white text-neutral-700 hover:bg-cream-100'
-            }`}
-          >
-            <FileText className="h-4 w-4" />
-            Site Copy
-          </button>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setActiveTab('emails');
+                setSelectedTemplate(null);
+                setSelectedCopy(null);
+                setEditMode(false);
+                setCreateMode(false);
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
+                activeTab === 'emails'
+                  ? 'bg-burgundy-500 text-white'
+                  : 'bg-white text-neutral-700 hover:bg-cream-100'
+              }`}
+            >
+              <Mail className="h-4 w-4" />
+              Email Templates
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('site-copy');
+                setSelectedTemplate(null);
+                setSelectedCopy(null);
+                setEditMode(false);
+                setCreateMode(false);
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
+                activeTab === 'site-copy'
+                  ? 'bg-burgundy-500 text-white'
+                  : 'bg-white text-neutral-700 hover:bg-cream-100'
+              }`}
+            >
+              <FileText className="h-4 w-4" />
+              Site Copy
+            </button>
+          </div>
+          {activeTab === 'emails' && (
+            <button
+              onClick={() => {
+                setCreateMode(true);
+                setSelectedTemplate(null);
+                setEditMode(false);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all"
+            >
+              <Plus className="h-4 w-4" />
+              New Template
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -422,7 +483,14 @@ export function AdminContent() {
 
           {/* Right Panel - Editor/Preview */}
           <div className="lg:col-span-2">
-            {selectedTemplate ? (
+            {createMode ? (
+              <CreateTemplateForm
+                onSave={(data) => createTemplate.mutate(data)}
+                onCancel={() => setCreateMode(false)}
+                saving={createTemplate.isPending}
+                error={createTemplate.error?.message}
+              />
+            ) : selectedTemplate ? (
               <EmailTemplateEditor
                 template={selectedTemplate}
                 editMode={editMode}
@@ -431,8 +499,14 @@ export function AdminContent() {
                 setPreviewMode={setPreviewMode}
                 onSave={(data) => updateTemplate.mutate({ ...data, slug: selectedTemplate.slug })}
                 onSendTest={(email) => sendTestEmail.mutate({ slug: selectedTemplate.slug, email })}
+                onDelete={() => {
+                  if (confirm(`Delete "${selectedTemplate.name}"? This cannot be undone.`)) {
+                    deleteTemplate.mutate(selectedTemplate.slug);
+                  }
+                }}
                 saving={updateTemplate.isPending}
                 sendingTest={sendTestEmail.isPending}
+                deleting={deleteTemplate.isPending}
                 getSampleVariables={getSampleVariables}
               />
             ) : selectedCopy ? (
@@ -478,8 +552,10 @@ function EmailTemplateEditor({
   setPreviewMode,
   onSave,
   onSendTest,
+  onDelete,
   saving,
   sendingTest,
+  deleting,
   getSampleVariables,
 }: {
   template: EmailTemplate;
@@ -489,8 +565,10 @@ function EmailTemplateEditor({
   setPreviewMode: (v: boolean) => void;
   onSave: (data: { subject: string; html_body: string; is_active: boolean }) => void;
   onSendTest: (email: string) => void;
+  onDelete: () => void;
   saving: boolean;
   sendingTest: boolean;
+  deleting?: boolean;
   getSampleVariables: (vars: string[]) => Record<string, string>;
 }) {
   const [subject, setSubject] = useState(template.subject);
@@ -548,6 +626,16 @@ function EmailTemplateEditor({
                 <Edit className="h-4 w-4" />
                 Edit
               </button>
+              {!template.is_system && (
+                <button
+                  onClick={onDelete}
+                  disabled={deleting}
+                  className="flex items-center gap-2 px-3 py-2 bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-all disabled:opacity-50"
+                  title="Delete Template"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
             </>
           ) : (
             <>
@@ -856,5 +944,285 @@ function SiteCopyEditor({
     </div>
   );
 }
+
+// Create Template Form Component
+function CreateTemplateForm({
+  onSave,
+  onCancel,
+  saving,
+  error,
+}: {
+  onSave: (data: {
+    slug: string;
+    name: string;
+    description: string;
+    category: string;
+    subject: string;
+    html_body: string;
+    text_body?: string;
+    available_variables: string[];
+    trigger_type?: string;
+    is_active: boolean;
+  }) => void;
+  onCancel: () => void;
+  saving: boolean;
+  error?: string;
+}) {
+  const [slug, setSlug] = useState('');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('transactional');
+  const [subject, setSubject] = useState('');
+  const [htmlBody, setHtmlBody] = useState(defaultEmailTemplate);
+  const [variablesText, setVariablesText] = useState('displayName');
+  const [triggerType, setTriggerType] = useState('manual');
+
+  // Auto-generate slug from name
+  const handleNameChange = (value: string) => {
+    setName(value);
+    const autoSlug = value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    setSlug(autoSlug);
+  };
+
+  const handleSubmit = () => {
+    if (!slug || !name || !subject || !htmlBody) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    const variables = variablesText
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    onSave({
+      slug,
+      name,
+      description,
+      category,
+      subject,
+      html_body: htmlBody,
+      available_variables: variables,
+      trigger_type: triggerType === 'manual' ? undefined : triggerType,
+      is_active: true,
+    });
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-card border border-cream-200 overflow-hidden">
+      {/* Header */}
+      <div className="p-4 border-b border-cream-200 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-neutral-800">Create New Email Template</h2>
+          <p className="text-sm text-neutral-500">Build a new email from scratch</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onCancel}
+            className="flex items-center gap-2 px-3 py-2 bg-cream-100 text-neutral-700 rounded-xl hover:bg-cream-200 transition-all"
+          >
+            <X className="h-4 w-4" />
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={saving || !slug || !name || !subject}
+            className="flex items-center gap-2 px-3 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" />
+            {saving ? 'Creating...' : 'Create Template'}
+          </button>
+        </div>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="p-4 bg-red-50 border-b border-red-200">
+          <p className="text-red-700 text-sm flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            {error}
+          </p>
+        </div>
+      )}
+
+      {/* Form */}
+      <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+        {/* Basic Info */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1">
+              Template Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              placeholder="e.g., Weekly Summary"
+              className="w-full px-4 py-2 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1">
+              Slug <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+              placeholder="weekly-summary"
+              className="w-full px-4 py-2 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy-500 font-mono"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 mb-1">Description</label>
+          <input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Brief description of when this email is sent"
+            className="w-full px-4 py-2 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy-500"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1">Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full px-4 py-2 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy-500"
+            >
+              <option value="transactional">Transactional</option>
+              <option value="lifecycle">Lifecycle</option>
+              <option value="marketing">Marketing</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1">Trigger Type</label>
+            <select
+              value={triggerType}
+              onChange={(e) => setTriggerType(e.target.value)}
+              className="w-full px-4 py-2 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy-500"
+            >
+              <option value="manual">Manual / API</option>
+              <option value="event">Event-based</option>
+              <option value="scheduled">Scheduled</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 mb-1">
+            Subject Line <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder="e.g., Your weekly Survivor Fantasy update"
+            className="w-full px-4 py-2 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy-500"
+          />
+          <p className="text-xs text-neutral-500 mt-1">
+            Use {'{{variableName}}'} for dynamic content
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 mb-1">
+            Available Variables
+          </label>
+          <input
+            type="text"
+            value={variablesText}
+            onChange={(e) => setVariablesText(e.target.value)}
+            placeholder="displayName, leagueName, episodeNumber"
+            className="w-full px-4 py-2 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy-500"
+          />
+          <p className="text-xs text-neutral-500 mt-1">Comma-separated list of variable names</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 mb-1">
+            HTML Body <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            value={htmlBody}
+            onChange={(e) => setHtmlBody(e.target.value)}
+            rows={16}
+            className="w-full px-4 py-2 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy-500 font-mono text-sm"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Default email template for new emails
+const defaultEmailTemplate = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #FDF8F3;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #FDF8F3; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #8B0000 0%, #6B0000 100%); padding: 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
+                🔥 Survivor Fantasy
+              </h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 32px;">
+              <h2 style="margin: 0 0 16px 0; color: #1a1a1a; font-size: 24px;">
+                Hello {{displayName}}!
+              </h2>
+              <p style="margin: 0 0 16px 0; color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+                Your email content goes here. Use {{variableName}} for dynamic content.
+              </p>
+              
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="{{dashboardUrl}}" style="display: inline-block; padding: 14px 32px; background-color: #8B0000; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Go to Dashboard
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; background-color: #f5f0eb; text-align: center;">
+              <p style="margin: 0; color: #6a6a6a; font-size: 14px;">
+                Reality Games Fantasy League
+              </p>
+              <p style="margin: 8px 0 0 0; color: #9a9a9a; font-size: 12px;">
+                You're receiving this because you signed up at realitygamesfantasyleague.com
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 
 export default AdminContent;
