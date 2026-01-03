@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Templates Preview - Reality Games</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      background: #1a1a1a; 
+      margin: 0; 
+      padding: 40px 20px;
+      color: #fff;
+    }
+    h1 { text-align: center; margin-bottom: 40px; font-size: 32px; }
+    h2 { 
+      background: #8B0000; 
+      color: white; 
+      padding: 16px 24px; 
+      margin: 60px 0 0 0; 
+      font-size: 20px;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      border-radius: 12px 12px 0 0;
+    }
+    .email-container {
+      max-width: 700px;
+      margin: 0 auto 40px auto;
+      background: #F5F0E6;
+      border-radius: 0 0 12px 12px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .email-wrapper {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .logo-header {
+      background: #FFFFFF;
+      padding: 32px 40px;
+      text-align: center;
+      border-bottom: 3px solid #8B0000;
+    }
+    .logo-header img {
+      width: 180px;
+      height: auto;
+    }
+    .content {
+      padding: 40px;
+    }
+    .footer {
+      background: #F5F0E6;
+      padding: 28px 40px;
+      text-align: center;
+      border-top: 1px solid #E5E5E5;
+    }
+    .footer p { margin: 0 0 8px 0; font-size: 13px; color: #666; }
+    
+    /* Typography */
+    h3 { font-family: Georgia, serif; color: #1F1F1F; font-size: 28px; margin: 0 0 20px 0; }
+    h4 { font-family: Georgia, serif; color: #1F1F1F; font-size: 22px; margin: 24px 0 16px 0; }
+    p { color: #333; font-size: 16px; line-height: 1.65; margin: 0 0 16px 0; }
+    
+    /* Button */
+    .btn {
+      display: inline-block;
+      background: #8B0000;
+      color: white !important;
+      padding: 16px 36px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      margin: 28px 0;
+    }
+    .btn-urgent { background: #DC2626; }
+    .btn-gold { background: #B8860B; }
+    .btn-green { background: #059669; }
+    .btn-wrapper { text-align: center; }
+    
+    /* Card */
+    .card {
+      background: #FFF8F0;
+      border: 1px solid #E5E5E5;
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+    .card-warning {
+      background: #FEF9E7;
+      border: 2px solid #F59E0B;
+    }
+    .card-error {
+      background: #FEF2F2;
+      border: 2px solid #DC2626;
+    }
+    .card-gold {
+      background: #FFFBEB;
+      border: 3px solid #DAA520;
+    }
+    
+    /* Stat Box */
+    .stat-box {
+      display: inline-block;
+      background: #FFF8F0;
+      border: 1px solid #E5E5E5;
+      border-radius: 12px;
+      padding: 20px 24px;
+      text-align: center;
+      margin: 8px;
+      min-width: 130px;
+    }
+    .stat-value {
+      font-family: Georgia, serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: #8B0000;
+    }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+      margin-top: 8px;
+    }
+    
+    /* Highlight */
+    .highlight { color: #8B0000; font-weight: 600; }
+    
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #CCCCCC, transparent);
+      margin: 28px 0;
+    }
+    
+    /* Code Box */
+    .code-box {
+      font-family: -apple-system, sans-serif;
+      font-size: 42px;
+      font-weight: 700;
+      color: #8B0000;
+      letter-spacing: 6px;
+      text-align: center;
+      padding: 16px;
+    }
+    .code-label {
+      color: #666;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    
+    /* List */
+    .checklist { list-style: none; padding: 0; margin: 0; }
+    .checklist li { padding: 8px 0; color: #333; }
+    .checklist li strong { color: #1F1F1F; }
+    
+    /* Table of Contents */
+    .toc {
+      max-width: 700px;
+      margin: 0 auto 60px auto;
+      background: #222;
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .toc h3 { color: white; margin: 0 0 16px 0; }
+    .toc ul { list-style: none; padding: 0; margin: 0; }
+    .toc li { padding: 8px 0; border-bottom: 1px solid #333; }
+    .toc a { color: #DAA520; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .toc .count { color: #888; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>📧 Email Templates Preview</h1>
+  
+  <div class="toc">
+    <h3>Table of Contents (19 Email Templates)</h3>
+    <ul>
+      <li><a href="#welcome">1. Welcome Email</a> <span class="count">- New user signup</span></li>
+      <li><a href="#trivia-welcome">2. Trivia Welcome</a> <span class="count">- After playing trivia</span></li>
+      <li><a href="#trivia-signup">3. Trivia Signup</a> <span class="count">- Homepage email signup</span></li>
+      <li><a href="#league-created">4. League Created</a> <span class="count">- Commissioner creates league</span></li>
+      <li><a href="#league-joined">5. League Joined</a> <span class="count">- User joins a league</span></li>
+      <li><a href="#draft-pick">6. Draft Pick Confirmed</a> <span class="count">- Castaway assigned</span></li>
+      <li><a href="#draft-complete">7. Draft Complete</a> <span class="count">- Team is set</span></li>
+      <li><a href="#pick-confirmed">8. Pick Confirmed</a> <span class="count">- Weekly pick locked</span></li>
+      <li><a href="#auto-pick">9. Auto-Pick Alert</a> <span class="count">- Missed deadline</span></li>
+      <li><a href="#payment">10. Payment Confirmed</a> <span class="count">- Receipt</span></li>
+      <li><a href="#draft-reminder">11. Draft Reminder</a> <span class="count">- X days left</span></li>
+      <li><a href="#draft-warning">12. Draft Final Warning</a> <span class="count">- Urgent</span></li>
+      <li><a href="#pick-reminder">13. Pick Reminder</a> <span class="count">- X hours left</span></li>
+      <li><a href="#pick-warning">14. Pick Final Warning</a> <span class="count">- 30 minutes!</span></li>
+      <li><a href="#results">15. Episode Results</a> <span class="count">- Spoiler-safe</span></li>
+      <li><a href="#elimination">16. Elimination Alert</a> <span class="count">- Roster change</span></li>
+      <li><a href="#payment-recovery">17. Payment Recovery</a> <span class="count">- Failed payment</span></li>
+      <li><a href="#torch-snuffed">18. Torch Snuffed</a> <span class="count">- Both castaways out</span></li>
+      <li><a href="#join-nudge">19. Join League Nudge</a> <span class="count">- Re-engagement</span></li>
+    </ul>
+  </div>
+
+  <!-- ==================== 1. WELCOME EMAIL ==================== -->
+  <h2 id="welcome">1. Welcome Email</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>Welcome to the Game!</h3>
+        <p>Hey Sarah,</p>
+        <p>You're now part of the most strategic Survivor fantasy league ever created. With 100+ scoring rules that reward real gameplay strategy, every episode is an opportunity to prove your Survivor knowledge.</p>
+        
+        <div class="divider"></div>
+        
+        <div class="card">
+          <h4>Getting Started</h4>
+          <p><strong>1. Create or join a league</strong> — Play with friends or join the global rankings</p>
+          <p><strong>2. Rank your castaways</strong> — Rank all 18 castaways from 1-18. Players are assigned in turn order based on a random draw.</p>
+          <p><strong>3. Make weekly picks</strong> — Choose which castaway to play each episode</p>
+          <p><strong>4. Dominate!</strong> — Climb the leaderboard and prove you're the ultimate fan</p>
+        </div>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">Go to Dashboard</a>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="card" style="text-align: center;">
+          <h4>Text Your Picks</h4>
+          <p>Add your phone number to use SMS commands. Text <strong>PICK [Name]</strong> to make picks, <strong>STATUS</strong> to check your current pick, and <strong>TEAM</strong> to see your roster — all from your phone.</p>
+          <p style="color: #666; font-size: 14px;">Text us at:</p>
+          <div style="font-size: 28px; font-weight: 700; color: #8B0000; letter-spacing: 2px;">(918) 505-7435</div>
+          <a href="#" class="btn btn-green">Set Up SMS</a>
+        </div>
+        
+        <p>Questions? Reply to this email or check out our <a href="#" style="color: #8B0000; font-weight: 500;">How to Play</a> guide.</p>
+        <p><em style="color: #666;">The tribe has spoken. Let's play.</em></p>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+        <p><a href="#" style="color: #8B0000;">Manage Preferences</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 2. TRIVIA WELCOME ==================== -->
+  <h2 id="trivia-welcome">2. Trivia Welcome</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>Welcome, Survivor Fan</h3>
+        <p>Hey Mike,</p>
+        <p>Thanks for playing our Survivor trivia! You clearly know your stuff. Now it's time to put that knowledge to the test in our fantasy leagues.</p>
+        
+        <div class="divider"></div>
+        
+        <div class="card">
+          <h4>How to Start Playing</h4>
+          <p><strong>1. Join a league</strong> — Create one with friends or join a public league</p>
+          <p><strong>2. Rank castaways</strong> — Pick your favorites before the premiere</p>
+          <p><strong>3. Make weekly picks</strong> — Choose who to play each episode</p>
+          <p><strong>4. Score points</strong> — 100+ rules reward real Survivor strategy</p>
+        </div>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">Join a League Now</a>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="card" style="text-align: center;">
+          <h4>Season 50 is Coming</h4>
+          <p>Join Season 50: In the Hands of the Fans and compete with other superfans. Draft your team, make strategic picks, and prove you're the ultimate Survivor expert.</p>
+        </div>
+        
+        <p>Want to learn more? Check out our <a href="#" style="color: #8B0000; font-weight: 500;">How to Play</a> guide.</p>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 3. TRIVIA SIGNUP ==================== -->
+  <h2 id="trivia-signup">3. Trivia Signup (Homepage Form)</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>You're Signed Up for Survivor Trivia!</h3>
+        <p>Hey Survivor Fan,</p>
+        <p>You're now on the list for our 24-question Survivor trivia challenge! Here's what to expect:</p>
+        
+        <div class="divider"></div>
+        
+        <div class="card">
+          <h4>How Trivia Works</h4>
+          <p><strong>24 Questions</strong> — Test your Survivor knowledge with trivia spanning all 50 seasons</p>
+          <p><strong>20 Seconds Each</strong> — Think fast! You have 20 seconds per question</p>
+          <p><strong>24-Hour Lockout</strong> — Get one wrong? Come back tomorrow to try again</p>
+          <p><strong>Leaderboard Glory</strong> — Complete all 24 to earn your spot among the Survivor elite</p>
+        </div>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">Create Account to Play</a>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="card" style="text-align: center;">
+          <h4>Ready for More?</h4>
+          <p>Love trivia? You'll love our fantasy leagues even more! Draft castaways, make weekly picks, and compete with other superfans throughout the season.</p>
+        </div>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 4. LEAGUE CREATED ==================== -->
+  <h2 id="league-created">4. League Created (Commissioner)</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>Your League is Ready!</h3>
+        <p>Hey Amanda,</p>
+        <p>You've successfully created <span class="highlight">The Tribal Council</span> for Season 50. As commissioner, you're in charge of inviting players and managing the league.</p>
+        
+        <div class="card card-gold">
+          <div class="code-label">League Code</div>
+          <div class="code-box">TRIBAL50</div>
+        </div>
+        
+        <h4>Share Your League</h4>
+        <p>Send this invite link to your friends:</p>
+        <div style="background: #F5F0E6; padding: 16px; border-radius: 8px; font-family: monospace; color: #8B0000; font-size: 14px; text-align: center; margin: 16px 0;">
+          https://survivor.realitygamesfantasyleague.com/join/TRIBAL50
+        </div>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">Manage Your League</a>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <h4>What You Can Do</h4>
+        <p>As commissioner, you can:</p>
+        <ul class="checklist">
+          <li>• Invite 2-12 players to your league</li>
+          <li>• Set an optional league donation amount</li>
+          <li>• Customize your league name and settings</li>
+          <li>• View all league member activity</li>
+        </ul>
+        
+        <div class="card">
+          <h4>Key Dates</h4>
+          <p><strong>Registration closes:</strong> Wednesday, February 25, 2026 at 5:00 PM PST</p>
+          <p><strong>Premiere:</strong> Wednesday, February 26, 2026 at 8:00 PM EST</p>
+          <p><strong>Draft deadline:</strong> Tuesday, February 24, 2026 at 11:59 PM PST</p>
+        </div>
+        
+        <p><em style="color: #666;">Good luck, Commissioner.</em></p>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 5. LEAGUE JOINED ==================== -->
+  <h2 id="league-joined">5. League Joined</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>You're In!</h3>
+        <p>Hey David,</p>
+        <p>You've joined <span class="highlight">The Tribal Council</span> for Season 50!</p>
+        
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 48px; font-weight: 700; color: #8B0000;">7<span style="color: #666; font-size: 24px;">/12</span></div>
+          <p style="color: #666; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; margin: 4px 0 0 0;">Players Joined</p>
+        </div>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">View League</a>
+        </div>
+        
+        <div class="card">
+          <h4>Key Dates</h4>
+          <p><strong>Premiere:</strong> Wednesday, February 26, 2026 at 8:00 PM EST</p>
+          <p><strong>Draft deadline:</strong> Tuesday, February 24, 2026 at 11:59 PM PST</p>
+          <p><strong>First weekly pick due:</strong> Wednesday, March 5, 2026 at 5:00 PM PST (Episode 2)</p>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <h4>How The Draft Works</h4>
+        <ul class="checklist">
+          <li>• Rank all 18 castaways from 1-18 based on your preferences</li>
+          <li>• A random draw determines the turn order</li>
+          <li>• Players are assigned in reverse order each round</li>
+          <li>• You'll get 2 castaways for your team</li>
+        </ul>
+        
+        <p><em style="color: #666;">May the best fan win.</em></p>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 6. DRAFT PICK CONFIRMED ==================== -->
+  <h2 id="draft-pick">6. Draft Pick Confirmed</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>Draft Pick Confirmed</h3>
+        <p>Hey Rachel,</p>
+        <p>You've been assigned <span class="highlight">Venus Vafa</span> in Round 1 for <span class="highlight">The Tribal Council</span>.</p>
+        
+        <div style="text-align: center; margin: 24px 0;">
+          <div class="stat-box">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Pick Number</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value">1/2</div>
+            <div class="stat-label">Round</div>
+          </div>
+        </div>
+        
+        <p style="text-align: center; color: #666;">Next pick: <strong style="color: #8B0000;">Round 2</strong></p>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">View Your Team</a>
+        </div>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 7. DRAFT COMPLETE ==================== -->
+  <h2 id="draft-complete">7. Draft Complete</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>Your Team is Set!</h3>
+        <p>Hey Rachel,</p>
+        <p>The draft for <span class="highlight">The Tribal Council</span> is complete. Here's your roster:</p>
+        
+        <div class="card card-gold">
+          <h4 style="color: #B8860B;">Your Castaways</h4>
+          <div style="padding: 12px 0; border-bottom: 1px solid #D4C4A8; display: flex; align-items: center;">
+            <span style="background: #8B0000; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; margin-right: 12px;">1</span>
+            <span><strong>Venus Vafa</strong> <span style="color: #666;">• Lagi</span></span>
+          </div>
+          <div style="padding: 12px 0; display: flex; align-items: center;">
+            <span style="background: #8B0000; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; margin-right: 12px;">2</span>
+            <span><strong>Charlie Davis</strong> <span style="color: #666;">• Tuku</span></span>
+          </div>
+        </div>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">View Your Team</a>
+        </div>
+        
+        <div class="card">
+          <h4>What's Next</h4>
+          <p>The premiere airs Wednesday, February 26, 2026 at 8:00 PM EST.</p>
+          <p><strong>Your first weekly pick is due Wednesday, March 5, 2026 at 5:00 PM PST</strong> (before Episode 2). No pick is needed for the premiere episode.</p>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">Pro Tip: Text Your Picks</div>
+          <p>Make picks on the go! Text <strong>PICK Venus</strong> to submit your weekly pick. <a href="#" style="color: #8B0000; font-weight: 500;">Set up SMS now →</a></p>
+        </div>
+        
+        <p><em style="color: #666;">Good luck this season.</em></p>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 8. PICK CONFIRMED ==================== -->
+  <h2 id="pick-confirmed">8. Pick Confirmed</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>Pick Confirmed</h3>
+        <p>Hey Rachel,</p>
+        
+        <div class="card" style="text-align: center;">
+          <p style="color: #666; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; margin: 0 0 8px 0;">Your Pick for Episode 3</p>
+          <div style="font-family: Georgia, serif; font-size: 32px; font-weight: 700; color: #8B0000;">Venus Vafa</div>
+          <p style="color: #333; font-size: 14px; margin: 12px 0 0 0;">The Tribal Council</p>
+        </div>
+        
+        <p style="text-align: center;">You have until <strong>Wednesday, March 12 at 5:00 PM PST</strong> to change your pick.</p>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">View Pick</a>
+        </div>
+        
+        <p style="text-align: center;"><em style="color: #666;">Good luck!</em></p>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 9. AUTO-PICK ALERT ==================== -->
+  <h2 id="auto-pick">9. Auto-Pick Alert</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>Auto-Pick Applied</h3>
+        <p>Hey Marcus,</p>
+        <p>You missed the pick deadline for Episode 4 in <span class="highlight">The Tribal Council</span>.</p>
+        
+        <div class="card card-warning" style="text-align: center;">
+          <p style="color: #92400E; font-weight: 600; font-size: 18px; margin: 0;">Auto-selected: Charlie Davis</p>
+          <p style="color: #A16207; font-size: 14px; margin: 8px 0 0 0;">We selected the castaway you didn't play last week.</p>
+        </div>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">View Your Team</a>
+        </div>
+        
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">Never Miss a Pick Again</div>
+          <p>Set up SMS to make picks on the go. Just text <strong>PICK [Name]</strong> from anywhere!</p>
+          <a href="#" class="btn btn-green">Set Up SMS</a>
+        </div>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 10. PAYMENT CONFIRMED ==================== -->
+  <h2 id="payment">10. Payment Confirmed (Receipt)</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>Payment Received</h3>
+        <p>Hey Jennifer,</p>
+        <p>Your payment for <span class="highlight">Winners at War League</span> has been received. Thank you!</p>
+        
+        <div class="card">
+          <h4>Receipt</h4>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #E5E5E5;">
+              <td style="padding: 12px 0; color: #666;">League</td>
+              <td style="padding: 12px 0; text-align: right; font-weight: 500;">Winners at War League</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #E5E5E5;">
+              <td style="padding: 12px 0; color: #666;">Amount</td>
+              <td style="padding: 12px 0; text-align: right; color: #8B0000; font-weight: 700; font-size: 18px;">$25.00</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; color: #666;">Date</td>
+              <td style="padding: 12px 0; text-align: right; font-weight: 500;">February 20, 2026</td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">Go to League</a>
+        </div>
+        
+        <p style="color: #666; font-size: 12px; text-align: center;">This is your official receipt. Keep it for your records.</p>
+        <p style="font-size: 11px; color: #666; text-align: center; border-top: 1px solid #E5E5E5; padding-top: 16px; margin-top: 16px;">Reality Games Fantasy League is a program of Follow the Unicorn Productions, a 501(c)(3) nonprofit (EIN: 99-3779763). All contributions are tax-deductible to the extent allowed by law.</p>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 11. DRAFT REMINDER ==================== -->
+  <h2 id="draft-reminder">11. Draft Reminder</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>Complete Your Draft</h3>
+        <p>Hey Tyler,</p>
+        
+        <div style="text-align: center; margin: 24px 0;">
+          <div style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 12px; padding: 20px; display: inline-block; min-width: 140px;">
+            <div style="font-size: 36px; font-weight: 700; color: #B45309;">3</div>
+            <div style="color: #92400E; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">Days Remaining</div>
+          </div>
+        </div>
+        
+        <p style="text-align: center;">Rank your castaways for <span class="highlight">The Tribal Council</span> before the deadline.</p>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">Complete Your Draft</a>
+        </div>
+        
+        <p style="color: #666; font-size: 14px; text-align: center;">If you don't complete your rankings, castaways will be auto-assigned from remaining available players.</p>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 12. DRAFT FINAL WARNING ==================== -->
+  <h2 id="draft-warning">12. Draft Final Warning (URGENT)</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3 style="color: #DC2626;">RANKINGS CLOSE SOON!</h3>
+        <p>Hey Tyler,</p>
+        
+        <div class="card card-error" style="text-align: center;">
+          <div style="font-size: 56px; font-weight: 700; color: #DC2626;">6h</div>
+          <div style="color: #991B1B; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; font-weight: 600;">Until Rankings Close</div>
+        </div>
+        
+        <p style="text-align: center;">Complete your castaway rankings for <span class="highlight">The Tribal Council</span> now!</p>
+        <p style="text-align: center; color: #666; font-size: 14px;">Players will be assigned the following day.</p>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn btn-urgent">COMPLETE RANKINGS NOW</a>
+        </div>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 13. PICK REMINDER ==================== -->
+  <h2 id="pick-reminder">13. Pick Reminder</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>Make Your Pick!</h3>
+        <p>Hey Lisa,</p>
+        <p>You haven't locked in your pick for <span class="highlight">Episode 5</span> yet.</p>
+        
+        <div style="text-align: center; margin: 24px 0;">
+          <div style="background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 12px; padding: 20px; display: inline-block; min-width: 140px;">
+            <div style="font-size: 36px; font-weight: 700; color: #B45309;">4h</div>
+            <div style="color: #92400E; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">Until Picks Lock</div>
+          </div>
+        </div>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">Make Your Pick</a>
+        </div>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 14. PICK FINAL WARNING ==================== -->
+  <h2 id="pick-warning">14. Pick Final Warning (30 MINUTES!)</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3 style="color: #DC2626;">PICKS LOCK IN 30 MINUTES!</h3>
+        <p>Hey Lisa,</p>
+        
+        <div class="card card-error" style="text-align: center;">
+          <div style="font-size: 56px; font-weight: 700; color: #DC2626;">30m</div>
+          <div style="color: #991B1B; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; font-weight: 600;">Until Picks Lock</div>
+        </div>
+        
+        <p style="text-align: center;">Lock in your pick for Episode 5 now.</p>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn btn-urgent">PICK NOW</a>
+        </div>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 15. EPISODE RESULTS ==================== -->
+  <h2 id="results">15. Episode Results (Spoiler-Safe)</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>Episode 5 Results Are Ready</h3>
+        <p>Hey Rachel,</p>
+        <p>The latest episode has been scored and your results are ready to view.</p>
+        
+        <div class="card card-warning" style="text-align: center; padding: 24px;">
+          <p style="color: #92400E; margin: 0 0 12px 0; font-weight: 600; font-size: 16px;">⚠️ Spoiler Warning</p>
+          <p style="color: #A16207; margin: 0 0 16px 0; font-size: 14px;">Click the button below to reveal your scores and standings. This will show episode results including eliminations and gameplay events.</p>
+          <a href="#" class="btn">View My Results</a>
+        </div>
+        
+        <p>Not ready to see spoilers? No problem! Results will be available in your dashboard whenever you're ready.</p>
+        <p><em style="color: #666;">The tribe has spoken.</em></p>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 16. ELIMINATION ALERT ==================== -->
+  <h2 id="elimination">16. Elimination Alert (Spoiler-Safe)</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>This Week's Results Are Ready</h3>
+        <p>Hey Marcus,</p>
+        <p>There's been a change to your roster in <span class="highlight">The Tribal Council</span>. Log in to see the details.</p>
+        
+        <div class="card card-warning" style="text-align: center; padding: 24px;">
+          <p style="color: #92400E; margin: 0 0 12px 0; font-weight: 600; font-size: 16px;">⚠️ Spoiler Warning</p>
+          <p style="color: #A16207; margin: 0 0 16px 0; font-size: 14px;">Click the button below to see this week's results, including any roster changes and what it means for your team.</p>
+          <a href="#" class="btn">View Results</a>
+        </div>
+        
+        <p>Not ready to see spoilers? No problem! Your results will be available whenever you're ready.</p>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 17. PAYMENT RECOVERY ==================== -->
+  <h2 id="payment-recovery">17. Payment Recovery (Failed Payment)</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>Complete Your Payment</h3>
+        <p>Hey Kevin,</p>
+        <p>Your payment for <span class="highlight">Winners at War League</span> wasn't completed. No worries — you can try again anytime!</p>
+        
+        <div class="card" style="text-align: center;">
+          <p style="color: #666; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; margin: 0 0 8px 0;">League Entry Fee</p>
+          <div style="font-size: 36px; font-weight: 700; color: #8B0000;">$25.00</div>
+          <p style="color: #333; font-size: 14px; margin: 8px 0 0 0;">Winners at War League</p>
+        </div>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">Complete Payment</a>
+        </div>
+        
+        <div class="card">
+          <h4>What Happened?</h4>
+          <p>Your checkout session expired or the payment was not completed. This can happen if:</p>
+          <ul class="checklist">
+            <li>• You closed the payment page before completing</li>
+            <li>• Your card was declined</li>
+            <li>• The session timed out</li>
+          </ul>
+          <p><strong>Don't worry</strong> — just click the button above to try again!</p>
+        </div>
+        
+        <p style="color: #666; font-size: 14px; text-align: center;">Need help? Reply to this email or contact us at support@realitygamesfantasyleague.com</p>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 18. TORCH SNUFFED ==================== -->
+  <h2 id="torch-snuffed">18. Torch Snuffed (Spoiler-Safe)</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>This Week's Results Are Ready</h3>
+        <p>Hey Alex,</p>
+        <p>There's an important update about your status in <span class="highlight">The Tribal Council</span>. Log in to see the details.</p>
+        
+        <div class="card card-warning" style="text-align: center; padding: 24px;">
+          <p style="color: #92400E; margin: 0 0 12px 0; font-weight: 600; font-size: 16px;">⚠️ Spoiler Warning</p>
+          <p style="color: #A16207; margin: 0 0 16px 0; font-size: 14px;">Click the button below to see this week's results and what they mean for your team.</p>
+          <a href="#" class="btn">View Results</a>
+        </div>
+        
+        <p>Not ready to see spoilers? No problem! Your results will be available whenever you're ready.</p>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 19. JOIN LEAGUE NUDGE ==================== -->
+  <h2 id="join-nudge">19. Join League Nudge (Re-engagement)</h2>
+  <div class="email-container">
+    <div class="email-wrapper">
+      <div class="logo-header">
+        <img src="https://survivor.realitygamesfantasyleague.com/logo.png" alt="Reality Games Fantasy League">
+      </div>
+      <div class="content">
+        <h3>Ready to Play?</h3>
+        <p>Hey Chris,</p>
+        <p>You signed up 5 days ago but haven't joined a league yet. The fun is just getting started!</p>
+        
+        <div class="card" style="text-align: center;">
+          <h4>Season 50 Awaits</h4>
+          <p>The premiere is February 26, 2026. Join a league now to draft your team and compete with other Survivor superfans.</p>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <h4>Three Ways to Play</h4>
+        <p><strong>1. Create a Private League</strong> — Invite friends and family to compete together</p>
+        <p><strong>2. Join a Public League</strong> — Match up with other fans looking for a league</p>
+        <p><strong>3. Global Rankings</strong> — Already enrolled! Compete against all players worldwide</p>
+        
+        <div class="btn-wrapper">
+          <a href="#" class="btn">Find a League</a>
+        </div>
+        
+        <p><em style="color: #666;">Don't miss out on the season!</em></p>
+      </div>
+      <div class="footer">
+        <p style="font-weight: 600; color: #1F1F1F;">Reality Games Fantasy League</p>
+        <p>You're receiving this because you're part of the tribe.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width: 700px; margin: 60px auto; text-align: center; color: #888;">
+    <p>— End of Email Preview —</p>
+    <p style="font-size: 14px;">19 email templates total. All buttons centered, no logo stretching, vibrant colors applied.</p>
+  </div>
+
+</body>
+</html>
