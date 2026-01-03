@@ -223,12 +223,15 @@ export function Navigation() {
                   {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                 </button>
 
-                {/* Admin indicator (only for admins) */}
+                {/* Admin link (only for admins) */}
                 {isAdmin && (
-                  <div className="hidden sm:flex items-center gap-1 text-xs font-medium px-2 py-1 rounded text-white bg-orange-500">
+                  <Link
+                    to="/admin"
+                    className="hidden sm:flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg text-white bg-orange-500 hover:bg-orange-600 transition-colors"
+                  >
                     <Shield className="h-4 w-4" />
-                    Admin
-                  </div>
+                    Admin Panel
+                  </Link>
                 )}
 
                 {/* User Menu - Desktop */}
@@ -388,6 +391,19 @@ export function Navigation() {
                     Weekly Timeline
                   </Link>
                 </div>
+                {/* Admin link for mobile */}
+                {isAdmin && (
+                  <>
+                    <hr className="my-2 border-burgundy-100" />
+                    <Link
+                      to="/admin"
+                      className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-orange-600 bg-orange-50"
+                    >
+                      <Shield className="h-4 w-4" />
+                      Admin Panel
+                    </Link>
+                  </>
+                )}
                 <hr className="my-2 border-burgundy-100" />
                 <Link to="/profile" className="block px-4 py-3 text-sm text-neutral-600">
                   Profile Settings
