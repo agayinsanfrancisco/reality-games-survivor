@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
+import { AdminNavBar } from '@/components/AdminNavBar';
 import { TimelineFeed } from '@/components/admin/TimelineFeed';
 import { ActivityFeed } from '@/components/admin/ActivityFeed';
 import { AlertTriangle, Users, Target, Trophy, Activity, RefreshCw } from 'lucide-react';
@@ -265,6 +266,7 @@ export function AdminDashboard() {
     return (
       <div className="min-h-screen bg-neutral-900">
         <Navigation />
+        <AdminNavBar />
         <main className="max-w-4xl mx-auto px-4 py-16 text-center">
           <div className="bg-neutral-800 rounded-2xl p-12 border border-neutral-700">
             <div className="w-20 h-20 mx-auto mb-6 bg-red-900/30 rounded-full flex items-center justify-center">
@@ -294,6 +296,7 @@ export function AdminDashboard() {
   return (
     <div className="min-h-screen bg-neutral-900">
       <Navigation />
+      <AdminNavBar />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header with Refresh */}

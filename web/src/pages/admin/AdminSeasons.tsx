@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Navigation } from '@/components/Navigation';
+import { AdminNavBar } from '@/components/AdminNavBar';
 
 export function AdminSeasons() {
   const queryClient = useQueryClient();
@@ -209,6 +210,7 @@ export function AdminSeasons() {
     return (
       <>
         <Navigation />
+        <AdminNavBar />
         <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex items-center justify-center">
           <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
         </div>
@@ -219,6 +221,7 @@ export function AdminSeasons() {
   return (
     <>
       <Navigation />
+      <AdminNavBar />
       <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 p-4 pb-24">
         <div className="max-w-4xl mx-auto">
           {/* Header */}

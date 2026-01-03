@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Navigation } from '@/components/Navigation';
+import { AdminNavBar } from '@/components/AdminNavBar';
 import {
   DollarSign,
   Users,
@@ -367,6 +368,7 @@ export function AdminStats() {
     return (
       <div className="min-h-screen bg-[#faf8f5]">
         <Navigation />
+        <AdminNavBar />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-burgundy-500" />
@@ -380,6 +382,7 @@ export function AdminStats() {
     return (
       <div className="min-h-screen bg-[#faf8f5]">
         <Navigation />
+        <AdminNavBar />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
             <XCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
@@ -396,6 +399,7 @@ export function AdminStats() {
   return (
     <div className="min-h-screen bg-[#faf8f5]">
       <Navigation />
+      <AdminNavBar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

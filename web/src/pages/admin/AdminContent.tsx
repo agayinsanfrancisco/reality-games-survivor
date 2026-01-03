@@ -18,6 +18,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
+import { AdminNavBar } from '@/components/AdminNavBar';
 import { supabase } from '@/lib/supabase';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
@@ -266,6 +267,7 @@ export function AdminContent() {
   return (
     <div className="min-h-screen bg-cream-50">
       <Navigation />
+      <AdminNavBar />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}

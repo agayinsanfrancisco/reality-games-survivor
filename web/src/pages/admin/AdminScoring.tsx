@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
+import { AdminNavBar } from '@/components/AdminNavBar';
 import {
   FinalizeModal,
   FinalizeResultModal,
@@ -249,6 +250,7 @@ export function AdminScoring() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
         <Navigation />
+        <AdminNavBar />
         <main className="max-w-4xl mx-auto px-4 py-16 text-center">
           <div className="bg-white rounded-2xl shadow-elevated p-12">
             <h1 className="text-2xl font-display text-neutral-800 mb-3">Access Denied</h1>
@@ -265,6 +267,7 @@ export function AdminScoring() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
       <Navigation />
+      <AdminNavBar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
