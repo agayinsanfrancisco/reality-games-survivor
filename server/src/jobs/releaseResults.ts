@@ -32,11 +32,13 @@ interface User {
 /**
  * Get the latest locked episode that hasn't had results released yet
  * Episodes must be manually locked by admin before results can be released
+ * Excludes episode 1 - no scoring in premiere week
  */
 async function getLatestLockedEpisode(): Promise<Episode | null> {
   const { data, error } = await supabaseAdmin
     .from('episodes')
     .select('id, number, week_number, season_id, scoring_finalized_at, results_locked_at, results_released_at')
+    .gt('number', 1) // Skip episode 1 - no scoring in premiere week
     .not('scoring_finalized_at', 'is', null)
     .not('results_locked_at', 'is', null)
     .is('results_released_at', null)

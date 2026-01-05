@@ -26,11 +26,12 @@ router.get('/current', async (req: AuthenticatedRequest, res: Response) => {
       return res.json({ episode: null, stats: null });
     }
 
-    // Get current or next episode
+    // Get current or next episode (exclude episode 1 - no picks in premiere week)
     const { data: episode } = await supabaseAdmin
       .from('episodes')
       .select('*')
       .eq('season_id', season.id)
+      .gt('number', 1) // Skip episode 1 - no picks in premiere week
       .gt('picks_lock_at', now.minus({ hours: 24 }).toISO())
       .order('picks_lock_at', { ascending: true })
       .limit(1)

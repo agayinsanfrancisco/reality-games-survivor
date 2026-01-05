@@ -5,10 +5,11 @@ import { supabaseAdmin } from '../config/supabase.js';
  */
 export async function lockPicks() {
     const now = new Date().toISOString();
-    // Find episodes where picks should be locked
+    // Find episodes where picks should be locked (exclude episode 1 - no picks in premiere week)
     const { data: episodes, error: episodesError } = await supabaseAdmin
         .from('episodes')
         .select('id')
+        .gt('number', 1) // Skip episode 1 - no picks in premiere week
         .lte('picks_lock_at', now)
         .eq('is_scored', false);
     if (episodesError) {

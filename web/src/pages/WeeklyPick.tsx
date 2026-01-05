@@ -47,7 +47,7 @@ export function WeeklyPick() {
   const { data: league } = useLeague(leagueId);
   const { data: roster, isLoading: rosterLoading } = useRoster(leagueId, user?.id);
 
-  // Fetch current/next episode
+  // Fetch current/next episode (exclude episode 1 - no picks in premiere week)
   const { data: currentEpisode } = useQuery({
     queryKey: ['currentEpisode', league?.season_id],
     queryFn: async () => {
@@ -57,6 +57,7 @@ export function WeeklyPick() {
         .from('episodes')
         .select('*')
         .eq('season_id', league.season_id)
+        .gt('number', 1) // Skip episode 1 - no picks in premiere week
         .gte('picks_lock_at', now)
         .order('air_date', { ascending: true })
         .limit(1)

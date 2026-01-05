@@ -16,10 +16,11 @@ export async function autoPick(): Promise<{
 }> {
   const now = new Date();
 
-  // Find current episode where picks just locked
+  // Find current episode where picks just locked (exclude episode 1 - no picks in premiere week)
   const { data: episodes } = await supabaseAdmin
     .from('episodes')
     .select('id, season_id, number')
+    .gt('number', 1) // Skip episode 1 - no picks in premiere week
     .lte('picks_lock_at', now.toISOString())
     .eq('is_scored', false)
     .order('picks_lock_at', { ascending: false })

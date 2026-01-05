@@ -180,6 +180,7 @@ export function useCurrentPickStatus(leagueId: string | undefined, userId: strin
         .from('episodes')
         .select('id, number, picks_lock_at')
         .eq('season_id', season.id)
+        .gt('number', 1) // Skip episode 1 - no picks in premiere week
         .gte('air_date', new Date().toISOString().split('T')[0])
         .order('air_date', { ascending: true })
         .limit(1)

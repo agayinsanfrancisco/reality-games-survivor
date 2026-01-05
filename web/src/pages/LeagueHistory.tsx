@@ -53,7 +53,7 @@ export default function LeagueHistory() {
     enabled: !!league?.commissioner_id,
   });
 
-  // Fetch episode history for current league
+  // Fetch episode history for current league (exclude episode 1 - no scoring in premiere week)
   const { data: episodes } = useQuery({
     queryKey: ['league-episodes', leagueId],
     queryFn: async () => {
@@ -62,6 +62,7 @@ export default function LeagueHistory() {
         .from('episodes')
         .select('*')
         .eq('season_id', league.season_id)
+        .gt('number', 1) // Skip episode 1 - no scoring in premiere week
         .eq('is_scored', true)
         .order('number', { ascending: false });
       if (error) throw error;

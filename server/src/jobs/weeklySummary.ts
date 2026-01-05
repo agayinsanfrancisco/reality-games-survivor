@@ -16,11 +16,12 @@ export async function sendWeeklySummary(): Promise<{ sent: number }> {
 
   if (!season) return { sent: 0 };
 
-  // Get next episode
+  // Get next episode (exclude episode 1 - no scoring/picks in premiere week)
   const { data: nextEpisodes } = await supabaseAdmin
     .from('episodes')
     .select('id, number, title, air_date, picks_lock_at')
     .eq('season_id', season.id)
+    .gt('number', 1) // Skip episode 1 - no scoring/picks in premiere week
     .eq('is_scored', false)
     .order('air_date', { ascending: true })
     .limit(1);

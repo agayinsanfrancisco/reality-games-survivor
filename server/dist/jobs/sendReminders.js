@@ -6,10 +6,11 @@ import { EmailService } from '../emails/index.js';
  */
 export async function sendPickReminders() {
     const now = new Date();
-    // Find upcoming episode
+    // Find upcoming episode (exclude episode 1 - no picks in premiere week)
     const { data: episodes } = await supabaseAdmin
         .from('episodes')
         .select('id, number, season_id, picks_lock_at')
+        .gt('number', 1) // Skip episode 1 - no picks in premiere week
         .gte('picks_lock_at', now.toISOString())
         .order('picks_lock_at', { ascending: true })
         .limit(1);

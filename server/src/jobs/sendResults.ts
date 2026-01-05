@@ -11,10 +11,11 @@ interface ResultsResult {
  * Runs: Fri 12pm PST (after scoring is finalized)
  */
 export async function sendEpisodeResults(): Promise<ResultsResult> {
-  // Find most recently scored episode
+  // Find most recently scored episode (exclude episode 1 - no scoring in premiere week)
   const { data: episodes } = await supabaseAdmin
     .from('episodes')
     .select('id, number, season_id')
+    .gt('number', 1) // Skip episode 1 - no scoring in premiere week
     .eq('is_scored', true)
     .order('air_date', { ascending: false })
     .limit(1);

@@ -33,6 +33,7 @@ export function useEpisodes(seasonId: string | undefined) {
 
 /**
  * Get the next upcoming episode (next one that hasn't been scored)
+ * Excludes episode 1 - no scoring in premiere week
  */
 export function useNextEpisode(seasonId: string | undefined) {
   return useQuery({
@@ -44,6 +45,7 @@ export function useNextEpisode(seasonId: string | undefined) {
         .from('episodes')
         .select('*')
         .eq('season_id', seasonId)
+        .gt('number', 1) // Skip episode 1 - no scoring in premiere week
         .eq('is_scored', false)
         .order('number', { ascending: true })
         .limit(1)
@@ -59,6 +61,7 @@ export function useNextEpisode(seasonId: string | undefined) {
 
 /**
  * Get the current episode (next one with picks_lock_at in the future)
+ * Excludes episode 1 - no picks in premiere week
  */
 export function useCurrentEpisode(seasonId: string | undefined) {
   return useQuery({
@@ -70,6 +73,7 @@ export function useCurrentEpisode(seasonId: string | undefined) {
         .from('episodes')
         .select('*')
         .eq('season_id', seasonId)
+        .gt('number', 1) // Skip episode 1 - no picks in premiere week
         .gte('picks_lock_at', new Date().toISOString())
         .order('picks_lock_at', { ascending: true })
         .limit(1)

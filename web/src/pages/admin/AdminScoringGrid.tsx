@@ -311,11 +311,14 @@ export function AdminScoringGrid() {
                 className="p-2 border border-cream-200 rounded-xl focus:ring-2 focus:ring-burgundy-500"
               >
                 <option value="">Choose episode...</option>
-                {episodes?.map((ep) => (
-                  <option key={ep.id} value={ep.id}>
-                    Ep {ep.number}: {ep.title || 'TBD'} {ep.is_scored ? '✓' : ''}
-                  </option>
-                ))}
+                {/* Filter out episode 1 - no scoring in week 1 (premiere) */}
+                {episodes
+                  ?.filter((ep) => ep.number > 1)
+                  .map((ep) => (
+                    <option key={ep.id} value={ep.id}>
+                      Ep {ep.number}: {ep.title || 'TBD'} {ep.is_scored ? '✓' : ''}
+                    </option>
+                  ))}
               </select>
             </div>
             <div className="flex items-center gap-2">

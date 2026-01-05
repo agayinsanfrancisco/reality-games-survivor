@@ -60,7 +60,7 @@ export function InlineWeeklyPick({
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
 
-  // Fetch current/next episode
+  // Fetch current/next episode (exclude episode 1 - no picks in premiere week)
   const { data: currentEpisode } = useQuery({
     queryKey: ['currentEpisode', seasonId],
     queryFn: async () => {
@@ -69,6 +69,7 @@ export function InlineWeeklyPick({
         .from('episodes')
         .select('*')
         .eq('season_id', seasonId)
+        .gt('number', 1) // Skip episode 1 - no picks in premiere week
         .gte('picks_lock_at', now)
         .order('air_date', { ascending: true })
         .limit(1)
