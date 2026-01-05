@@ -500,7 +500,7 @@ export default function EpisodeResults() {
             <p className="text-neutral-500 text-center py-8">
               {episode?.is_scored
                 ? 'No scores recorded for this episode.'
-                : 'Scoring not yet finalized. Check back after Friday at noon!'}
+                : 'Scoring not yet finalized. Check back Friday morning!'}
             </p>
           )}
         </div>

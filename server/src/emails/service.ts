@@ -385,7 +385,7 @@ function autoPickAlertEmailTemplate(data: AutoPickAlertEmailData): string {
       <p style="color: #A16207; margin: 8px 0 0 0; font-size: 14px; text-align: center;">We selected the castaway you didn't play last week.</p>
     `, 'warning')}
     ${button('View Your Team', `${BASE_URL}/leagues/${data.leagueId}/team`)}
-    ${paragraph(`<strong style="color: #8B0000;">Don't let it happen again — set a reminder for next Wednesday at 5pm PT.</strong>`)}
+    ${paragraph(`<strong style="color: #8B0000;">Don't let it happen again — set a reminder for next Wednesday before 8pm ET / 5pm PT.</strong>`)}
   `, `Auto-pick applied: ${data.castawayName} for Episode ${data.episodeNumber}`);
 }
 
@@ -862,6 +862,40 @@ export class EmailService {
       to: data.email,
       subject: `Payment received - ${data.leagueName}`,
       html,
+    });
+  }
+
+  // Send tax receipt for nonprofit donations (CRITICAL - IRS compliance)
+  static async sendTaxReceipt(data: {
+    displayName: string;
+    email: string;
+    donationAmount: number;
+    donationDate: Date;
+    transactionId: string;
+    leagueName: string;
+  }): Promise<boolean> {
+    const { generateTaxReceiptHtml, generateTaxReceiptText } = await import('./templates/taxReceipt.js');
+
+    // TODO: Replace with actual nonprofit info from environment variables
+    const organizationName = process.env.NONPROFIT_NAME || 'Reality Games Fantasy League';
+    const ein = process.env.NONPROFIT_EIN || '[Your EIN Here]';
+    const address = process.env.NONPROFIT_ADDRESS || '[Your Address Here]';
+
+    const emailData = {
+      ...data,
+      organizationName,
+      ein,
+      address,
+    };
+
+    const html = generateTaxReceiptHtml(emailData);
+    const text = generateTaxReceiptText(emailData);
+
+    return sendEmailCritical({
+      to: data.email,
+      subject: `Tax Receipt - ${organizationName} (${data.leagueName})`,
+      html,
+      text,
     });
   }
 

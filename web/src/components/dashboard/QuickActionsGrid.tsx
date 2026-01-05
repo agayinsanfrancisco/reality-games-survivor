@@ -93,7 +93,7 @@ export function QuickActionsGrid({
               <div className="flex-1">
                 <h3 className="font-bold text-xl">Make Your Pick</h3>
                 <p className="text-burgundy-100 text-sm mt-1">
-                  Episode {nextEpisode.number} — Lock in before Wednesday
+                  Episode {nextEpisode.number} — Lock in before Wed 8pm ET
                 </p>
               </div>
               <ChevronRight className="h-6 w-6 text-white/60 group-hover:translate-x-1 transition-transform" />

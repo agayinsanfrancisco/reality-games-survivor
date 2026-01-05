@@ -70,8 +70,8 @@ const jobMetadata: Record<string, { description: string; schedule: string }> = {
     schedule: 'Wed 2pm PST (weekly)',
   },
   'results-notification': {
-    description: 'Send scoring results to players (morning after episode)',
-    schedule: 'Thu 10am PST (weekly)',
+    description: 'Send scoring results to players (when picks open)',
+    schedule: 'Fri 8am PST (weekly)',
   },
   'weekly-summary': {
     description: 'Send weekly standings summary',

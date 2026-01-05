@@ -97,7 +97,7 @@ These emails are sent via Resend API for game-related communications.
 
 | Email | Trigger | Priority | Method |
 |-------|---------|----------|--------|
-| **Episode Results** | Scoring finalized (Friday 2pm) | Background | `enqueueEmail()` |
+| **Episode Results** | Picks open (Friday 8am PT) | Background | `enqueueEmail()` |
 | **Elimination Alert** | User's castaway eliminated | Background | `enqueueEmail()` |
 | **Torch Snuffed** | Both castaways eliminated | **Critical** | `sendEmailCritical()` |
 

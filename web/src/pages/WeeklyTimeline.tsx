@@ -3,7 +3,6 @@ import {
   Calendar,
   Clock,
   Lock,
-  Trophy,
   Bell,
   RefreshCw,
   ArrowRight,
@@ -36,23 +35,13 @@ const TIMELINE_EVENTS = [
     tip: 'Results notifications respect your spoiler delay settings.',
   },
   {
-    day: 'Thursday',
-    time: 'Morning',
-    icon: Trophy,
-    color: 'amber',
-    title: 'Scoring Finalized',
-    description:
-      'Our team reviews the episode and finalizes all scoring events. We catch every confessional, idol play, and strategic move.',
-    tip: 'Scores are typically finalized within 12-24 hours of the episode airing.',
-  },
-  {
-    day: 'Thursday',
-    time: 'After Scoring',
+    day: 'Friday',
+    time: '11:00 AM ET / 8:00 AM PT',
     icon: RefreshCw,
     color: 'blue',
-    title: 'Next Week Opens',
+    title: 'Weekly Picks Open',
     description:
-      'Picks for the next episode open after scoring is finalized. You have until the next Wednesday to decide which of your castaways to play.',
+      'Picks for the next episode open Friday morning. You have until the next Wednesday at 8pm ET to decide which of your castaways to play.',
     tip: 'The earlier you pick, the less chance you forget!',
   },
 ];

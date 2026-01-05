@@ -41,10 +41,10 @@ A comprehensive job monitoring system has been implemented for the Survivor Fant
 
 ### Recurring Jobs (Cron)
 1. **email-queue-processor** - Every 5 minutes
-2. **lock-picks** - Wednesday 3pm PST
-3. **auto-pick** - Wednesday 3:05pm PST
-4. **pick-reminders** - Wednesday 12pm PST
-5. **results-notification** - Friday 12pm PST
+2. **lock-picks** - Wednesday 5pm PST
+3. **auto-pick** - Wednesday 5:05pm PST
+4. **pick-reminders** - Wednesday 2pm PST
+5. **results-notification** - Friday 8am PST
 6. **weekly-summary** - Sunday 10am PST
 7. **draft-reminders** - Daily 9am PST
 

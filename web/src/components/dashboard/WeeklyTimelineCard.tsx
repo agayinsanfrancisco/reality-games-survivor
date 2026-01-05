@@ -27,21 +27,14 @@ export function WeeklyTimelineCard() {
           <div className="w-2 h-2 rounded-full bg-green-500 mt-2 flex-shrink-0" />
           <div>
             <p className="text-sm font-medium text-neutral-800">Wednesday ~9pm PT</p>
-            <p className="text-xs text-neutral-500">Results posted after West Coast airing</p>
-          </div>
-        </div>
-        <div className="flex items-start gap-3">
-          <div className="w-2 h-2 rounded-full bg-amber-500 mt-2 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-neutral-800">Thursday Morning</p>
-            <p className="text-xs text-neutral-500">Scoring finalized</p>
+            <p className="text-xs text-neutral-500">Results posted (exceptions may apply)</p>
           </div>
         </div>
         <div className="flex items-start gap-3">
           <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-neutral-800">Thursday</p>
-            <p className="text-xs text-neutral-500">Next week's picks open</p>
+            <p className="text-sm font-medium text-neutral-800">Friday 11am ET / 8am PT</p>
+            <p className="text-xs text-neutral-500">Weekly picks open for next episode</p>
           </div>
         </div>
       </div>

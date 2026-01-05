@@ -40,10 +40,10 @@ interface JobExecution {
 
 **Recurring Cron Jobs (7 total):**
 - `email-queue-processor` - Every 5 minutes
-- `lock-picks` - Wednesday 3pm PST
-- `auto-pick` - Wednesday 3:05pm PST
-- `pick-reminders` - Wednesday 12pm PST
-- `results-notification` - Friday 12pm PST
+- `lock-picks` - Wednesday 5pm PST
+- `auto-pick` - Wednesday 5:05pm PST
+- `pick-reminders` - Wednesday 2pm PST
+- `results-notification` - Friday 8am PST
 - `weekly-summary` - Sunday 10am PST
 - `draft-reminders` - Daily 9am PST
 

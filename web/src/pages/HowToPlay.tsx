@@ -64,7 +64,7 @@ export default function HowToPlay() {
       description:
         'Each week, choose which of your 2 castaways to "start" for that episode. Only your starting castaway earns points - the other is benched.',
       details: [
-        'Picks lock Wednesday at 5pm PST before the episode',
+        'Picks lock Wednesday at 8pm ET / 5pm PT when the episode airs',
         'A random number generator is used if no pick is made',
         'Prior week designations do NOT impact the current week',
         'When only one castaway remains, they must be your starter',

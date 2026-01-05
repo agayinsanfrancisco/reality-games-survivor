@@ -235,7 +235,7 @@ This document describes the major user flows through the RGFL platform.
 │                        WEEKLY PICKS                                  │
 └─────────────────────────────────────────────────────────────────────┘
 
-    [Thursday: Picks Open]
+    [Friday 11am ET / 8am PT: Picks Open]
               │
               ▼
     ┌─────────────────────────────────┐

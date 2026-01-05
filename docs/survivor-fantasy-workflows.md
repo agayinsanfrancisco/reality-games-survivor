@@ -57,12 +57,11 @@ PRE-SEASON (2-4 weeks before premiere)
 └── Marketing push for signups
 
 ACTIVE SEASON (weekly)
-├── Monday: Open picks for new week
-├── Wednesday 8pm ET: Episode airs
-│   ├── 6pm: Pick reminder (2 hours before close)
-│   ├── 8pm: Lock picks
-│   └── 10pm: Publish live scoring
-├── Thursday: Weekly standings email
+├── Wednesday 8pm ET / 5pm PT: Episode airs
+│   ├── 2pm PT: Pick reminder (3 hours before lock)
+│   ├── 5pm PT: Lock picks
+│   └── ~9pm PT: Results posted
+├── Friday 11am ET / 8am PT: Open picks for next week
 └── Sunday: Re-engagement for inactive users
 
 POST-SEASON (finale week)

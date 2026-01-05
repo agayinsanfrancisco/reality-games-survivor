@@ -20,6 +20,7 @@ import { authenticate, requireAdmin } from '../../middleware/authenticate.js';
 import dashboardRouter from './dashboard.js';
 import seasonsRouter from './seasons.js';
 import statsRouter from './stats.js';
+import nonprofitRouter from './nonprofit.js';
 
 const router = Router();
 
@@ -31,6 +32,7 @@ router.use(requireAdmin);
 router.use('/dashboard', dashboardRouter);
 router.use('/seasons', seasonsRouter);
 router.use('/stats', statsRouter);
+router.use('/nonprofit', nonprofitRouter);
 
 // Export for use in main router
 // NOTE: The remaining routes (castaways, episodes, jobs, payments, users, leagues, email-queue, alerting)
@@ -39,4 +41,4 @@ router.use('/stats', statsRouter);
 export default router;
 
 // Re-export the sub-routers for direct access if needed
-export { dashboardRouter, seasonsRouter, statsRouter };
+export { dashboardRouter, seasonsRouter, statsRouter, nonprofitRouter };

@@ -35,14 +35,15 @@ export function getWeeklyPhase(
   const picksLock = new Date(episode.picks_lock_at);
   const airDate = new Date(episode.air_date);
 
-  // Calculate approximate times (using typical schedule from CLAUDE.md)
+  // Calculate approximate times (using typical schedule)
+  // Results posted ~9pm PT Wednesday (same day as air)
   const resultsPosted = new Date(airDate);
-  resultsPosted.setDate(resultsPosted.getDate() + 2); // Friday (2 days after Wednesday air)
-  resultsPosted.setHours(12, 0, 0, 0);
+  resultsPosted.setHours(21, 0, 0, 0); // ~9pm PT same day
 
-  const nextPickOpens = new Date(resultsPosted);
-  nextPickOpens.setDate(nextPickOpens.getDate() + 1); // Saturday
-  nextPickOpens.setHours(12, 0, 0, 0);
+  // Picks open Friday 8am PT (2 days after Wednesday air)
+  const nextPickOpens = new Date(airDate);
+  nextPickOpens.setDate(nextPickOpens.getDate() + 2); // Friday
+  nextPickOpens.setHours(8, 0, 0, 0); // 8am PT
 
   // Check if previous episode was just scored (results posted phase)
   if (previousEpisode?.is_scored && now < nextPickOpens) {

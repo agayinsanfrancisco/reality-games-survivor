@@ -367,7 +367,7 @@ export default function Results() {
               <p className="text-neutral-500">
                 {episode?.is_scored
                   ? 'No scores recorded for this episode.'
-                  : 'Scoring not yet finalized. Check back after Friday at noon!'}
+                  : 'Scoring not yet finalized. Check back Friday morning!'}
               </p>
             </div>
           )}
