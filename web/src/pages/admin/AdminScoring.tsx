@@ -58,7 +58,6 @@ async function apiWithAuth(endpoint: string, options?: RequestInit) {
 import { EpisodeSelector } from '@/components/admin/scoring/EpisodeSelector';
 import { ScoringHeader } from '@/components/admin/scoring/ScoringHeader';
 import { ScoringCategoryAccordion } from '@/components/admin/scoring/ScoringCategoryAccordion';
-import { ScoringRulesReference } from '@/components/admin/scoring/ScoringRulesReference';
 
 export function AdminScoring() {
   const { user } = useAuth();
@@ -314,9 +313,6 @@ export function AdminScoring() {
 
           {/* Scoring Form */}
           <div className="lg:col-span-3">
-            {/* Most Scored Rules Reference - Always visible at top */}
-            <ScoringRulesReference />
-
             {!selectedEpisodeId ? (
               <div className="bg-white rounded-2xl shadow-elevated p-12 text-center">
                 <p className="text-neutral-500">Select an episode to begin scoring</p>
