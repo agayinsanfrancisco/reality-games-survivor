@@ -12,6 +12,7 @@ export interface EditFormData {
   hometown: string;
   occupation: string;
   photo_url: string;
+  tribe_original: string;
   previous_seasons: string;
   best_placement: string;
   fun_fact: string;
@@ -46,12 +47,24 @@ export interface EliminateModalProps {
   isPending: boolean;
 }
 
+export interface Tribe {
+  id: string;
+  season_id: string;
+  name: string;
+  color: string;
+  bg_color: string;
+  border_color: string;
+  display_order: number;
+  is_active: boolean;
+}
+
 export interface EditCastawayModalProps {
   formData: EditFormData;
   onFormChange: (data: EditFormData) => void;
   onSave: () => void;
   onCancel: () => void;
   isPending: boolean;
+  tribes?: Tribe[];
 }
 
 export interface BulkActionsProps {

@@ -2,14 +2,15 @@
  * Trivia Card Component
  */
 import { useState, useEffect } from 'react';
-import { TriviaQuestion, TRIVIA_QUESTIONS, WRONG_MESSAGES } from './TriviaData';
+import type { TriviaQuestion } from './TriviaData';
+import { TRIVIA_QUESTIONS, WRONG_MESSAGES } from './TriviaData';
 
 interface TriviaCardProps {
   question: TriviaQuestion;
   questionNumber: number;
   onAnswer: (correct: boolean) => void;
   showResult: 'correct' | 'wrong' | null;
-  funFact: string | null;
+  funFact?: string | null;
 }
 
 export function TriviaCard({
@@ -17,7 +18,7 @@ export function TriviaCard({
   questionNumber,
   onAnswer,
   showResult,
-  funFact,
+  funFact: _funFact,
 }: TriviaCardProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -144,11 +145,11 @@ export function TriviaCard({
           </button>
         )}
 
-        {/* Fun fact for correct answers */}
-        {showResult === 'correct' && funFact && (
-          <div className="mt-6 p-4 bg-amber-100/50 rounded-lg border border-amber-300/50">
-            <p className="text-amber-900 text-sm">
-              <span className="font-semibold">🔥 Fun Fact:</span> {funFact}
+        {/* Correct answer confirmation */}
+        {showResult === 'correct' && (
+          <div className="mt-6 p-4 bg-green-100/50 rounded-lg border border-green-300/50">
+            <p className="text-green-800 text-sm font-semibold text-center">
+              🔥 Correct! Keep up the great work!
             </p>
           </div>
         )}

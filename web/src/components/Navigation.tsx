@@ -17,9 +17,11 @@ export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const [castawaysOpen, setCastawaysOpen] = useState(false);
+  const [leaguesOpen, setLeaguesOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const howToPlayRef = useRef<HTMLDivElement>(null);
   const castawaysRef = useRef<HTMLDivElement>(null);
+  const leaguesRef = useRef<HTMLDivElement>(null);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -38,12 +40,15 @@ export function Navigation() {
       if (castawaysRef.current && !castawaysRef.current.contains(event.target as Node)) {
         setCastawaysOpen(false);
       }
+      if (leaguesRef.current && !leaguesRef.current.contains(event.target as Node)) {
+        setLeaguesOpen(false);
+      }
     };
-    if (mobileMenuOpen || howToPlayOpen || castawaysOpen) {
+    if (mobileMenuOpen || howToPlayOpen || castawaysOpen || leaguesOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [mobileMenuOpen, howToPlayOpen, castawaysOpen]);
+  }, [mobileMenuOpen, howToPlayOpen, castawaysOpen, leaguesOpen]);
 
   // Handle sign out
   const handleSignOut = async () => {
@@ -119,16 +124,39 @@ export function Navigation() {
                 >
                   Dashboard
                 </Link>
-                <Link
-                  to="/leagues"
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    isActive('/leagues') && !location.pathname.includes('/create')
-                      ? 'text-burgundy-600 bg-burgundy-50'
-                      : 'text-neutral-600 hover:text-burgundy-600 hover:bg-neutral-50'
-                  }`}
-                >
-                  Leagues
-                </Link>
+                <div className="relative" ref={leaguesRef}>
+                  <button
+                    onClick={() => setLeaguesOpen(!leaguesOpen)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${
+                      isActive('/leagues') || isActive('/my-leagues')
+                        ? 'text-burgundy-600 bg-burgundy-50'
+                        : 'text-neutral-600 hover:text-burgundy-600 hover:bg-neutral-50'
+                    }`}
+                  >
+                    Leagues
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform ${leaguesOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {leaguesOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-neutral-200 min-w-[180px] z-50 py-1">
+                      <Link
+                        to="/leagues?filter=my"
+                        onClick={() => setLeaguesOpen(false)}
+                        className="block px-4 py-2 text-sm hover:bg-neutral-50 text-neutral-600"
+                      >
+                        My Leagues
+                      </Link>
+                      <Link
+                        to="/leagues?filter=public"
+                        onClick={() => setLeaguesOpen(false)}
+                        className="block px-4 py-2 text-sm hover:bg-neutral-50 text-neutral-600"
+                      >
+                        Public Leagues
+                      </Link>
+                    </div>
+                  )}
+                </div>
                 <div className="relative" ref={castawaysRef}>
                   <button
                     onClick={() => setCastawaysOpen(!castawaysOpen)}
@@ -366,14 +394,31 @@ export function Navigation() {
                 >
                   Dashboard
                 </Link>
-                <Link
-                  to="/leagues"
-                  className={`block px-4 py-3 text-sm font-semibold uppercase tracking-wide ${
-                    isActive('/leagues') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
-                  }`}
-                >
-                  Leagues
-                </Link>
+                <div>
+                  <div className="px-4 py-2 text-sm font-semibold text-neutral-800 uppercase tracking-wide">
+                    Leagues
+                  </div>
+                  <Link
+                    to="/leagues?filter=my"
+                    className={`block px-8 py-2 text-sm ${
+                      isActive('/leagues') && location.search.includes('my')
+                        ? 'text-burgundy-600 bg-burgundy-50'
+                        : 'text-neutral-600'
+                    }`}
+                  >
+                    My Leagues
+                  </Link>
+                  <Link
+                    to="/leagues?filter=public"
+                    className={`block px-8 py-2 text-sm ${
+                      isActive('/leagues') && location.search.includes('public')
+                        ? 'text-burgundy-600 bg-burgundy-50'
+                        : 'text-neutral-600'
+                    }`}
+                  >
+                    Public Leagues
+                  </Link>
+                </div>
                 <div>
                   <div className="px-4 py-2 text-sm font-semibold text-neutral-800 uppercase tracking-wide">
                     Castaways

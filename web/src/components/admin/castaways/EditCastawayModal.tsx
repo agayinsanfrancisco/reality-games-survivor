@@ -4,7 +4,7 @@
  * Modal for editing castaway details.
  */
 
-import { History, Trophy } from 'lucide-react';
+import { History, Trophy, Users } from 'lucide-react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import type { EditCastawayModalProps } from './types';
@@ -27,6 +27,7 @@ export function EditCastawayModal({
   onSave,
   onCancel,
   isPending,
+  tribes,
 }: EditCastawayModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -101,6 +102,50 @@ export function EditCastawayModal({
               onChange={(e) => onFormChange({ ...formData, occupation: e.target.value })}
               className="w-full p-3 border border-cream-200 rounded-xl focus:ring-2 focus:ring-burgundy-500"
             />
+          </div>
+
+          {/* Original Tribe */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1 flex items-center gap-2">
+              <Users className="h-4 w-4 text-teal-500" />
+              Original Tribe
+            </label>
+            {tribes && tribes.length > 0 ? (
+              <div className="space-y-2">
+                <select
+                  value={formData.tribe_original}
+                  onChange={(e) => onFormChange({ ...formData, tribe_original: e.target.value })}
+                  className="w-full p-3 border border-cream-200 rounded-xl focus:ring-2 focus:ring-burgundy-500"
+                >
+                  <option value="">Select a tribe...</option>
+                  {tribes.map((tribe) => (
+                    <option key={tribe.id} value={tribe.name}>
+                      {tribe.name}
+                    </option>
+                  ))}
+                </select>
+                {formData.tribe_original && (
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded-full border"
+                      style={{
+                        backgroundColor:
+                          tribes.find((t) => t.name === formData.tribe_original)?.color || '#888',
+                      }}
+                    />
+                    <span className="text-sm text-neutral-600">{formData.tribe_original}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <input
+                type="text"
+                value={formData.tribe_original}
+                onChange={(e) => onFormChange({ ...formData, tribe_original: e.target.value })}
+                placeholder="e.g., Vatu"
+                className="w-full p-3 border border-cream-200 rounded-xl focus:ring-2 focus:ring-burgundy-500"
+              />
+            )}
           </div>
 
           {/* Returning Player Section */}

@@ -86,8 +86,7 @@ export function AdminNavBar() {
     isActive('/admin/announcements') ||
     isActive('/admin/push') ||
     isActive('/admin/email-queue') ||
-    isActive('/admin/sms') ||
-    isActive('/admin/content');
+    isActive('/admin/sms');
 
   const isSystemActive = () =>
     isActive('/admin/jobs') || isActive('/admin/health') || isActive('/admin/stats');
@@ -96,6 +95,7 @@ export function AdminNavBar() {
     { path: '/admin/command-center', label: 'Command Center' },
     { path: '/admin/leagues', label: 'Leagues' },
     { path: '/admin/scoring', label: 'Scoring' },
+    { path: '/admin/content', label: 'CMS' },
   ];
 
   const manageItems = [
@@ -107,7 +107,6 @@ export function AdminNavBar() {
   const communicateItems = [
     { path: '/admin/announcements', label: 'Announcements' },
     { path: '/admin/email-queue', label: 'Email Queue', badgeKey: 'failedEmails' as const },
-    { path: '/admin/content', label: 'Content CMS' },
   ];
 
   const systemItems = [

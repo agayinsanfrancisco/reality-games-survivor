@@ -13,13 +13,27 @@ import { useAuth } from '@/lib/auth';
 import { Navigation } from '@/components/Navigation';
 import { AdminNavBar } from '@/components/AdminNavBar';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
-
+// Shared API helper that ensures token is fresh
 async function apiWithAuth(endpoint: string, options?: RequestInit) {
-  const session = await supabase.auth.getSession();
-  const token = session.data.session?.access_token;
-  if (!token) throw new Error('Not authenticated');
+  // Get a fresh session - this will auto-refresh if needed
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
+  if (sessionError) {
+    console.error('Session error:', sessionError);
+    throw new Error('Session error - please refresh the page');
+  }
+
+  const token = sessionData.session?.access_token;
+  if (!token) {
+    // Try to refresh the session
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError || !refreshData.session?.access_token) {
+      throw new Error('Not authenticated - please log in again');
+    }
+    return apiWithAuth(endpoint, options); // Retry with fresh token
+  }
+
+  const API_URL = import.meta.env.VITE_API_URL || 'https://rgfl-api-production.up.railway.app';
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers: {
@@ -30,6 +44,25 @@ async function apiWithAuth(endpoint: string, options?: RequestInit) {
   });
 
   if (!response.ok) {
+    // Handle 401/403 specifically
+    if (response.status === 401 || response.status === 403) {
+      // Try to refresh the session and retry once
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (!refreshError && refreshData.session?.access_token) {
+        // Retry the request with fresh token
+        const retryResponse = await fetch(`${API_URL}${endpoint}`, {
+          ...options,
+          headers: {
+            ...options?.headers,
+            Authorization: `Bearer ${refreshData.session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (retryResponse.ok) {
+          return retryResponse.json();
+        }
+      }
+    }
     const data = await response.json().catch(() => ({}));
     throw new Error(data.error || `API error: ${response.status}`);
   }
@@ -56,6 +89,7 @@ import {
   useScoringStatus,
   getMostCommonRules,
 } from '@/lib/hooks';
+import { ScoringRulesReference } from '@/components/admin/scoring/ScoringRulesReference';
 
 // Grid scores map: { [castawayId]: { [ruleId]: quantity } }
 type GridScores = Record<string, Record<string, number>>;
@@ -299,6 +333,9 @@ export function AdminScoringGrid() {
             </button>
           </div>
         )}
+
+        {/* Most Scored Rules Reference - Always visible at top */}
+        <ScoringRulesReference />
 
         {/* Controls */}
         <div className="bg-white rounded-2xl shadow-elevated p-5 mb-6">

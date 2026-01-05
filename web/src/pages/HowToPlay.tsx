@@ -19,109 +19,153 @@ import { useSiteCopy } from '@/lib/hooks/useSiteCopy';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 
+// Map icon names to components (exported for potential dynamic use)
+const _iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Users,
+  Trophy,
+  Target,
+  Calendar,
+  Star,
+  Award,
+  Zap,
+  Shield,
+  Flame,
+  Clock,
+};
+
 export default function HowToPlay() {
   const { user } = useAuth();
   const { getCopy } = useSiteCopy();
 
+  // Parse JSON details from CMS or use fallback
+  const parseDetails = (key: string, fallback: string[]): string[] => {
+    try {
+      const content = getCopy(key, JSON.stringify(fallback));
+      return JSON.parse(content);
+    } catch {
+      return fallback;
+    }
+  };
+
   const steps = [
     {
       icon: Users,
-      title: 'Join or Create a League',
-      description:
-        'Play with friends in a private league or join a public one. Each league has its own leaderboard and bragging rights.',
-      details: [
+      title: getCopy('how-to-play.step1.title', 'Join or Create a League'),
+      description: getCopy(
+        'how-to-play.step1.description',
+        'Play with friends in a private league or join a public one. Each league has its own leaderboard and bragging rights.'
+      ),
+      details: parseDetails('how-to-play.step1.details', [
         'Create a private league and invite friends with a code',
         'Join public leagues to compete with the community',
         'Play in multiple leagues with the same roster',
         'Everyone is automatically in the Global League',
-      ],
+      ]),
     },
     {
       icon: Trophy,
-      title: 'Rank Your Castaways',
-      description:
-        'After the first episode, participants rank all castaways 1-24. This determines who you get in the snake draft.',
-      details: [
+      title: getCopy('how-to-play.step2.title', 'Rank Your Castaways'),
+      description: getCopy(
+        'how-to-play.step2.description',
+        'After the first episode, participants rank all castaways 1-24. This determines who you get in the snake draft.'
+      ),
+      details: parseDetails('how-to-play.step2.details', [
         'Rankings apply to ALL your leagues for the season',
         'Picks are made in reverse order of prior season fantasy rankings (or random for new leagues)',
         'The picking order reverses each round (snake draft style)',
         'Special selection rules apply if there are more participants than castaways',
-      ],
+      ]),
     },
     {
       icon: Target,
-      title: 'Get Your Team',
-      description:
-        'After the deadline, the system runs a snake draft. You get 2 castaways based on your draft position and rankings.',
-      details: [
+      title: getCopy('how-to-play.step3.title', 'Get Your Team'),
+      description: getCopy(
+        'how-to-play.step3.description',
+        'After the deadline, the system runs a snake draft. You get 2 castaways based on your draft position and rankings.'
+      ),
+      details: parseDetails('how-to-play.step3.details', [
         'Draft positions are randomly assigned for new leagues',
         'Snake draft means pick order reverses each round',
         "You'll get your highest-ranked available castaway each pick",
         'Your 2 castaways are your team for the entire season',
-      ],
+      ]),
     },
     {
       icon: Calendar,
-      title: 'Make Weekly Picks (Starting/Benched)',
-      description:
-        'Each week, choose which of your 2 castaways to "start" for that episode. Only your starting castaway earns points - the other is benched.',
-      details: [
+      title: getCopy('how-to-play.step4.title', 'Make Weekly Picks (Starting/Benched)'),
+      description: getCopy(
+        'how-to-play.step4.description',
+        'Each week, choose which of your 2 castaways to "start" for that episode. Only your starting castaway earns points - the other is benched.'
+      ),
+      details: parseDetails('how-to-play.step4.details', [
         'Picks lock Wednesday at 8pm ET / 5pm PT when the episode airs',
         'A random number generator is used if no pick is made',
         'Prior week designations do NOT impact the current week',
         'When only one castaway remains, they must be your starter',
-      ],
+      ]),
     },
     {
       icon: Star,
-      title: 'Earn Points',
-      description:
-        "Points are based on your STARTING castaway's performance that week. Your benched castaway does not score.",
-      details: [
+      title: getCopy('how-to-play.step5.title', 'Earn Points'),
+      description: getCopy(
+        'how-to-play.step5.description',
+        "Points are based on your STARTING castaway's performance that week. Your benched castaway does not score."
+      ),
+      details: parseDetails('how-to-play.step5.details', [
         'If a team has no remaining castaways, they can no longer score points',
         'Their Total Points are set at that point',
-      ],
+      ]),
       linkTo: '/scoring',
       linkText: 'View Full Scoring Rules →',
     },
     {
       icon: Award,
-      title: 'Win Your League',
-      description:
-        'The player with the most total points at the end of the season wins! Track your progress on the leaderboard.',
-      details: [
+      title: getCopy('how-to-play.step6.title', 'Win Your League'),
+      description: getCopy(
+        'how-to-play.step6.description',
+        'The player with the most total points at the end of the season wins! Track your progress on the leaderboard.'
+      ),
+      details: parseDetails('how-to-play.step6.details', [
         'Points accumulate across all episodes',
         'Leaderboard updates after each episode is scored',
         'Compete for glory in multiple leagues',
         'Bragging rights last until next season!',
-      ],
+      ]),
     },
   ];
 
   const strategies = [
     {
       icon: Zap,
-      title: 'Study the Edit',
-      description:
-        'Castaways with more screen time and confessionals tend to score more points. Pay attention to who the editors are focusing on.',
+      title: getCopy('how-to-play.strategy1.title', 'Study the Edit'),
+      description: getCopy(
+        'how-to-play.strategy1.description',
+        'Castaways with more screen time and confessionals tend to score more points. Pay attention to who the editors are focusing on.'
+      ),
     },
     {
       icon: Shield,
-      title: 'Balance Risk',
-      description:
-        "Sometimes the safe pick isn't the best pick. A castaway in danger might score big if they survive or play an idol.",
+      title: getCopy('how-to-play.strategy2.title', 'Balance Risk'),
+      description: getCopy(
+        'how-to-play.strategy2.description',
+        "Sometimes the safe pick isn't the best pick. A castaway in danger might score big if they survive or play an idol."
+      ),
     },
     {
       icon: Flame,
-      title: 'Know the Meta',
-      description:
-        'Challenge beasts score consistently. Strategic players score in bursts. Social players accumulate over time.',
+      title: getCopy('how-to-play.strategy3.title', 'Know the Meta'),
+      description: getCopy(
+        'how-to-play.strategy3.description',
+        'Challenge beasts score consistently. Strategic players score in bursts. Social players accumulate over time.'
+      ),
     },
     {
       icon: Clock,
-      title: 'Think Long-Term',
-      description:
-        "Don't just think about this week. Consider who will make the merge, who has idol-finding potential, who might win.",
+      title: getCopy('how-to-play.strategy4.title', 'Think Long-Term'),
+      description: getCopy(
+        'how-to-play.strategy4.description',
+        "Don't just think about this week. Consider who will make the merge, who has idol-finding potential, who might win."
+      ),
     },
   ];
 
@@ -152,12 +196,12 @@ export default function HowToPlay() {
         {/* Steps Section */}
         <section className="mb-16">
           <h2 className="text-2xl font-display font-bold text-neutral-800 mb-8 text-center">
-            The Game in 6 Steps
+            {getCopy('how-to-play.steps.section-title', 'The Game in 6 Steps')}
           </h2>
           <div className="space-y-6">
             {steps.map((step, index) => (
               <div
-                key={step.title}
+                key={index}
                 className="bg-white rounded-2xl shadow-card border border-cream-200 overflow-hidden"
               >
                 <div className="p-6 md:p-8">
@@ -205,12 +249,12 @@ export default function HowToPlay() {
         {/* Strategy Tips */}
         <section className="mb-16">
           <h2 className="text-2xl font-display font-bold text-neutral-800 mb-8 text-center">
-            Strategy Tips
+            {getCopy('how-to-play.strategies.section-title', 'Strategy Tips')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {strategies.map((strategy) => (
+            {strategies.map((strategy, index) => (
               <div
-                key={strategy.title}
+                key={index}
                 className="bg-white rounded-2xl shadow-card border border-cream-200 p-6"
               >
                 <div className="flex items-start gap-4">
@@ -232,7 +276,7 @@ export default function HowToPlay() {
         {/* Quick Links */}
         <section className="mb-16">
           <h2 className="text-2xl font-display font-bold text-neutral-800 mb-8 text-center">
-            Learn More
+            {getCopy('how-to-play.links.section-title', 'Learn More')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link
@@ -275,17 +319,21 @@ export default function HowToPlay() {
         {/* CTA Section */}
         <section className="text-center pb-16">
           <div className="bg-gradient-to-r from-burgundy-500 to-burgundy-600 rounded-2xl p-8 md:p-12 text-white shadow-lg">
-            <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">Ready to Play?</h2>
+            <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">
+              {getCopy('how-to-play.cta.title', 'Ready to Play?')}
+            </h2>
             <p className="text-burgundy-100 mb-8 max-w-lg mx-auto text-lg">
-              Join Season 50: In the Hands of the Fans and prove you know more about Survivor
-              strategy than your friends.
+              {getCopy(
+                'how-to-play.cta.description',
+                'Join Season 50: In the Hands of the Fans and prove you know more about Survivor strategy than your friends.'
+              )}
             </p>
             {user ? (
               <Link
                 to="/dashboard"
                 className="inline-flex items-center gap-2 bg-white text-burgundy-600 font-bold px-8 py-4 rounded-xl hover:bg-cream-100 transition-colors text-lg"
               >
-                Go to Dashboard
+                {getCopy('how-to-play.cta.button-logged-in', 'Go to Dashboard')}
                 <ArrowRight className="h-5 w-5" />
               </Link>
             ) : (
@@ -293,7 +341,7 @@ export default function HowToPlay() {
                 to="/signup"
                 className="inline-flex items-center gap-2 bg-white text-burgundy-600 font-bold px-8 py-4 rounded-xl hover:bg-cream-100 transition-colors text-lg"
               >
-                Join Now - It's Free
+                {getCopy('how-to-play.cta.button-logged-out', "Join Now - It's Free")}
                 <ArrowRight className="h-5 w-5" />
               </Link>
             )}

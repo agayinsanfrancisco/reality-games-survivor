@@ -29,7 +29,7 @@ interface TriviaQuestionCardProps {
     correctIndex: number;
   } | null;
   correctIndex: number;
-  funFact: string | null;
+  funFact?: string | null;
   wrongMessage: string;
   isPending: boolean;
   onAnswer: (index: number) => void;
@@ -48,7 +48,7 @@ export function TriviaQuestionCard({
   alreadyAnswered,
   userAnswer,
   correctIndex,
-  funFact,
+  funFact: _funFact,
   wrongMessage,
   isPending,
   onAnswer,
@@ -176,7 +176,7 @@ export function TriviaQuestionCard({
       </div>
 
       {/* Result Message */}
-      {(showResult || alreadyAnswered) && funFact && (
+      {(showResult || alreadyAnswered) && (
         <div
           className={`p-6 rounded-xl mb-6 ${
             userAnswer?.isCorrect || isCorrect
@@ -185,12 +185,9 @@ export function TriviaQuestionCard({
           }`}
         >
           {isCorrect ? (
-            <>
-              <p className="text-lg font-bold text-green-800 mb-2 flex items-center gap-2">
-                <span className="text-2xl">🔥</span> Correct!
-              </p>
-              <p className="text-sm text-neutral-700">{funFact}</p>
-            </>
+            <p className="text-lg font-bold text-green-800 flex items-center gap-2">
+              <span className="text-2xl">🔥</span> Correct!
+            </p>
           ) : (
             <>
               <p className="text-2xl font-bold text-red-800 mb-3 text-center">💀 {wrongMessage}</p>
@@ -198,7 +195,6 @@ export function TriviaQuestionCard({
                 Correct answer:{' '}
                 <span className="font-semibold">{question.options[correctIndex]}</span>
               </p>
-              <p className="text-sm text-neutral-700 mb-3">{funFact}</p>
               <div className="bg-red-100 border border-red-300 rounded-lg p-3 mt-3">
                 <p className="text-sm font-semibold text-red-800 text-center">
                   ⏰ You're locked out for 24 hours. Come back tomorrow to continue.

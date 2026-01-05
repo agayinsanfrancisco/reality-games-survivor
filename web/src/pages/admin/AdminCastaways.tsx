@@ -57,6 +57,7 @@ export function AdminCastaways() {
     hometown: '',
     occupation: '',
     photo_url: '',
+    tribe_original: '',
     previous_seasons: '',
     best_placement: '',
     fun_fact: '',
@@ -115,6 +116,23 @@ export function AdminCastaways() {
         .order('number');
       if (error) throw error;
       return data as Episode[];
+    },
+    enabled: !!activeSeason?.id,
+  });
+
+  // Fetch tribes for the season
+  const { data: tribes } = useQuery({
+    queryKey: ['tribes', activeSeason?.id],
+    queryFn: async () => {
+      if (!activeSeason?.id) return [];
+      const { data, error } = await supabase
+        .from('tribes')
+        .select('*')
+        .eq('season_id', activeSeason.id)
+        .eq('is_active', true)
+        .order('display_order');
+      if (error) throw error;
+      return data;
     },
     enabled: !!activeSeason?.id,
   });
@@ -181,6 +199,7 @@ export function AdminCastaways() {
       hometown: castaway.hometown || '',
       occupation: castaway.occupation || '',
       photo_url: castaway.photo_url || '',
+      tribe_original: castaway.tribe_original || '',
       previous_seasons: castaway.previous_seasons?.join(', ') || '',
       best_placement: castaway.best_placement?.toString() || '',
       fun_fact: castaway.fun_fact || '',
@@ -221,6 +240,7 @@ export function AdminCastaways() {
         hometown: editForm.hometown || null,
         occupation: editForm.occupation || null,
         photo_url: editForm.photo_url || null,
+        tribe_original: editForm.tribe_original || null,
         previous_seasons: previousSeasons,
         best_placement: bestPlacement,
         fun_fact: editForm.fun_fact || null,
@@ -370,6 +390,7 @@ export function AdminCastaways() {
             onSave={saveEdit}
             onCancel={() => setEditingId(null)}
             isPending={updateMutation.isPending}
+            tribes={tribes}
           />
         )}
       </main>

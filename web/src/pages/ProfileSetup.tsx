@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Loader2, Bell, ChevronDown, ChevronUp } from 'lucide-react';
+import { User, Loader2, Bell } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
@@ -79,8 +79,7 @@ export default function ProfileSetup() {
   const [firstName, setFirstName] = useState('');
   const [lastInitial, setLastInitial] = useState('');
 
-  // Optional fields
-  const [showOptional, setShowOptional] = useState(false);
+  // Optional fields (always visible now)
   const [hometown, setHometown] = useState('');
   const [favoriteCastaway, setFavoriteCastaway] = useState('');
   const [favoriteSeason, setFavoriteSeason] = useState('');
@@ -108,7 +107,6 @@ export default function ProfileSetup() {
       if (error) throw error;
       return data || [];
     },
-    enabled: showOptional,
   });
 
   // Fallback profile fetch if auth profile hasn't loaded yet
@@ -390,104 +388,86 @@ export default function ProfileSetup() {
             </div>
           </div>
 
-          {/* Optional Fields Toggle */}
-          <button
-            type="button"
-            onClick={() => setShowOptional(!showOptional)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-cream-50 rounded-xl border border-cream-200 hover:bg-cream-100 transition-colors text-left"
-          >
-            <span className="text-neutral-600 font-medium">Additional info (optional)</span>
-            {showOptional ? (
-              <ChevronUp className="h-5 w-5 text-neutral-400" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-neutral-400" />
-            )}
-          </button>
-
-          {/* Optional Fields */}
-          {showOptional && (
-            <div className="space-y-4 animate-slide-up">
-              <div>
-                <label
-                  htmlFor="hometown"
-                  className="block text-sm font-medium text-neutral-700 mb-2"
-                >
-                  Hometown
-                </label>
-                <input
-                  id="hometown"
-                  type="text"
-                  value={hometown}
-                  onChange={(e) => setHometown(e.target.value)}
-                  placeholder="e.g., Los Angeles, CA"
-                  className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="favoriteCastaway"
-                  className="block text-sm font-medium text-neutral-700 mb-2"
-                >
-                  Favorite Castaway
-                </label>
-                <input
-                  id="favoriteCastaway"
-                  type="text"
-                  value={favoriteCastaway}
-                  onChange={(e) => setFavoriteCastaway(e.target.value)}
-                  placeholder="e.g., Parvati Shallow"
-                  className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="favoriteSeason"
-                  className="block text-sm font-medium text-neutral-700 mb-2"
-                >
-                  Favorite Survivor Season
-                </label>
-                <select
-                  id="favoriteSeason"
-                  value={favoriteSeason}
-                  onChange={(e) => setFavoriteSeason(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all bg-white"
-                >
-                  {ALL_SURVIVOR_SEASONS.map((season) => (
-                    <option key={season.value} value={season.value}>
-                      {season.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="season50Winner"
-                  className="block text-sm font-medium text-neutral-700 mb-2"
-                >
-                  🏆 Who Will Win Season 50?
-                </label>
-                <select
-                  id="season50Winner"
-                  value={season50WinnerPrediction}
-                  onChange={(e) => setSeason50WinnerPrediction(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all bg-white"
-                >
-                  <option value="">Make your prediction</option>
-                  {season50Castaways?.map((castaway) => (
-                    <option key={castaway.id} value={castaway.id}>
-                      {castaway.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-neutral-500 mt-1">
-                  Just for fun! Lock in your prediction before the season starts.
-                </p>
-              </div>
+          {/* Optional Fields - All Visible */}
+          <div className="space-y-4">
+            <p className="text-sm text-neutral-500 font-medium">Optional Information</p>
+            <div>
+              <label htmlFor="hometown" className="block text-sm font-medium text-neutral-700 mb-2">
+                Hometown
+              </label>
+              <input
+                id="hometown"
+                type="text"
+                value={hometown}
+                onChange={(e) => setHometown(e.target.value)}
+                placeholder="e.g., Los Angeles, CA"
+                className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all"
+              />
             </div>
-          )}
+
+            <div>
+              <label
+                htmlFor="favoriteCastaway"
+                className="block text-sm font-medium text-neutral-700 mb-2"
+              >
+                Favorite Castaway
+              </label>
+              <input
+                id="favoriteCastaway"
+                type="text"
+                value={favoriteCastaway}
+                onChange={(e) => setFavoriteCastaway(e.target.value)}
+                placeholder="e.g., Parvati Shallow"
+                className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="favoriteSeason"
+                className="block text-sm font-medium text-neutral-700 mb-2"
+              >
+                Favorite Survivor Season
+              </label>
+              <select
+                id="favoriteSeason"
+                value={favoriteSeason}
+                onChange={(e) => setFavoriteSeason(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all bg-white"
+              >
+                {ALL_SURVIVOR_SEASONS.map((season) => (
+                  <option key={season.value} value={season.value}>
+                    {season.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="season50Winner"
+                className="block text-sm font-medium text-neutral-700 mb-2"
+              >
+                🏆 Who Will Win Season 50?
+              </label>
+              <select
+                id="season50Winner"
+                value={season50WinnerPrediction}
+                onChange={(e) => setSeason50WinnerPrediction(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all bg-white"
+              >
+                <option value="">Make your prediction (optional)</option>
+                {season50Castaways?.map((castaway) => (
+                  <option key={castaway.id} value={castaway.id}>
+                    {castaway.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-neutral-500 mt-1">
+                Just for fun! Lock in your prediction before the season starts.
+              </p>
+            </div>
+          </div>
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
