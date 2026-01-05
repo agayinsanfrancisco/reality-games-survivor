@@ -16,8 +16,10 @@ export function Navigation() {
   const { user, signOut, loading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [castawaysOpen, setCastawaysOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const howToPlayRef = useRef<HTMLDivElement>(null);
+  const castawaysRef = useRef<HTMLDivElement>(null);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -33,12 +35,15 @@ export function Navigation() {
       if (howToPlayRef.current && !howToPlayRef.current.contains(event.target as Node)) {
         setHowToPlayOpen(false);
       }
+      if (castawaysRef.current && !castawaysRef.current.contains(event.target as Node)) {
+        setCastawaysOpen(false);
+      }
     };
-    if (mobileMenuOpen || howToPlayOpen) {
+    if (mobileMenuOpen || howToPlayOpen || castawaysOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [mobileMenuOpen, howToPlayOpen]);
+  }, [mobileMenuOpen, howToPlayOpen, castawaysOpen]);
 
   // Handle sign out
   const handleSignOut = async () => {
@@ -124,16 +129,47 @@ export function Navigation() {
                 >
                   Leagues
                 </Link>
-                <Link
-                  to="/castaways"
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    isActive('/castaways')
-                      ? 'text-burgundy-600 bg-burgundy-50'
-                      : 'text-neutral-600 hover:text-burgundy-600 hover:bg-neutral-50'
-                  }`}
-                >
-                  Castaways
-                </Link>
+                <div className="relative" ref={castawaysRef}>
+                  <button
+                    onClick={() => setCastawaysOpen(!castawaysOpen)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${
+                      isActive('/castaways') || isActive('/draft-rankings')
+                        ? 'text-burgundy-600 bg-burgundy-50'
+                        : 'text-neutral-600 hover:text-burgundy-600 hover:bg-neutral-50'
+                    }`}
+                  >
+                    Castaways
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform ${castawaysOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {castawaysOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-neutral-200 min-w-[180px] z-50 py-1">
+                      <Link
+                        to="/castaways"
+                        onClick={() => setCastawaysOpen(false)}
+                        className={`block px-4 py-2 text-sm hover:bg-neutral-50 ${
+                          isActive('/castaways') && !isActive('/draft-rankings')
+                            ? 'text-burgundy-600 bg-burgundy-50'
+                            : 'text-neutral-600'
+                        }`}
+                      >
+                        All Castaways
+                      </Link>
+                      <Link
+                        to="/draft-rankings"
+                        onClick={() => setCastawaysOpen(false)}
+                        className={`block px-4 py-2 text-sm hover:bg-neutral-50 ${
+                          isActive('/draft-rankings')
+                            ? 'text-burgundy-600 bg-burgundy-50'
+                            : 'text-neutral-600'
+                        }`}
+                      >
+                        Your Rankings
+                      </Link>
+                    </div>
+                  )}
+                </div>
                 <Link
                   to="/leaderboard"
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -338,14 +374,31 @@ export function Navigation() {
                 >
                   Leagues
                 </Link>
-                <Link
-                  to="/castaways"
-                  className={`block px-4 py-3 text-sm font-semibold uppercase tracking-wide ${
-                    isActive('/castaways') ? 'text-burgundy-600 bg-burgundy-50' : 'text-neutral-600'
-                  }`}
-                >
-                  Castaways
-                </Link>
+                <div>
+                  <div className="px-4 py-2 text-sm font-semibold text-neutral-800 uppercase tracking-wide">
+                    Castaways
+                  </div>
+                  <Link
+                    to="/castaways"
+                    className={`block px-8 py-2 text-sm ${
+                      isActive('/castaways') && !isActive('/draft-rankings')
+                        ? 'text-burgundy-600 bg-burgundy-50'
+                        : 'text-neutral-600'
+                    }`}
+                  >
+                    All Castaways
+                  </Link>
+                  <Link
+                    to="/draft-rankings"
+                    className={`block px-8 py-2 text-sm ${
+                      isActive('/draft-rankings')
+                        ? 'text-burgundy-600 bg-burgundy-50'
+                        : 'text-neutral-600'
+                    }`}
+                  >
+                    Your Rankings
+                  </Link>
+                </div>
                 <Link
                   to="/leaderboard"
                   className={`block px-4 py-3 text-sm font-semibold uppercase tracking-wide ${

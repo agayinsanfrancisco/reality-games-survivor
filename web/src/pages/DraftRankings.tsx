@@ -5,9 +5,19 @@ import { useAuth } from '@/lib/auth';
 import { useSiteCopy } from '@/lib/hooks/useSiteCopy';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { ArrowLeft, Loader2, Clock, Check, AlertCircle, Save, GripVertical } from 'lucide-react';
+import {
+  ArrowLeft,
+  Loader2,
+  Clock,
+  Check,
+  AlertCircle,
+  Save,
+  GripVertical,
+  Users,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCastaways } from '@/lib/hooks';
+import { useMyLeagues } from '@/lib/hooks/useLeagues';
 import { formatDateTimeFull } from '@/lib/date-utils';
 import type { Castaway } from '@/types';
 
@@ -20,6 +30,10 @@ export default function DraftRankings() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Check if user is in any leagues
+  const { data: myLeagues, isLoading: leaguesLoading } = useMyLeagues(user?.id);
+  const isInAnyLeague = myLeagues && myLeagues.length > 0;
 
   const { data: activeSeason } = useQuery({
     queryKey: ['active-season'],
@@ -135,12 +149,63 @@ export default function DraftRankings() {
 
   const handleDragEnd = () => setDraggedIndex(null);
 
-  if (rankingsLoading || castawaysLoading) {
+  if (rankingsLoading || castawaysLoading || leaguesLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex flex-col">
         <Navigation />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 text-burgundy-500 animate-spin" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show CTA to join a league if user is not in any league
+  if (!isInAnyLeague) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 flex flex-col">
+        <Navigation />
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
+          <div className="mb-6">
+            <Link
+              to="/castaways"
+              className="inline-flex items-center gap-2 text-neutral-600 hover:text-neutral-800 mb-4"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Castaways
+            </Link>
+            <h1 className="text-3xl font-display font-bold text-neutral-800 mb-2">
+              {getCopy('draft-rankings.header.title', 'Draft Rankings')}
+            </h1>
+            <p className="text-neutral-500">
+              {getCopy(
+                'draft-rankings.header.subtitle',
+                'Rank castaways to set your draft preferences'
+              )}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-card border border-cream-200 p-8 text-center">
+            <div className="w-16 h-16 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Users className="h-8 w-8 text-burgundy-600" />
+            </div>
+            <h2 className="text-2xl font-display font-bold text-neutral-800 mb-3">
+              Join a League First
+            </h2>
+            <p className="text-neutral-600 mb-6 max-w-md mx-auto">
+              To set your draft rankings, you need to be part of a league. Join an existing league
+              or create your own to start ranking castaways for the draft!
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link to="/leagues" className="btn btn-primary">
+                Browse Leagues
+              </Link>
+              <Link to="/leagues/create" className="btn btn-secondary">
+                Create a League
+              </Link>
+            </div>
+          </div>
         </main>
         <Footer />
       </div>

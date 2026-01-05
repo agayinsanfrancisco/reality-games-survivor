@@ -5,7 +5,21 @@
  */
 
 import { History, Trophy } from 'lucide-react';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 import type { EditCastawayModalProps } from './types';
+
+// Quill modules configuration for rich text editing
+const quillModules = {
+  toolbar: [
+    ['bold', 'italic', 'underline'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    ['link'],
+    ['clean'],
+  ],
+};
+
+const quillFormats = ['bold', 'italic', 'underline', 'list', 'bullet', 'link'];
 
 export function EditCastawayModal({
   formData,
@@ -132,16 +146,23 @@ export function EditCastawayModal({
             </div>
           </div>
 
-          {/* Fun Fact */}
+          {/* Fun Fact - Rich Text Editor */}
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-1">Fun Fact</label>
-            <textarea
-              value={formData.fun_fact}
-              onChange={(e) => onFormChange({ ...formData, fun_fact: e.target.value })}
-              placeholder="Interesting trivia about this castaway..."
-              rows={3}
-              className="w-full p-3 border border-cream-200 rounded-xl focus:ring-2 focus:ring-burgundy-500 resize-none"
-            />
+            <div className="border border-cream-200 rounded-xl overflow-hidden">
+              <ReactQuill
+                theme="snow"
+                value={formData.fun_fact}
+                onChange={(value) => onFormChange({ ...formData, fun_fact: value })}
+                modules={quillModules}
+                formats={quillFormats}
+                placeholder="Interesting trivia about this castaway..."
+                className="quill-castaway"
+              />
+            </div>
+            <p className="text-xs text-neutral-500 mt-1">
+              Use the toolbar to format text with bold, italic, lists, and links.
+            </p>
           </div>
         </div>
 

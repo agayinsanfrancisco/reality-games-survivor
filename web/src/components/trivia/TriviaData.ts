@@ -1,6 +1,6 @@
 /**
  * Trivia Data and Types
- * Updated to match the 24 questions from the database
+ * Generated from Season 50 castaway fun facts - 24 questions total (one per castaway)
  */
 
 export interface TriviaQuestion {
@@ -13,214 +13,252 @@ export interface TriviaQuestion {
 
 export const TRIVIA_QUESTIONS: TriviaQuestion[] = [
   {
-    castaway: 'Cirie Fields',
-    question:
-      'Which Survivor 50 contestant holds the record for competing in the most seasons (including international)?',
-    options: ['Ozzy Lusth', 'Cirie Fields', 'Joe Anglim', 'Colby Donaldson'],
-    correctIndex: 1,
-    funFact:
-      'Cirie has played 5 times: Panama, Micronesia, HvV, Game Changers, and Australian Survivor',
-  },
-  {
     castaway: 'Angelina Keeley',
-    question: 'In David vs. Goliath (S37), what was the final jury vote when Nick Wilson won?',
-    options: [
-      '7-3-0 (Nick-Mike-Angelina)',
-      '6-2-2 (Nick-Mike-Angelina)',
-      '5-3-2 (Nick-Mike-Angelina)',
-      '8-0-0 (Nick unanimous)',
-    ],
-    correctIndex: 0,
-    funFact: 'Angelina received zero jury votes despite making it to Final Tribal Council',
-  },
-  {
-    castaway: 'Stephenie LaGrossa',
-    question:
-      'Which contestant was the LAST person standing from the infamous Ulong tribe in Palau?',
-    options: ['Tom Westman', 'Katie Gallagher', 'Stephenie LaGrossa', 'Bobby Jon Drinkard'],
-    correctIndex: 2,
-    funFact:
-      'Ulong lost every single immunity challenge, and Stephenie survived alone before being absorbed into Koror',
-  },
-  {
-    castaway: 'Savannah Louie',
-    question: 'How many individual immunity challenges did Savannah Louie win in Season 49?',
-    options: ['2', '3', '4', '5'],
-    correctIndex: 2,
-    funFact: 'Savannah tied the record for most immunity wins by a woman in a single season',
-  },
-  {
-    castaway: 'Joe Anglim',
-    question:
-      'Which Survivor 50 contestant collapsed during an immunity challenge due to exhaustion?',
-    options: ['Jonathan Young', 'Joe Anglim', 'Ozzy Lusth', 'Coach Wade'],
-    correctIndex: 1,
-    funFact: 'Joe collapsed on Day 32 of Cambodia after pushing himself to the limit',
-  },
-  {
-    castaway: 'Genevieve Mushaluk',
-    question: 'Genevieve Mushaluk was known in Season 47 for being the queen of what?',
-    options: ['Immunity wins', 'Blindsides', 'Finding idols', 'Social gameplay'],
-    correctIndex: 1,
-    funFact: 'Genevieve orchestrated multiple blindsides including the Kishan vote and Operation: Italy',
-  },
-  {
-    castaway: 'Joe Anglim & Sierra',
-    question:
-      'Which two Survivor 50 contestants competed on the same original season and later got married?',
-    options: [
-      'Ozzy Lusth & Amanda Kimmel',
-      'Joe Anglim & Sierra Dawn Thomas',
-      'Colby Donaldson & Jerri Manthey',
-      'Coach Wade & Debbie Beebe',
-    ],
-    correctIndex: 1,
-    funFact: 'Joe and Sierra met on Worlds Apart (S30) and married in 2019',
-  },
-  {
-    castaway: 'Kyle Fraser',
-    question: 'Kyle Fraser won Survivor 48 with what final jury vote?',
-    options: ['7-1-0', '6-2-0', '5-2-1', '4-3-1'],
-    correctIndex: 2,
-    funFact: 'All three finalists (Kyle, Eva, Joe) received at least one vote - a rare occurrence',
-  },
-  {
-    castaway: 'Tiffany Ervin',
-    question: 'Tiffany Ervin was blindsided in Season 46 while holding what in her pocket?',
-    options: ['An extra vote', 'A hidden immunity idol', 'A fake idol', 'Shot in the dark'],
-    correctIndex: 1,
-    funFact: 'Tiffany was blindsided at Final 8 with an idol after Q exposed her advantage to the tribe',
-  },
-  {
-    castaway: 'Rick Devens',
-    question:
-      'How many Hidden Immunity Idols did Rick Devens possess during Edge of Extinction (S38)?',
-    options: ['2', '3', '4', '5'],
-    correctIndex: 2,
-    funFact: 'Rick holds the record for most idols possessed in a single season with 4',
-  },
-  {
-    castaway: 'Colby Donaldson',
-    question:
-      'In Australian Outback, Colby made a controversial decision at Final 3. What did he do?',
-    options: [
-      'Kept the immunity necklace',
-      'Took Tina instead of Keith to Final 2',
-      'Refused to vote',
-      'Gave away his reward',
-    ],
-    correctIndex: 1,
-    funFact: "Colby's decision to take Tina cost him $1 million - she won 4-3",
-  },
-  {
-    castaway: 'Ozzy Lusth',
-    question: 'How many times has Ozzy Lusth competed on Survivor?',
-    options: ['2', '3', '4', '5'],
-    correctIndex: 2,
-    funFact: 'Ozzy played in Cook Islands, Micronesia, South Pacific, and Game Changers',
-  },
-  {
-    castaway: 'Coach Wade',
-    question: "What is Coach Wade's self-proclaimed nickname?",
-    options: ['The Warrior', 'The Dragon Slayer', 'The Maestro', 'The Survivor'],
+    question: 'Angelina Keeley is the founder and CEO of what type of organization?',
+    options: ['Tech startup', 'Nonprofit for young girls', 'Fashion brand', 'Restaurant chain'],
     correctIndex: 1,
     funFact:
-      "Coach's eccentric personality and stories made him one of Survivor's most memorable characters",
+      'Angelina founded Miss Limitless, a nonprofit that encourages and empowers young girls to run for student government positions.',
   },
   {
     castaway: 'Aubry Bracco',
-    question: 'In Kaôh Rōng, Aubry lost the final jury vote to which winner?',
-    options: ['Natalie Anderson', 'Michele Fitzgerald', 'Sarah Lacina', 'Wendell Holland'],
-    correctIndex: 1,
-    funFact: "The jury vote was 5-2 in favor of Michele in one of Survivor's most debated outcomes",
-  },
-  {
-    castaway: 'Christian Hubicki',
-    question: "What is Christian Hubicki's profession outside of Survivor?",
-    options: ['Software Engineer', 'Robotics Scientist', 'Data Analyst', 'Math Teacher'],
-    correctIndex: 1,
-    funFact:
-      "Christian's nerdy charm and puzzle-solving skills made him a fan favorite in David vs. Goliath",
-  },
-  {
-    castaway: 'Mike White',
-    question: 'Mike White is known outside Survivor for creating which hit TV show?',
-    options: ['Succession', 'The White Lotus', 'Yellowjackets', 'The Bear'],
-    correctIndex: 1,
-    funFact:
-      'Mike finished 2nd on David vs. Goliath and later won multiple Emmys for The White Lotus',
-  },
-  {
-    castaway: 'Chrissy Hofbeck',
-    question:
-      'How many individual immunity challenges did Chrissy Hofbeck win in Heroes vs. Healers vs. Hustlers?',
-    options: ['2', '3', '4', '5'],
-    correctIndex: 2,
-    funFact: "Chrissy tied the women's record for immunity wins at the time with 4 necklaces",
-  },
-  {
-    castaway: 'Jonathan Young',
-    question: 'Jonathan Young was known in Season 42 for his dominance in what area?',
-    options: ['Puzzle solving', 'Physical challenges', 'Finding idols', 'Social manipulation'],
-    correctIndex: 1,
-    funFact: "Jonathan's incredible strength carried his tribe through the pre-merge challenges",
-  },
-  {
-    castaway: 'Dee Valladares',
-    question: 'Dee Valladares won Season 45 with what final jury vote?',
-    options: ['7-1-0', '6-2-0', '5-3-0', '4-3-1'],
-    correctIndex: 2,
-    funFact: 'Dee dominated Season 45 and is considered one of the best New Era winners',
-  },
-  {
-    castaway: 'Emily Flippen',
-    question: 'Emily Flippen was known early in Season 45 for being extremely:',
-    options: ['Strategic', 'Physical', 'Blunt and abrasive', 'Under the radar'],
-    correctIndex: 2,
-    funFact:
-      'Emily had one of the best redemption arcs, going from most disliked to respected player',
-  },
-  {
-    castaway: 'Q Burdette',
-    question:
-      'Q Burdette became infamous in Season 46 for repeatedly doing what at Tribal Council?',
+    question: "What was Aubry Bracco's claim to fame according to her Edge of Extinction profile?",
     options: [
-      'Refusing to vote',
-      'Asking to be voted out',
-      'Playing fake idols',
-      'Switching his vote last second',
+      'Winning immunity 4 times',
+      'Neutralizing a Super Idol',
+      'Finding 3 idols',
+      'Making fire fastest',
     ],
     correctIndex: 1,
     funFact:
-      "Q's chaotic gameplay including asking to go home made him one of the most unpredictable players ever",
+      "Aubry's Survivor audition video was posted online by casting for many years as an example of a good audition video.",
   },
   {
     castaway: 'Charlie Davis',
-    question: 'Charlie Davis finished as runner-up in Season 46, losing to which winner?',
-    options: ['Maria Shrime Gonzalez', 'Kenzie Petty', 'Ben Katzman', 'Liz Wilcox'],
+    question: 'Charlie Davis co-hosted which official Survivor podcast?',
+    options: [
+      'RHAP',
+      'Survivor Know-It-Alls',
+      'On Fire with Jeff Probst',
+      'The Ringer Survivor Show',
+    ],
+    correctIndex: 2,
+    funFact:
+      'Charlie graduated from Boston College law school and is known as a Taylor Swift superfan.',
+  },
+  {
+    castaway: 'Chrissy Hofbeck',
+    question: 'How many years did Chrissy Hofbeck apply to be on Survivor before being cast?',
+    options: ['5 years', '10 years', '16 years', '20 years'],
+    correctIndex: 2,
+    funFact:
+      'Chrissy is one of six women to win 4 individual immunities in a single season and was gifted the Super Idol on Day 1.',
+  },
+  {
+    castaway: 'Christian Hubicki',
+    question: 'Christian Hubicki once won a challenge due to his ability to do what for 5 hours?',
+    options: [
+      'Hold his breath',
+      'Balance on a perch',
+      'Make conversation with Jeff',
+      'Solve puzzles repeatedly',
+    ],
+    correctIndex: 2,
+    funFact:
+      'Christian won a 5-hour endurance challenge, in part due to his ramblings and attempts to make conversations with Jeff Probst.',
+  },
+  {
+    castaway: 'Cirie Fields',
+    question: 'What major accomplishment did Cirie Fields achieve after Survivor?',
+    options: ['Won Big Brother', 'Won The Traitors', 'Won The Amazing Race', 'Won The Challenge'],
     correctIndex: 1,
     funFact:
-      'Charlie lost 5-3-0 despite being considered one of the best strategic players of the season',
+      "Cirie is the first player to compete 6 times and was famously eliminated by 'Advantageddon' with zero votes against her.",
   },
   {
-    castaway: 'Kamilla Karthigesu',
-    question: 'Kamilla Karthigesu was eliminated in Season 48 by losing what challenge?',
-    options: ['Final immunity', 'Firemaking', 'Rock draw', 'Shot in the dark'],
+    castaway: 'Coach Wade',
+    question: 'What unique professional title does Coach Wade hold?',
+    options: ['Olympic Athlete', 'Symphony Conductor', 'Marine Biologist', 'Astronaut'],
     correctIndex: 1,
-    funFact: 'The jury confirmed Kamilla would have won if she made Final Tribal Council',
+    funFact:
+      "Coach, nicknamed 'The Dragon Slayer,' was the first returning player to reach Final Tribal Council without receiving a single vote throughout the season.",
   },
   {
-    castaway: 'Rizo Velovic',
-    question: 'Rizo Velovic holds what distinction as a Survivor contestant?',
+    castaway: 'Colby Donaldson',
+    question: 'Colby Donaldson set what record in Australian Outback?',
     options: [
-      'First Gen Z winner',
-      'First Albanian-American contestant',
-      'Youngest male finalist',
-      'Most idols found by a rookie',
+      'Most tribal councils attended',
+      '5 consecutive individual immunity wins',
+      'Most votes against',
+      'Longest fire-making challenge',
     ],
     correctIndex: 1,
     funFact:
-      "Rizo, aka 'Rizgod,' was a superfan who became the first Albanian-American on the show",
+      'Colby was the first castaway to fall victim to the Car Curse and is forever associated in Survivor lore with Jerri Manthey.',
+  },
+  {
+    castaway: 'Dee Valladares',
+    question: 'Dee Valladares had a quirky talking point about having what?',
+    options: ['Million-dollar smile', 'Million-dollar toes', 'Lucky socks', 'Magic hands'],
+    correctIndex: 1,
+    funFact:
+      'Dee immigrated from Cuba at age 2 and had a showmance with Austin Li Coon during her season.',
+  },
+  {
+    castaway: 'Emily Flippen',
+    question: 'Emily Flippen is remembered for a key confessional that was loosened by what?',
+    options: ['A nap', 'Winning reward', 'A large glass of wine', 'Finding an idol'],
+    correctIndex: 2,
+    funFact:
+      'Emily challenged a returning player on the opening mat for having an advantage, and Survivor fans love making memes about her job title and name.',
+  },
+  {
+    castaway: 'Genevieve Mushaluk',
+    question:
+      "Which memorable quote is associated with Genevieve Mushaluk's gameplay in Season 47?",
+    options: [
+      'The tribe has spoken',
+      'Make Kishan the plan',
+      'Blindside the blindsider',
+      'Trust the process',
+    ],
+    correctIndex: 1,
+    funFact:
+      "Genevieve was part of 'Operation: Italy' and intentionally started emotionless then realized emotion was key to her game.",
+  },
+  {
+    castaway: 'Jenna Lewis-Dougherty',
+    question: 'Jenna Lewis-Dougherty holds what impressive Survivor gap record?',
+    options: [
+      'Longest time between seasons (42)',
+      'Most reunions attended',
+      'Most tribal councils',
+      'Most confessionals',
+    ],
+    correctIndex: 0,
+    funFact:
+      'Jenna was the only Borneo contestant to make merge in All-Stars and co-hosted a podcast with Rob Cesternino prior to RHAP.',
+  },
+  {
+    castaway: 'Joe Hunter',
+    question: "What is notable about Joe Hunter's voting record in Season 48?",
+    options: [
+      'Received the most votes',
+      'Never received a single vote',
+      'Voted wrong every time',
+      'Never voted',
+    ],
+    correctIndex: 1,
+    funFact:
+      'Joe is an advocate for domestic violence prevention and survivors, and attended the Emmys as a guest after his season.',
+  },
+  {
+    castaway: 'Jonathan Young',
+    question: 'Jonathan Young holds a Guinness World Record for doing what?',
+    options: [
+      'Most push-ups in a minute',
+      '15 chin-ups with 100 lbs in 60 seconds',
+      'Longest plank',
+      'Fastest mile carrying weight',
+    ],
+    correctIndex: 1,
+    funFact:
+      'Jonathan was originally cast for Season 41 before filming was suspended due to COVID-19, and is remembered for single-handedly dragging his boat through rough waters.',
+  },
+  {
+    castaway: 'Kamilla Karthigesu',
+    question: "What do Kamilla Karthigesu's fans call themselves?",
+    options: ['Kamilla Crew', 'The Kamillitary', 'Team Kamilla', 'Karthigesu Nation'],
+    correctIndex: 1,
+    funFact:
+      'Kamilla had a game-long secret alliance revealed during Final Tribal Council and intentionally made people look worse than her.',
+  },
+  {
+    castaway: 'Kyle Fraser',
+    question: 'What mishap occurred when Kyle Fraser competed in a reward challenge?',
+    options: ['Broke the puzzle', 'Broke the water jug', 'Lost his shoes', 'Forgot the rules'],
+    correctIndex: 1,
+    funFact:
+      'Kyle talks openly about his history of incarceration and had a game-long secret alliance revealed during Final Tribal Council.',
+  },
+  {
+    castaway: 'Mike White',
+    question: "Mike White found another castaway's hidden immunity idol clue while doing what?",
+    options: ['Fishing', 'Building shelter', 'Drinking wine', 'Taking a nap'],
+    correctIndex: 2,
+    funFact:
+      "Mike is the creator of 'The White Lotus' and wrote 'School of Rock.' He's a close friend of Survivor host Jeff Probst.",
+  },
+  {
+    castaway: 'Ozzy Lusth',
+    question: 'Ozzy Lusth created a historic first in Survivor by doing what?',
+    options: [
+      'Winning 5 immunities in a row',
+      'Making a fake idol that was played by another castaway',
+      'Finding 4 idols',
+      'Competing without getting votes',
+    ],
+    correctIndex: 1,
+    funFact:
+      'Ozzy was voted out three times in a single season and was blindsided by the Black Widow Brigade.',
+  },
+  {
+    castaway: 'Q Burdette',
+    question: 'Q Burdette is the inventor of what unique Survivor fashion item?',
+    options: ['The Q-Hat', 'The Q-Skirt', 'The Q-Bandana', 'The Q-Shoes'],
+    correctIndex: 1,
+    funFact:
+      "Q famously said, 'Thought she could rally the troops and send me packing? You can cancel Christmas, girl.'",
+  },
+  {
+    castaway: 'Rick Devens',
+    question: 'Rick Devens was the first castaway to co-host which podcast?',
+    options: ['RHAP', 'On Fire with Jeff Probst', 'Survivor Winners at War', 'The Drop'],
+    correctIndex: 1,
+    funFact:
+      'Rick re-entered the game after winning the re-entry duel challenge at the merge and possessed four hidden immunity idols during the season.',
+  },
+  {
+    castaway: 'Rizo Velovic',
+    question: 'How did Rizo Velovic infamously win a tribe supplies challenge?',
+    options: [
+      'Solving it first',
+      "Copying a competitor's puzzle",
+      'Getting help from his tribe',
+      'Finding a shortcut',
+    ],
+    correctIndex: 1,
+    funFact:
+      'Rizo held a publicly known immunity idol through nine Tribal Councils and was the first Survivor player of Albanian descent.',
+  },
+  {
+    castaway: 'Savannah Louie',
+    question: 'What distinction does Savannah Louie hold among female Survivor contestants?',
+    options: [
+      'Most confessionals',
+      'Most individual immunity wins in a season (4)',
+      'Longest challenge win',
+      'Most votes survived',
+    ],
+    correctIndex: 1,
+    funFact:
+      'Savannah was part of an all-female Final Tribal Council, the first time in 20 seasons. She received her first callback for Survivor at age 19.',
+  },
+  {
+    castaway: 'Stephenie LaGrossa Kendrick',
+    question: 'What injury did Stephenie LaGrossa famously suffer and immediately fix herself?',
+    options: ['Broken finger', 'Dislocated shoulder', 'Twisted ankle', 'Cut hand'],
+    correctIndex: 1,
+    funFact:
+      'Stephenie was famously the last castaway on a pre-merge tribe and was the first female to return to play in a mixed game of returning and new players.',
+  },
+  {
+    castaway: 'Tiffany Nicole Ervin',
+    question: "How many days did Tiffany's tribe go without fire in Season 46?",
+    options: ['5 days', '8 days', '11 days', '14 days'],
+    correctIndex: 2,
+    funFact:
+      'Tiffany was voted out with a hidden immunity idol in her pocket and switched careers to art and content creation after a layoff in 2020.',
   },
 ];
 

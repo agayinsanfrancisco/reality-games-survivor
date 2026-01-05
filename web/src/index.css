@@ -581,3 +581,16 @@
 .ql-snow .ql-toolbar .ql-picker-item.ql-selected {
   color: #8b0000;
 }
+
+/* Compact Quill for castaway editing */
+.quill-castaway .ql-editor {
+  min-height: 120px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 12px;
+  font-size: 14px;
+}
+
+.quill-castaway .ql-toolbar.ql-snow {
+  padding: 6px;
+}
