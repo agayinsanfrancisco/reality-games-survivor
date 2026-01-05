@@ -10,15 +10,15 @@
 
 import { Router, Response } from 'express';
 import { supabaseAdmin } from '../../config/supabase.js';
-import { AuthRequest, authMiddleware, requireAdmin } from '../../middleware/auth.js';
+import { AuthenticatedRequest, authenticate, requireAdmin } from '../../middleware/authenticate.js';
 
 const router = Router();
 
 // All routes require admin authentication
-router.use(authMiddleware, requireAdmin);
+router.use(authenticate, requireAdmin);
 
 // GET /api/admin/nonprofit/summary - Global fund summary
-router.get('/summary', async (req: AuthRequest, res: Response) => {
+router.get('/summary', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('global_fund_summary')
@@ -35,7 +35,7 @@ router.get('/summary', async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/admin/nonprofit/league-funds - Per-league fund balances
-router.get('/league-funds', async (req: AuthRequest, res: Response) => {
+router.get('/league-funds', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('league_fund_balances')
@@ -52,7 +52,7 @@ router.get('/league-funds', async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/admin/nonprofit/pending-receipts - Tax receipts not yet sent
-router.get('/pending-receipts', async (req: AuthRequest, res: Response) => {
+router.get('/pending-receipts', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('pending_tax_receipts')
@@ -69,7 +69,7 @@ router.get('/pending-receipts', async (req: AuthRequest, res: Response) => {
 });
 
 // POST /api/admin/nonprofit/charity-selection - Record charity selection by winner
-router.post('/charity-selection', async (req: AuthRequest, res: Response) => {
+router.post('/charity-selection', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { league_id, charity_name, charity_ein, charity_address, selected_by } = req.body;
 
@@ -101,7 +101,7 @@ router.post('/charity-selection', async (req: AuthRequest, res: Response) => {
 });
 
 // POST /api/admin/nonprofit/disburse - Record charity disbursement
-router.post('/disburse', async (req: AuthRequest, res: Response) => {
+router.post('/disburse', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const {
       league_id,
@@ -189,7 +189,7 @@ router.post('/disburse', async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/admin/nonprofit/disbursements - Get disbursement history
-router.get('/disbursements', async (req: AuthRequest, res: Response) => {
+router.get('/disbursements', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('charity_disbursements')
@@ -206,7 +206,7 @@ router.get('/disbursements', async (req: AuthRequest, res: Response) => {
 });
 
 // POST /api/admin/nonprofit/resend-tax-receipt - Resend tax receipt for a payment
-router.post('/resend-tax-receipt/:paymentId', async (req: AuthRequest, res: Response) => {
+router.post('/resend-tax-receipt/:paymentId', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { paymentId } = req.params;
 

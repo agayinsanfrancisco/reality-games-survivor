@@ -23,6 +23,7 @@
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
     "luxon": "^3.7.2",
+    "node-cache": "^5.1.2",
     "node-cron": "^3.0.3",
     "resend": "^2.0.0",
     "stripe": "^14.0.0",

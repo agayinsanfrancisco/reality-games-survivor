@@ -12,6 +12,7 @@ import { Footer } from '@/components/Footer';
 import { Flame, Mail, Loader2, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
+import { usePageCopy } from '@/lib/useSiteCopy';
 
 export function Home() {
   const { user, loading } = useAuth();
@@ -19,6 +20,18 @@ export function Home() {
   const [triviaSubmitting, setTriviaSubmitting] = useState(false);
   const [triviaSuccess, setTriviaSuccess] = useState(false);
   const [triviaError, setTriviaError] = useState('');
+
+  // Fetch site copy from CMS with fallbacks
+  const { copy } = usePageCopy('home', {
+    'home.hero.badge': 'Season 50 Now Open',
+    'home.hero.title': 'Fantasy Survivor for People Who Actually Watch',
+    'home.hero.subtitle':
+      'Draft castaways. Set weekly lineups. Earn points for every confessional, idol play, and blindside. Prove you know the game.',
+    'home.cta.primary': 'Join Free',
+    'home.cta.secondary': 'How It Works',
+    'home.trivia.heading': 'Sign Up for Free Trivia',
+    'home.trivia.description': 'Get access to our 24-question Survivor trivia challenge!',
+  });
 
   // Redirect logged-in users to dashboard
   if (!loading && user) {
@@ -61,7 +74,7 @@ export function Home() {
         <div className="w-full max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-burgundy-100 text-burgundy-700 px-3 py-1.5 rounded-full text-sm font-semibold mb-6">
             <Flame className="h-4 w-4" />
-            Season 50 Now Open
+            {copy['home.hero.badge']}
           </div>
 
           <h1
@@ -76,8 +89,7 @@ export function Home() {
           </h1>
 
           <p className="text-lg sm:text-xl text-neutral-600 mb-10 max-w-xl mx-auto">
-            Draft castaways. Set weekly lineups. Earn points for every confessional, idol play, and
-            blindside. Prove you know the game.
+            {copy['home.hero.subtitle']}
           </p>
 
           {/* CTA Buttons */}
@@ -87,13 +99,13 @@ export function Home() {
               className="bg-burgundy-600 hover:bg-burgundy-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl inline-flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <Flame className="h-5 w-5" />
-              Join Free
+              {copy['home.cta.primary']}
             </Link>
             <Link
               to="/how-to-play"
               className="bg-white hover:bg-cream-100 text-neutral-800 px-8 py-4 rounded-xl font-semibold text-lg border-2 border-cream-200 hover:border-cream-300 transition-all inline-flex items-center justify-center w-full sm:w-auto"
             >
-              How It Works
+              {copy['home.cta.secondary']}
             </Link>
           </div>
 
@@ -101,11 +113,9 @@ export function Home() {
           <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200 max-w-md mx-auto">
             <div className="flex items-center justify-center gap-2 mb-3">
               <Mail className="h-5 w-5 text-burgundy-600" />
-              <h3 className="font-semibold text-neutral-800">Sign Up for Free Trivia</h3>
+              <h3 className="font-semibold text-neutral-800">{copy['home.trivia.heading']}</h3>
             </div>
-            <p className="text-sm text-neutral-600 mb-4">
-              Get access to our 24-question Survivor trivia challenge!
-            </p>
+            <p className="text-sm text-neutral-600 mb-4">{copy['home.trivia.description']}</p>
 
             {triviaSuccess ? (
               <div className="flex items-center justify-center gap-2 text-green-600 py-2">

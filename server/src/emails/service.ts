@@ -767,12 +767,22 @@ function inactivityReminderEmailTemplate(data: InactivityReminderEmailData): str
 export class EmailService {
   // Send welcome email when user signs up
   static async sendWelcome(data: WelcomeEmailData): Promise<boolean> {
-    const html = welcomeEmailTemplate(data);
-    return sendEmail({
-      to: data.email,
-      subject: 'Welcome to Reality Games: Survivor',
-      html,
-    });
+    return EmailService.sendFromCMS(
+      'welcome',
+      {
+        displayName: data.displayName,
+        dashboardUrl: `${BASE_URL}/dashboard`,
+        howToPlayUrl: `${BASE_URL}/how-to-play`,
+      },
+      {
+        subject: 'Welcome to Reality Games: Survivor',
+        html: welcomeEmailTemplate(data),
+      },
+      {
+        to: data.email,
+        critical: false,
+      }
+    );
   }
 
   // Send trivia welcome email when user starts playing trivia
@@ -807,12 +817,28 @@ export class EmailService {
 
   // Send league joined email to new member (CRITICAL - part of payment flow)
   static async sendLeagueJoined(data: LeagueJoinedEmailData): Promise<boolean> {
-    const html = leagueJoinedEmailTemplate(data);
-    return sendEmailCritical({
-      to: data.email,
-      subject: `You've joined ${data.leagueName}`,
-      html,
-    });
+    return EmailService.sendFromCMS(
+      'league-joined',
+      {
+        displayName: data.displayName,
+        leagueName: data.leagueName,
+        seasonName: data.seasonName,
+        memberCount: data.memberCount.toString(),
+        maxMembers: data.maxMembers.toString(),
+        premiereDate: formatDate(data.premiereDate),
+        draftDeadline: formatDate(data.draftDeadline),
+        firstPickDue: formatDate(data.firstPickDue),
+        leagueUrl: `${BASE_URL}/leagues/${data.leagueId}`,
+      },
+      {
+        subject: `You've joined ${data.leagueName}`,
+        html: leagueJoinedEmailTemplate(data),
+      },
+      {
+        to: data.email,
+        critical: true, // Part of payment flow - must be delivered
+      }
+    );
   }
 
   // Send draft pick confirmation (CRITICAL - draft confirmations must be delivered)
@@ -857,12 +883,24 @@ export class EmailService {
 
   // Send payment confirmation (CRITICAL - uses retry logic)
   static async sendPaymentConfirmed(data: PaymentConfirmedEmailData): Promise<boolean> {
-    const html = paymentConfirmedEmailTemplate(data);
-    return sendEmailCritical({
-      to: data.email,
-      subject: `Payment received - ${data.leagueName}`,
-      html,
-    });
+    return EmailService.sendFromCMS(
+      'payment-confirmation',
+      {
+        displayName: data.displayName,
+        leagueName: data.leagueName,
+        amount: data.amount.toFixed(2),
+        date: formatDate(data.date),
+        leagueUrl: `${BASE_URL}/leagues/${data.leagueId}`,
+      },
+      {
+        subject: `Payment received - ${data.leagueName}`,
+        html: paymentConfirmedEmailTemplate(data),
+      },
+      {
+        to: data.email,
+        critical: true, // Uses retry logic for critical payment confirmation
+      }
+    );
   }
 
   // Send tax receipt for nonprofit donations (CRITICAL - IRS compliance)
@@ -1065,6 +1103,74 @@ export class EmailService {
       type: 'normal',
     });
     return result !== null;
+  }
+
+  /**
+   * Send email using CMS template (database) with fallback to hardcoded template
+   *
+   * This method integrates the database-driven CMS with the email sending system.
+   * It tries to load the template from the database first, then falls back to
+   * a provided hardcoded template if the database template doesn't exist or is inactive.
+   *
+   * @param slug - Template slug in database (e.g., 'welcome', 'pick-reminder')
+   * @param variables - Variables to replace in template (e.g., {displayName: 'John'})
+   * @param fallback - Hardcoded template to use if database template doesn't exist
+   * @param options - Email sending options (critical, queue, etc.)
+   * @returns Promise<boolean> indicating success
+   */
+  static async sendFromCMS(
+    slug: string,
+    variables: Record<string, string | number | boolean>,
+    fallback: { subject: string; html: string; text?: string },
+    options: {
+      to: string;
+      critical?: boolean;
+      queue?: boolean;
+    }
+  ): Promise<boolean> {
+    try {
+      // Import template loader
+      const { renderEmailTemplate } = await import('./templateLoader.js');
+
+      // Render template (tries DB first, falls back to hardcoded)
+      const rendered = await renderEmailTemplate(slug, variables, fallback);
+
+      // Log which source was used
+      if (rendered.source === 'database') {
+        console.log(`[Email] Using CMS template: ${slug}`);
+      } else {
+        console.log(`[Email] Using fallback template: ${slug} (CMS template not found)`);
+      }
+
+      // Send email based on options
+      if (options.critical) {
+        return sendEmailCritical({
+          to: options.to,
+          subject: rendered.subject,
+          html: rendered.html,
+          text: rendered.text || undefined,
+        });
+      } else if (options.queue) {
+        const result = await enqueueEmail({
+          to: options.to,
+          subject: rendered.subject,
+          html: rendered.html,
+          text: rendered.text || undefined,
+          type: 'normal',
+        });
+        return result !== null;
+      } else {
+        return sendEmail({
+          to: options.to,
+          subject: rendered.subject,
+          html: rendered.html,
+          text: rendered.text || undefined,
+        });
+      }
+    } catch (err) {
+      console.error(`Failed to send email from CMS (${slug}):`, err);
+      return false;
+    }
   }
 
   // Log email to notifications table

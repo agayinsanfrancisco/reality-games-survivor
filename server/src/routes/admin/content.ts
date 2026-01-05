@@ -75,12 +75,12 @@ router.put('/email-templates/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
     const userId = (req as any).user?.id;
-    
+
     const parsed = updateTemplateSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: 'Invalid input', details: parsed.error.errors });
     }
-    
+
     const { data, error } = await supabaseAdmin
       .from('email_templates')
       .update({
@@ -91,9 +91,13 @@ router.put('/email-templates/:slug', async (req, res) => {
       .eq('slug', slug)
       .select()
       .single();
-    
+
     if (error) throw error;
-    
+
+    // Clear cache for this template
+    const { clearTemplateCache } = await import('../../emails/templateLoader.js');
+    clearTemplateCache(slug);
+
     res.json({ data, message: 'Template updated successfully' });
   } catch (err) {
     console.error('Failed to update email template:', err);
@@ -151,25 +155,29 @@ router.post('/email-templates', async (req, res) => {
 router.delete('/email-templates/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
-    
+
     // Check if it's a system template
     const { data: template } = await supabaseAdmin
       .from('email_templates')
       .select('is_system')
       .eq('slug', slug)
       .single();
-    
+
     if (template?.is_system) {
       return res.status(403).json({ error: 'Cannot delete system templates' });
     }
-    
+
     const { error } = await supabaseAdmin
       .from('email_templates')
       .delete()
       .eq('slug', slug);
-    
+
     if (error) throw error;
-    
+
+    // Clear cache for this template
+    const { clearTemplateCache } = await import('../../emails/templateLoader.js');
+    clearTemplateCache(slug);
+
     res.json({ message: 'Template deleted successfully' });
   } catch (err) {
     console.error('Failed to delete email template:', err);
@@ -569,22 +577,26 @@ router.get('/content-stats', async (req, res) => {
 // Clear template and site copy cache
 router.post('/clear-cache', async (req, res) => {
   try {
-    // Import the template service and clear its cache
-    const { TemplateService } = await import('../../services/template-service.js');
-    TemplateService.clearCache();
-    
-    // Also clear the site copy cache if it exists
-    try {
-      const siteCopyModule = await import('../site-copy.js');
-      if (siteCopyModule.clearSiteCopyCache) {
-        siteCopyModule.clearSiteCopyCache();
-      }
-    } catch {
-      // Site copy cache clearing is optional
-    }
-    
-    console.log('[Admin] Template and site copy cache cleared');
-    res.json({ success: true, message: 'Cache cleared successfully' });
+    // Import the template loader and clear its cache
+    const { clearTemplateCache, getTemplateCacheStats } = await import('../../emails/templateLoader.js');
+    const statsBefore = getTemplateCacheStats();
+    clearTemplateCache(); // Clear all templates
+
+    console.log('[Admin] Template cache cleared', {
+      clearedKeys: statsBefore.keys,
+      hits: statsBefore.hits,
+      misses: statsBefore.misses,
+    });
+
+    res.json({
+      success: true,
+      message: 'Template cache cleared successfully',
+      stats: {
+        templatesCleared: statsBefore.keys,
+        cacheHits: statsBefore.hits,
+        cacheMisses: statsBefore.misses,
+      },
+    });
   } catch (err) {
     console.error('Failed to clear cache:', err);
     res.status(500).json({ error: 'Failed to clear cache' });
