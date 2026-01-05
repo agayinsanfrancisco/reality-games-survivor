@@ -143,6 +143,16 @@ export function GlobalChat() {
     });
   };
 
+  // Format name as "First Name + Last Initial" (e.g., "John S." or "Mary")
+  const formatDisplayName = (displayName: string | undefined): string => {
+    if (!displayName) return 'Unknown';
+    const parts = displayName.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0];
+    const firstName = parts[0];
+    const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
+    return `${firstName} ${lastInitial}.`;
+  };
+
   if (!leagueId) {
     return null;
   }
@@ -198,7 +208,7 @@ export function GlobalChat() {
                     <div className={`max-w-[75%] ${isOwn ? 'text-right' : ''}`}>
                       {!isOwn && (
                         <p className="text-xs text-neutral-500 mb-0.5 px-1">
-                          {(msg.user as any)?.display_name || 'Unknown'}
+                          {formatDisplayName((msg.user as any)?.display_name)}
                         </p>
                       )}
                       <div

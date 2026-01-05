@@ -2,13 +2,13 @@
  * Profile Setup Page
  *
  * First-time profile setup for new users after magic link signup.
- * Collects display name, favorite season, and notification preferences.
+ * Single-screen setup collecting display name (required) and optional info.
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Loader2, Bell, MapPin, Star, FileText } from 'lucide-react';
+import { User, Loader2, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/supabase';
@@ -74,19 +74,23 @@ export default function ProfileSetup() {
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { user, profile: authProfile, refreshProfile, loading: authLoading } = useAuth();
-  const [step, setStep] = useState(1);
+
+  // Required fields
   const [firstName, setFirstName] = useState('');
   const [lastInitial, setLastInitial] = useState('');
+
+  // Optional fields
+  const [showOptional, setShowOptional] = useState(false);
   const [hometown, setHometown] = useState('');
   const [favoriteCastaway, setFavoriteCastaway] = useState('');
-  const [bio, setBio] = useState('');
   const [favoriteSeason, setFavoriteSeason] = useState('');
   const [season50WinnerPrediction, setSeason50WinnerPrediction] = useState('');
   const [emailNotifications, setEmailNotifications] = useState(true);
+
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: season50Castaways, isFetching: isCastawaysLoading } = useQuery({
+  const { data: season50Castaways } = useQuery({
     queryKey: ['season-50-castaways'],
     queryFn: async () => {
       const { data: season } = await supabase
@@ -104,7 +108,7 @@ export default function ProfileSetup() {
       if (error) throw error;
       return data || [];
     },
-    enabled: step >= 3, // only fetch when needed
+    enabled: showOptional,
   });
 
   // Fallback profile fetch if auth profile hasn't loaded yet
@@ -141,21 +145,12 @@ export default function ProfileSetup() {
         </div>
         <SkeletonBlock className="h-8 w-40 mx-auto mb-2" />
         <SkeletonBlock className="h-4 w-56 mx-auto mb-6" />
-        <div className="flex justify-center gap-2 mb-6">
-          {[1, 2, 3, 4].map((i) => (
-            <SkeletonBlock key={i} className="h-3 w-3 rounded-full" />
-          ))}
-        </div>
         <div className="space-y-4">
           <div>
             <SkeletonBlock className="h-4 w-24 mb-2" />
             <SkeletonBlock className="h-11 w-full" />
           </div>
           <SkeletonBlock className="h-10 w-full" />
-          <div className="flex gap-3">
-            <SkeletonBlock className="h-10 w-full" />
-            <SkeletonBlock className="h-10 w-full" />
-          </div>
         </div>
       </div>
     </div>
@@ -166,7 +161,6 @@ export default function ProfileSetup() {
       display_name: string;
       hometown?: string;
       favorite_castaway?: string;
-      bio?: string;
       favorite_season?: string;
       season_50_winner_prediction?: string;
       notification_email: boolean;
@@ -179,12 +173,9 @@ export default function ProfileSetup() {
 
       if (data.hometown) updateData.hometown = data.hometown;
       if (data.favorite_castaway) updateData.favorite_castaway = data.favorite_castaway;
-      if (data.bio) updateData.bio = data.bio;
       if (data.favorite_season) updateData.favorite_season = data.favorite_season;
       if (data.season_50_winner_prediction)
         updateData.season_50_winner_prediction = data.season_50_winner_prediction;
-
-      console.log('Updating profile with data:', updateData);
 
       // Fetch existing role if present to avoid losing it
       const { data: existingUser } = await supabase
@@ -227,48 +218,27 @@ export default function ProfileSetup() {
   // Compute display name from first name and last initial
   const displayName = `${firstName.trim()}${lastInitial.trim() ? ` ${lastInitial.trim().charAt(0).toUpperCase()}.` : ''}`;
 
-  const handleNext = () => {
-    if (step === 1) {
-      if (!firstName.trim()) {
-        setError('Please enter your first name');
-        return;
-      }
-      if (firstName.trim().length < 2) {
-        setError('First name must be at least 2 characters');
-        return;
-      }
-      if (!lastInitial.trim()) {
-        setError('Please enter your last initial');
-        return;
-      }
-      if (!/^[A-Za-z]$/.test(lastInitial.trim())) {
-        setError('Last initial must be a single letter');
-        return;
-      }
-      setError('');
-      setStep(2);
-    } else if (step === 2) {
-      setError('');
-      setStep(3);
-    } else if (step === 3) {
-      setError('');
-      setStep(4);
-    }
-  };
-
-  const handleBack = () => {
-    if (step === 2) {
-      setStep(1);
-    } else if (step === 3) {
-      setStep(2);
-    } else if (step === 4) {
-      setStep(3);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validation
+    if (!firstName.trim()) {
+      setError('Please enter your first name');
+      return;
+    }
+    if (firstName.trim().length < 2) {
+      setError('First name must be at least 2 characters');
+      return;
+    }
+    if (!lastInitial.trim()) {
+      setError('Please enter your last initial');
+      return;
+    }
+    if (!/^[A-Za-z]$/.test(lastInitial.trim())) {
+      setError('Last initial must be a single letter');
+      return;
+    }
 
     // Check if localStorage is working
     try {
@@ -284,7 +254,7 @@ export default function ProfileSetup() {
     setIsSubmitting(true);
 
     try {
-      // 1. Double check session before proceeding
+      // Double check session before proceeding
       const {
         data: { session: currentSession },
       } = await supabase.auth.getSession();
@@ -297,7 +267,6 @@ export default function ProfileSetup() {
         display_name: displayName.trim(),
         hometown: hometown.trim() || undefined,
         favorite_castaway: favoriteCastaway.trim() || undefined,
-        bio: bio.trim() || undefined,
         favorite_season: favoriteSeason || undefined,
         season_50_winner_prediction: season50WinnerPrediction || undefined,
         notification_email: emailNotifications,
@@ -305,7 +274,6 @@ export default function ProfileSetup() {
     } catch (err: any) {
       console.error('Submit error:', err);
 
-      // Extract message from various error formats
       const message = err?.message || (typeof err === 'string' ? err : 'Unknown error');
 
       if (
@@ -325,7 +293,6 @@ export default function ProfileSetup() {
   };
 
   // Redirect to login if auth has finished loading but there's no user
-  // BUT don't redirect if there's an access_token in the URL (magic link callback)
   useEffect(() => {
     const hasTokenInUrl = window.location.hash.includes('access_token');
     if (!authLoading && !user && !hasTokenInUrl) {
@@ -334,7 +301,6 @@ export default function ProfileSetup() {
   }, [authLoading, user, navigate]);
 
   // Show skeleton while auth is initializing or no user yet
-  // Also show skeleton if there's an access_token in the URL (processing magic link)
   const hasTokenInUrl = window.location.hash.includes('access_token');
   if (authLoading || !user || hasTokenInUrl) {
     return renderSkeleton();
@@ -356,111 +322,97 @@ export default function ProfileSetup() {
           <img src="/logo.png" alt="RGFL" className="h-16 w-auto" />
         </div>
 
-        {/* Progress indicator */}
-        <div className="flex justify-center gap-2 mb-6">
-          <div
-            className={`w-3 h-3 rounded-full ${step >= 1 ? 'bg-burgundy-500' : 'bg-cream-300'}`}
-          />
-          <div
-            className={`w-3 h-3 rounded-full ${step >= 2 ? 'bg-burgundy-500' : 'bg-cream-300'}`}
-          />
-          <div
-            className={`w-3 h-3 rounded-full ${step >= 3 ? 'bg-burgundy-500' : 'bg-cream-300'}`}
-          />
-          <div
-            className={`w-3 h-3 rounded-full ${step >= 4 ? 'bg-burgundy-500' : 'bg-cream-300'}`}
-          />
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <User className="h-8 w-8 text-burgundy-600" />
+          </div>
+          <h1 className="font-display text-3xl text-neutral-800 mb-2">Welcome!</h1>
+          <p className="text-neutral-500">Let's set up your profile</p>
         </div>
 
-        {step === 1 && (
-          <>
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="h-8 w-8 text-burgundy-600" />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Required: Name */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Your Name <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First name"
+                  className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all"
+                  autoFocus
+                />
               </div>
-              <h1 className="font-display text-3xl text-neutral-800 mb-2">Welcome!</h1>
-              <p className="text-neutral-500">What's your name?</p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <label
-                    htmlFor="firstName"
-                    className="block text-sm font-medium text-neutral-700 mb-2"
-                  >
-                    First Name
-                  </label>
-                  <input
-                    id="firstName"
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Jeff"
-                    className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all"
-                    autoFocus
-                  />
-                </div>
-                <div className="w-24">
-                  <label
-                    htmlFor="lastInitial"
-                    className="block text-sm font-medium text-neutral-700 mb-2"
-                  >
-                    Last Initial
-                  </label>
-                  <input
-                    id="lastInitial"
-                    type="text"
-                    value={lastInitial}
-                    onChange={(e) => setLastInitial(e.target.value.slice(0, 1))}
-                    placeholder="P"
-                    maxLength={1}
-                    className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all text-center uppercase"
-                  />
-                </div>
+              <div className="w-20">
+                <input
+                  type="text"
+                  value={lastInitial}
+                  onChange={(e) => setLastInitial(e.target.value.slice(0, 1))}
+                  placeholder="L"
+                  maxLength={1}
+                  className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all text-center uppercase"
+                />
               </div>
-              {displayName && (
-                <p className="text-sm text-neutral-500">
-                  You'll appear as:{' '}
-                  <span className="font-semibold text-neutral-800">{displayName}</span>
-                </p>
-              )}
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={!firstName.trim() || !lastInitial.trim()}
-                className="w-full bg-burgundy-500 hover:bg-burgundy-600 text-white font-semibold py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
             </div>
-          </>
-        )}
+            {displayName && firstName.trim() && lastInitial.trim() && (
+              <p className="text-sm text-neutral-500 mt-2">
+                You'll appear as:{' '}
+                <span className="font-semibold text-neutral-800">{displayName}</span>
+              </p>
+            )}
+            <p className="text-xs text-neutral-400 mt-1">
+              Privacy: Only your first name and last initial are shown to other players
+            </p>
+          </div>
 
-        {step === 2 && (
-          <>
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MapPin className="h-8 w-8 text-burgundy-600" />
+          {/* Email Notifications Toggle */}
+          <div
+            className="flex items-center justify-between cursor-pointer p-4 bg-cream-50 rounded-xl border border-cream-200 hover:bg-cream-100 transition-colors"
+            onClick={() => setEmailNotifications(!emailNotifications)}
+          >
+            <div className="flex items-center gap-3">
+              <Bell className="h-5 w-5 text-neutral-400" />
+              <div>
+                <p className="text-neutral-800 font-medium">Email Notifications</p>
+                <p className="text-neutral-400 text-sm">Get reminders and results</p>
               </div>
-              <h1 className="font-display text-3xl text-neutral-800 mb-2">Tell Us About You</h1>
-              <p className="text-neutral-500">Where are you from?</p>
             </div>
+            <div
+              className={`w-12 h-7 rounded-full p-1 transition-colors ${emailNotifications ? 'bg-burgundy-500' : 'bg-neutral-300'}`}
+            >
+              <div
+                className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${emailNotifications ? 'translate-x-5' : 'translate-x-0'}`}
+              />
+            </div>
+          </div>
 
-            <div className="space-y-4">
+          {/* Optional Fields Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowOptional(!showOptional)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-cream-50 rounded-xl border border-cream-200 hover:bg-cream-100 transition-colors text-left"
+          >
+            <span className="text-neutral-600 font-medium">Additional info (optional)</span>
+            {showOptional ? (
+              <ChevronUp className="h-5 w-5 text-neutral-400" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-neutral-400" />
+            )}
+          </button>
+
+          {/* Optional Fields */}
+          {showOptional && (
+            <div className="space-y-4 animate-slide-up">
               <div>
                 <label
                   htmlFor="hometown"
                   className="block text-sm font-medium text-neutral-700 mb-2"
                 >
-                  Hometown (optional)
+                  Hometown
                 </label>
                 <input
                   id="hometown"
@@ -469,53 +421,15 @@ export default function ProfileSetup() {
                   onChange={(e) => setHometown(e.target.value)}
                   placeholder="e.g., Los Angeles, CA"
                   className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all"
-                  autoFocus
                 />
               </div>
 
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="flex-1 bg-cream-100 hover:bg-cream-200 text-neutral-700 font-semibold py-3 rounded-xl transition-all"
-                >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="flex-1 bg-burgundy-500 hover:bg-burgundy-600 text-white font-semibold py-3 rounded-xl transition-all"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-
-        {step === 3 && (
-          <>
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="h-8 w-8 text-burgundy-600" />
-              </div>
-              <h1 className="font-display text-3xl text-neutral-800 mb-2">Your Favorites</h1>
-              <p className="text-neutral-500">Who's your favorite castaway?</p>
-            </div>
-
-            <div className="space-y-4">
               <div>
                 <label
                   htmlFor="favoriteCastaway"
                   className="block text-sm font-medium text-neutral-700 mb-2"
                 >
-                  Favorite Castaway (optional)
+                  Favorite Castaway
                 </label>
                 <input
                   id="favoriteCastaway"
@@ -524,7 +438,6 @@ export default function ProfileSetup() {
                   onChange={(e) => setFavoriteCastaway(e.target.value)}
                   placeholder="e.g., Parvati Shallow"
                   className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all"
-                  autoFocus
                 />
               </div>
 
@@ -533,7 +446,7 @@ export default function ProfileSetup() {
                   htmlFor="favoriteSeason"
                   className="block text-sm font-medium text-neutral-700 mb-2"
                 >
-                  Favorite Survivor Season (optional)
+                  Favorite Survivor Season
                 </label>
                 <select
                   id="favoriteSeason"
@@ -554,138 +467,49 @@ export default function ProfileSetup() {
                   htmlFor="season50Winner"
                   className="block text-sm font-medium text-neutral-700 mb-2"
                 >
-                  🏆 Who Will Win Season 50? (optional)
+                  🏆 Who Will Win Season 50?
                 </label>
-                {isCastawaysLoading ? (
-                  <div className="space-y-2">
-                    <SkeletonBlock className="h-11 w-full" />
-                    <SkeletonBlock className="h-3 w-48" />
-                  </div>
-                ) : (
-                  <>
-                    <select
-                      id="season50Winner"
-                      value={season50WinnerPrediction}
-                      onChange={(e) => setSeason50WinnerPrediction(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all bg-white"
-                    >
-                      <option value="">Make your prediction (optional)</option>
-                      {season50Castaways?.map((castaway) => (
-                        <option key={castaway.id} value={castaway.id}>
-                          {castaway.name}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-neutral-500 mt-1">
-                      Just for fun! Lock in your prediction before the season starts.
-                    </p>
-                  </>
-                )}
-              </div>
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="flex-1 bg-cream-100 hover:bg-cream-200 text-neutral-700 font-semibold py-3 rounded-xl transition-all"
+                <select
+                  id="season50Winner"
+                  value={season50WinnerPrediction}
+                  onChange={(e) => setSeason50WinnerPrediction(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all bg-white"
                 >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="flex-1 bg-burgundy-500 hover:bg-burgundy-600 text-white font-semibold py-3 rounded-xl transition-all"
-                >
-                  Next
-                </button>
+                  <option value="">Make your prediction</option>
+                  {season50Castaways?.map((castaway) => (
+                    <option key={castaway.id} value={castaway.id}>
+                      {castaway.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-neutral-500 mt-1">
+                  Just for fun! Lock in your prediction before the season starts.
+                </p>
               </div>
             </div>
-          </>
-        )}
+          )}
 
-        {step === 4 && (
-          <form onSubmit={handleSubmit}>
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileText className="h-8 w-8 text-burgundy-600" />
-              </div>
-              <h1 className="font-display text-3xl text-neutral-800 mb-2">Almost Done!</h1>
-              <p className="text-neutral-500">Tell us about yourself</p>
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
+              {error}
             </div>
+          )}
 
-            <div className="space-y-6">
-              <div>
-                <label htmlFor="bio" className="block text-sm font-medium text-neutral-700 mb-2">
-                  Bio (optional)
-                </label>
-                <textarea
-                  id="bio"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="Tell us a bit about yourself..."
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-xl border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all resize-none"
-                />
-              </div>
-
-              <div
-                className="flex items-center justify-between cursor-pointer p-4 bg-cream-50 rounded-xl border border-cream-200 hover:bg-cream-100 transition-colors"
-                onClick={() => setEmailNotifications(!emailNotifications)}
-              >
-                <div className="flex items-center gap-3">
-                  <Bell className="h-5 w-5 text-neutral-400" />
-                  <div>
-                    <p className="text-neutral-800 font-medium">Email Notifications</p>
-                    <p className="text-neutral-400 text-sm">Get reminders and results</p>
-                  </div>
-                </div>
-                <div
-                  className={`w-12 h-7 rounded-full p-1 transition-colors ${emailNotifications ? 'bg-burgundy-500' : 'bg-neutral-300'}`}
-                >
-                  <div
-                    className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${emailNotifications ? 'translate-x-5' : 'translate-x-0'}`}
-                  />
-                </div>
-              </div>
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="flex-1 bg-cream-100 hover:bg-cream-200 text-neutral-700 font-semibold py-3 rounded-xl transition-all"
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 bg-burgundy-500 hover:bg-burgundy-600 text-white font-semibold py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Setting up...
-                    </>
-                  ) : (
-                    "Let's Play!"
-                  )}
-                </button>
-              </div>
-            </div>
-          </form>
-        )}
+          <button
+            type="submit"
+            disabled={isSubmitting || !firstName.trim() || !lastInitial.trim()}
+            className="w-full bg-burgundy-500 hover:bg-burgundy-600 text-white font-semibold py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Setting up...
+              </>
+            ) : (
+              "Let's Play!"
+            )}
+          </button>
+        </form>
       </div>
     </div>
   );
