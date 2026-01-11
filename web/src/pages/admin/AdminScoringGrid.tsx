@@ -10,7 +10,6 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { Navigation } from '@/components/Navigation';
 import { AdminNavBar } from '@/components/AdminNavBar';
 
 // Shared API helper that ensures token is fresh and handles auth errors
@@ -107,7 +106,7 @@ export function AdminScoringGrid() {
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>('Most Scored Rules');
   const [skipNextScoreReset, setSkipNextScoreReset] = useState(false);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -242,8 +241,7 @@ export function AdminScoringGrid() {
   // Access denied for non-admins
   if (profile && profile.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
-        <Navigation />
+      <div className="min-h-screen bg-cream-50">
         <AdminNavBar />
         <main className="max-w-4xl mx-auto px-4 py-16 text-center">
           <div className="bg-white rounded-2xl shadow-elevated p-12">
@@ -259,8 +257,7 @@ export function AdminScoringGrid() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200">
-      <Navigation />
+    <div className="min-h-screen bg-cream-50">
       <AdminNavBar />
 
       <main className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -408,17 +405,17 @@ export function AdminScoringGrid() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-elevated overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-[calc(100vh-280px)]">
               <table className="w-full border-collapse">
-                <thead>
+                <thead className="sticky top-0 z-20">
                   <tr className="bg-cream-50">
-                    <th className="sticky left-0 bg-cream-50 z-10 p-3 text-left font-semibold text-neutral-700 border-b border-r border-cream-200 min-w-[200px]">
+                    <th className="sticky left-0 top-0 bg-cream-50 z-30 p-3 text-left font-semibold text-neutral-700 border-b border-r border-cream-200 min-w-[200px]">
                       Rule ({filteredRules.length})
                     </th>
                     {activeCastaways.map((castaway) => (
                       <th
                         key={castaway.id}
-                        className="p-2 text-center border-b border-cream-200 min-w-[80px]"
+                        className="p-2 text-center border-b border-cream-200 min-w-[80px] bg-cream-50"
                       >
                         <div className="flex flex-col items-center gap-1">
                           {castaway.photo_url ? (

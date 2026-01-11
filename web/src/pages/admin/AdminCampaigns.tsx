@@ -29,7 +29,6 @@ import {
   Save,
   X,
 } from 'lucide-react';
-import { Navigation } from '@/components/Navigation';
 import { AdminNavBar } from '@/components/AdminNavBar';
 import { supabase } from '@/lib/supabase';
 import ReactQuill from 'react-quill';
@@ -223,7 +222,6 @@ export function AdminCampaigns() {
 
   return (
     <div className="min-h-screen bg-cream-50">
-      <Navigation />
       <AdminNavBar />
 
       <div className="max-w-7xl mx-auto px-4 py-8">

@@ -13,6 +13,8 @@ import {
   Activity,
   Sparkles,
   ExternalLink,
+  HelpCircle,
+  MessageSquare,
 } from 'lucide-react';
 
 interface QuickLink {
@@ -83,6 +85,18 @@ const quickLinks: QuickLink[] = [
     label: 'Fun Stats',
     icon: <Sparkles className="h-5 w-5" />,
     description: 'Player insights',
+  },
+  {
+    path: '/admin/faq',
+    label: 'FAQ',
+    icon: <HelpCircle className="h-5 w-5" />,
+    description: 'Manage FAQs',
+  },
+  {
+    path: '/admin/campaigns',
+    label: 'Campaigns',
+    icon: <MessageSquare className="h-5 w-5" />,
+    description: 'SMS & Email',
   },
 ];
 
