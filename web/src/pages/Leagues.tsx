@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useSiteCopy } from '@/lib/hooks/useSiteCopy';
+import { EditableText } from '@/components/EditableText';
 import {
   Users,
   Search,
@@ -213,11 +214,14 @@ export default function Leagues() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-display font-bold text-neutral-800 flex items-center gap-3">
-            <span className="text-3xl">🏆</span> {getCopy('leagues.header.title', 'Leagues')}
+            <span className="text-3xl">🏆</span>
+            <EditableText copyKey="leagues.header.title" as="span" className="">
+              {getCopy('leagues.header.title', 'Leagues')}
+            </EditableText>
           </h1>
-          <p className="text-neutral-500 mt-1">
+          <EditableText copyKey="leagues.header.subtitle" as="p" className="text-neutral-500 mt-1">
             {getCopy('leagues.header.subtitle', 'Manage your leagues and join new ones')}
-          </p>
+          </EditableText>
         </div>
         <div className="flex gap-3">
           <Link
@@ -264,10 +268,12 @@ export default function Leagues() {
                 {myLeagues.length === 0 ? (
                   <div className="px-6 py-10 text-center">
                     <Users className="h-12 w-12 text-neutral-300 mx-auto mb-3" />
-                    <p className="text-neutral-500 mb-4">You haven't joined any leagues yet</p>
-                    <p className="text-sm text-neutral-400">
-                      Join a public league below or use an invite code
-                    </p>
+                    <EditableText copyKey="leagues.empty.title" as="p" className="text-neutral-500 mb-4">
+                      {getCopy('leagues.empty.title', "You haven't joined any leagues yet")}
+                    </EditableText>
+                    <EditableText copyKey="leagues.empty.subtitle" as="p" className="text-sm text-neutral-400">
+                      {getCopy('leagues.empty.subtitle', 'Join a public league below or use an invite code')}
+                    </EditableText>
                   </div>
                 ) : (
                   <>

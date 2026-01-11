@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useSiteCopy } from '@/lib/hooks/useSiteCopy';
+import { EditableText } from '@/components/EditableText';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 
@@ -60,17 +61,16 @@ export default function WeeklyTimeline() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-center gap-3 mb-3">
             <Calendar className="h-9 w-9 text-amber-600" />
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-neutral-800">
+            <EditableText copyKey="timeline.header.title" as="h1" className="text-3xl md:text-4xl font-display font-bold text-neutral-800">
               {getCopy('timeline.header.title', 'Weekly Timeline')}
-            </h1>
+            </EditableText>
           </div>
-          <p className="text-neutral-600 max-w-2xl mx-auto">
+          <EditableText copyKey="timeline.header.subtitle" as="p" className="text-neutral-600 max-w-2xl mx-auto">
             {getCopy(
               'timeline.header.subtitle',
-              'Every week follows the same rhythm. Know the schedule, never miss a deadline, and'
+              'Every week follows the same rhythm. Know the schedule, never miss a deadline, and maximize your scoring potential.'
             )}
-            maximize your scoring potential.
-          </p>
+          </EditableText>
         </div>
       </div>
 
@@ -156,10 +156,10 @@ export default function WeeklyTimeline() {
       {/* Important Notes */}
       <div className="max-w-3xl mx-auto px-6 pb-12">
         <div className="bg-white rounded-2xl shadow-card border border-cream-200 p-6">
-          <h3 className="font-display font-bold text-lg text-neutral-800 mb-4 flex items-center gap-2">
+          <EditableText copyKey="timeline.notes.title" as="h3" className="font-display font-bold text-lg text-neutral-800 mb-4 flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-amber-500" />
-            Important Notes
-          </h3>
+            {getCopy('timeline.notes.title', 'Important Notes')}
+          </EditableText>
           <ul className="space-y-3 text-neutral-600">
             <li className="flex items-start gap-3">
               <div className="w-1.5 h-1.5 rounded-full bg-burgundy-500 mt-2 flex-shrink-0" />
@@ -196,10 +196,12 @@ export default function WeeklyTimeline() {
       {/* CTA */}
       <div className="max-w-3xl mx-auto px-6 pb-16 text-center">
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-8 text-white">
-          <h2 className="text-2xl font-display font-bold mb-4">Never Miss a Deadline</h2>
-          <p className="text-amber-100 mb-6 max-w-lg mx-auto">
-            Enable notifications to get reminders before picks lock and when results are posted.
-          </p>
+          <EditableText copyKey="timeline.cta.title" as="h2" className="text-2xl font-display font-bold mb-4">
+            {getCopy('timeline.cta.title', 'Never Miss a Deadline')}
+          </EditableText>
+          <EditableText copyKey="timeline.cta.description" as="p" className="text-amber-100 mb-6 max-w-lg mx-auto">
+            {getCopy('timeline.cta.description', 'Enable notifications to get reminders before picks lock and when results are posted.')}
+          </EditableText>
           {user ? (
             <Link
               to="/settings"

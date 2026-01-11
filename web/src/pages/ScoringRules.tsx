@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { BookOpen, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useSiteCopy } from '@/lib/hooks/useSiteCopy';
+import { EditableText } from '@/components/EditableText';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 
@@ -120,17 +121,16 @@ export default function ScoringRules() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-center gap-3 mb-3">
             <BookOpen className="h-9 w-9 text-burgundy-500" />
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-neutral-800">
+            <EditableText copyKey="scoring.header.title" as="h1" className="text-3xl md:text-4xl font-display font-bold text-neutral-800">
               {getCopy('scoring.header.title', 'Scoring Rules')}
-            </h1>
+            </EditableText>
           </div>
-          <p className="text-neutral-600 max-w-2xl mx-auto">
+          <EditableText copyKey="scoring.header.subtitle" as="p" className="text-neutral-600 max-w-2xl mx-auto">
             {getCopy(
               'scoring.header.subtitle',
-              'See how castaways earn and lose points each episode'
+              'See how castaways earn and lose points each episode. New rules are added each season.'
             )}
-            are added each season.
-          </p>
+          </EditableText>
         </div>
       </div>
 
@@ -172,12 +172,12 @@ export default function ScoringRules() {
       {/* CTA */}
       <div className="max-w-4xl mx-auto px-6 pb-16 text-center">
         <div className="bg-burgundy-500 rounded-2xl p-8 text-white">
-          <h2 className="text-2xl font-display font-bold mb-4">
-            Ready to Put Your Survivor Knowledge to the Test?
-          </h2>
-          <p className="text-burgundy-100 mb-6 max-w-lg mx-auto">
-            Join Season 50 and prove you know more about Survivor strategy than your friends.
-          </p>
+          <EditableText copyKey="scoring.cta.title" as="h2" className="text-2xl font-display font-bold mb-4">
+            {getCopy('scoring.cta.title', 'Ready to Put Your Survivor Knowledge to the Test?')}
+          </EditableText>
+          <EditableText copyKey="scoring.cta.description" as="p" className="text-burgundy-100 mb-6 max-w-lg mx-auto">
+            {getCopy('scoring.cta.description', 'Join Season 50 and prove you know more about Survivor strategy than your friends.')}
+          </EditableText>
           {user ? (
             <Link
               to="/dashboard"

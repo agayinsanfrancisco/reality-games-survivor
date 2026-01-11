@@ -140,23 +140,23 @@ export default function GlobalLeaderboard() {
       </div>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
-          <Users className="h-6 w-6 text-burgundy-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-neutral-800">{summary?.totalPlayers || 0}</p>
-          <p className="text-neutral-500 text-sm">Total Players</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-card p-3 sm:p-4 border border-cream-200 text-center">
+          <Users className="h-5 w-5 sm:h-6 sm:w-6 text-burgundy-500 mx-auto mb-1 sm:mb-2" />
+          <p className="text-lg sm:text-2xl font-bold text-neutral-800">{summary?.totalPlayers || 0}</p>
+          <p className="text-neutral-500 text-xs sm:text-sm">Players</p>
         </div>
-        <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
-          <TrendingUp className="h-6 w-6 text-green-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-neutral-800">{summary?.topScore || 0}</p>
-          <p className="text-neutral-500 text-sm">Top Score</p>
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-card p-3 sm:p-4 border border-cream-200 text-center">
+          <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-green-500 mx-auto mb-1 sm:mb-2" />
+          <p className="text-lg sm:text-2xl font-bold text-neutral-800">{summary?.topScore || 0}</p>
+          <p className="text-neutral-500 text-xs sm:text-sm">Top Score</p>
         </div>
-        <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
-          <div className="flex justify-center mb-2">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-card p-3 sm:p-4 border border-cream-200 text-center">
+          <div className="flex justify-center mb-1 sm:mb-2">
             <TorchStaff lit={true} size="lg" />
           </div>
-          <p className="text-2xl font-bold text-neutral-800">{summary?.activeTorches || 0}</p>
-          <p className="text-neutral-500 text-sm">Torches Lit</p>
+          <p className="text-lg sm:text-2xl font-bold text-neutral-800">{summary?.activeTorches || 0}</p>
+          <p className="text-neutral-500 text-xs sm:text-sm">Torches Lit</p>
         </div>
       </div>
 
@@ -164,7 +164,8 @@ export default function GlobalLeaderboard() {
       {offset === 0 && leaderboard && leaderboard.length >= 3 && (
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-neutral-700 mb-4">Top Players</h2>
-          <div className="grid grid-cols-3 gap-4">
+          {/* Mobile: Stack vertically, Desktop: Podium layout */}
+          <div className="hidden sm:grid grid-cols-3 gap-4">
             {/* Second Place */}
             <div className="bg-gradient-to-b from-gray-100 to-gray-50 rounded-2xl p-6 border-2 border-gray-200 text-center mt-8">
               <div className="flex justify-center mb-3">
@@ -225,6 +226,32 @@ export default function GlobalLeaderboard() {
                 {leaderboard[2].confidenceIndicator}
               </p>
             </div>
+          </div>
+
+          {/* Mobile: Compact horizontal list */}
+          <div className="sm:hidden space-y-2">
+            {[leaderboard[0], leaderboard[1], leaderboard[2]].map((player, idx) => {
+              const rankNum = idx === 0 ? 1 : idx === 1 ? 2 : 3;
+              const bgColor = rankNum === 1 ? 'bg-gradient-to-r from-yellow-100 to-amber-50 border-yellow-300' :
+                             rankNum === 2 ? 'bg-gradient-to-r from-gray-100 to-gray-50 border-gray-200' :
+                             'bg-gradient-to-r from-orange-100 to-amber-50 border-orange-200';
+              const textColor = rankNum === 1 ? 'text-yellow-700' : rankNum === 2 ? 'text-gray-600' : 'text-orange-600';
+              return (
+                <div key={player.userId} className={`${bgColor} rounded-xl p-3 border-2 flex items-center gap-3`}>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${rankNum === 1 ? 'bg-yellow-300' : rankNum === 2 ? 'bg-gray-200' : 'bg-orange-200'}`}>
+                      {rankNum === 1 ? <Trophy className="h-4 w-4 text-yellow-700" /> : <span className={`font-bold text-sm ${textColor}`}>{rankNum}</span>}
+                    </div>
+                    <TorchIcon lit={!player.hasEliminatedCastaway} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-neutral-800 truncate text-sm">{player.displayName}</p>
+                    <p className="text-xs text-neutral-400">{player.leagueCount} {player.leagueCount === 1 ? 'league' : 'leagues'}</p>
+                  </div>
+                  <p className={`text-xl font-display ${textColor}`}>{player.weightedScore}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

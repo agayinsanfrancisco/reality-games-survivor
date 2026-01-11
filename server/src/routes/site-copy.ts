@@ -6,8 +6,13 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { supabaseAdmin } from '../config/supabase.js';
 
-// Simple admin check middleware
-async function requireAdmin(req: Request, res: Response, next: NextFunction) {
+// Extended request type with user info
+interface AuthenticatedRequest extends Request {
+  adminUser?: { id: string; email: string };
+}
+
+// Simple admin check middleware - also attaches user info for logging
+async function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -24,13 +29,16 @@ async function requireAdmin(req: Request, res: Response, next: NextFunction) {
     // Check if user is admin
     const { data: profile } = await supabaseAdmin
       .from('users')
-      .select('role')
+      .select('role, display_name')
       .eq('id', user.id)
       .single();
 
     if (profile?.role !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
     }
+
+    // Attach user info for logging
+    req.adminUser = { id: user.id, email: user.email || profile?.display_name || 'Unknown' };
 
     next();
   } catch {

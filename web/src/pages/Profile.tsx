@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSiteCopy } from '@/lib/hooks/useSiteCopy';
+import { EditableText } from '@/components/EditableText';
 import { apiWithAuth } from '../lib/api';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -254,12 +255,12 @@ export default function Profile() {
     <div className="max-w-2xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-neutral-800">
+        <EditableText copyKey="profile.header.title" as="h1" className="text-2xl font-display font-bold text-neutral-800">
           {getCopy('profile.header.title', 'My Profile')}
-        </h1>
-        <p className="text-neutral-500">
+        </EditableText>
+        <EditableText copyKey="profile.header.subtitle" as="p" className="text-neutral-500">
           {getCopy('profile.header.subtitle', 'Manage your account and preferences')}
-        </p>
+        </EditableText>
       </div>
 
       {/* Phone Verification Prompt */}

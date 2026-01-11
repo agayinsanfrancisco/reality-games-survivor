@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
+import { EditableText } from '@/components/EditableText';
 import { Flame, Mail, Loader2, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
@@ -72,10 +73,10 @@ export function Home() {
       {/* MAIN CONTENT */}
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-burgundy-100 text-burgundy-700 px-3 py-1.5 rounded-full text-sm font-semibold mb-6">
+          <EditableText copyKey="home.hero.badge" as="div" className="inline-flex items-center gap-2 bg-burgundy-100 text-burgundy-700 px-3 py-1.5 rounded-full text-sm font-semibold mb-6">
             <Flame className="h-4 w-4" />
             {copy['home.hero.badge']}
-          </div>
+          </EditableText>
 
           <h1
             className="text-4xl sm:text-5xl lg:text-6xl text-neutral-800 leading-[1.1] mb-6"
@@ -88,9 +89,9 @@ export function Home() {
             <span className="italic text-burgundy-600">Actually</span> Watch
           </h1>
 
-          <p className="text-lg sm:text-xl text-neutral-600 mb-10 max-w-xl mx-auto">
+          <EditableText copyKey="home.hero.subtitle" as="p" className="text-lg sm:text-xl text-neutral-600 mb-10 max-w-xl mx-auto">
             {copy['home.hero.subtitle']}
-          </p>
+          </EditableText>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-10">
@@ -113,9 +114,13 @@ export function Home() {
           <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200 max-w-md mx-auto">
             <div className="flex items-center justify-center gap-2 mb-3">
               <Mail className="h-5 w-5 text-burgundy-600" />
-              <h3 className="font-semibold text-neutral-800">{copy['home.trivia.heading']}</h3>
+              <EditableText copyKey="home.trivia.heading" as="h3" className="font-semibold text-neutral-800">
+                {copy['home.trivia.heading']}
+              </EditableText>
             </div>
-            <p className="text-sm text-neutral-600 mb-4">{copy['home.trivia.description']}</p>
+            <EditableText copyKey="home.trivia.description" as="p" className="text-sm text-neutral-600 mb-4">
+              {copy['home.trivia.description']}
+            </EditableText>
 
             {triviaSuccess ? (
               <div className="flex items-center justify-center gap-2 text-green-600 py-2">

@@ -17,6 +17,7 @@ import {
   Handshake,
   FileText,
 } from 'lucide-react';
+import { EditableText } from '@/components/EditableText';
 
 type ContactReason = 'general' | 'partner' | 'issue' | 'scorekeeper' | 'other';
 
@@ -126,11 +127,12 @@ export default function Contact() {
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
-          <h1 className="text-2xl font-display font-bold text-neutral-800 mb-2">Message Sent!</h1>
-          <p className="text-neutral-500 mb-6">
-            Thank you for reaching out. Your email client should have opened with your message. We
-            typically respond within 24-48 hours.
-          </p>
+          <EditableText copyKey="contact.success.title" as="h1" className="text-2xl font-display font-bold text-neutral-800 mb-2">
+            {getCopy('contact.success.title', 'Message Sent!')}
+          </EditableText>
+          <EditableText copyKey="contact.success.description" as="p" className="text-neutral-500 mb-6">
+            {getCopy('contact.success.description', 'Thank you for reaching out. Your email client should have opened with your message. We typically respond within 24-48 hours.')}
+          </EditableText>
           <button
             onClick={() => {
               setSuccess(false);
@@ -155,12 +157,12 @@ export default function Contact() {
           <div className="w-16 h-16 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Mail className="h-8 w-8 text-burgundy-600" />
           </div>
-          <h1 className="text-3xl font-display font-bold text-neutral-800 mb-2">
+          <EditableText copyKey="contact.header.title" as="h1" className="text-3xl font-display font-bold text-neutral-800 mb-2">
             {getCopy('contact.header.title', 'Contact Us')}
-          </h1>
-          <p className="text-neutral-500">
+          </EditableText>
+          <EditableText copyKey="contact.header.subtitle" as="p" className="text-neutral-500">
             {getCopy('contact.header.subtitle', "Questions? Feedback? We'd love to hear from you")}
-          </p>
+          </EditableText>
         </div>
 
         {/* Contact Form */}
@@ -224,9 +226,9 @@ export default function Contact() {
 
             {/* Reason Selection */}
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-3">
-                What can we help you with?
-              </label>
+              <EditableText copyKey="contact.form.reason-label" as="label" className="block text-sm font-medium text-neutral-700 mb-3">
+                {getCopy('contact.form.reason-label', 'What can we help you with?')}
+              </EditableText>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {reasonOptions.map((option) => (
                   <button

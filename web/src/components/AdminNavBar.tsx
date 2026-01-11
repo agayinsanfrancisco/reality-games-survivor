@@ -80,7 +80,8 @@ export function AdminNavBar() {
   };
 
   const isManageActive = () =>
-    isActive('/admin/castaways') || isActive('/admin/users') || isActive('/admin/seasons');
+    isActive('/admin/castaways') || isActive('/admin/users') || isActive('/admin/seasons') ||
+    isActive('/admin/faq') || isActive('/admin/content');
 
   const isCommunicateActive = () =>
     isActive('/admin/announcements') ||
@@ -95,13 +96,15 @@ export function AdminNavBar() {
     { path: '/admin/command-center', label: 'Command Center' },
     { path: '/admin/leagues', label: 'Leagues' },
     { path: '/admin/scoring', label: 'Scoring' },
-    { path: '/admin/content', label: 'CMS' },
+    { path: '/admin/scoring-rules', label: 'Rules' },
   ];
 
   const manageItems = [
     { path: '/admin/castaways', label: 'Castaways' },
     { path: '/admin/users', label: 'Users' },
     { path: '/admin/seasons', label: 'Seasons' },
+    { path: '/admin/faq', label: 'FAQ Manager' },
+    { path: '/admin/content', label: 'CMS (Legacy)' },
   ];
 
   const communicateItems = [

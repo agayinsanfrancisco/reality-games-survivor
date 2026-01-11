@@ -1,6 +1,6 @@
 /**
  * Floating toggle button for admin edit mode
- * Shows in bottom-left corner when admin is logged in
+ * Shows in bottom-right corner when admin is logged in
  */
 
 import { Pencil, PencilOff } from 'lucide-react';
@@ -14,20 +14,36 @@ export function AdminEditToggle() {
   if (!isAdmin) return null;
 
   return (
-    <button
-      onClick={toggleEditMode}
-      className={`fixed bottom-20 left-4 z-50 p-3 rounded-full shadow-lg transition-all ${
-        isEditMode
-          ? 'bg-burgundy-500 text-white ring-2 ring-burgundy-300'
-          : 'bg-white text-neutral-600 hover:bg-cream-50 border border-cream-200'
-      }`}
-      title={isEditMode ? 'Exit edit mode' : 'Enter edit mode'}
-    >
-      {isEditMode ? (
-        <PencilOff className="h-5 w-5" />
-      ) : (
-        <Pencil className="h-5 w-5" />
+    <>
+      {/* Edit mode banner at top of screen */}
+      {isEditMode && (
+        <div className="fixed top-0 left-0 right-0 z-[100] bg-burgundy-600 text-white text-center py-2 text-sm font-medium">
+          EDIT MODE ON - Click any underlined text to edit
+        </div>
       )}
-    </button>
+
+      {/* Toggle button */}
+      <button
+        onClick={toggleEditMode}
+        className={`fixed bottom-24 right-4 z-[100] flex items-center gap-2 px-4 py-3 rounded-full shadow-xl transition-all ${
+          isEditMode
+            ? 'bg-burgundy-500 text-white ring-4 ring-burgundy-300 animate-pulse'
+            : 'bg-white text-neutral-700 hover:bg-cream-50 border-2 border-neutral-300'
+        }`}
+        title={isEditMode ? 'Exit edit mode' : 'Enter edit mode'}
+      >
+        {isEditMode ? (
+          <>
+            <PencilOff className="h-5 w-5" />
+            <span className="font-medium">Exit Edit</span>
+          </>
+        ) : (
+          <>
+            <Pencil className="h-5 w-5" />
+            <span className="font-medium">Edit Page</span>
+          </>
+        )}
+      </button>
+    </>
   );
 }

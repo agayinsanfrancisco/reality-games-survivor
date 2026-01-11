@@ -13,6 +13,9 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
+  Clock,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Navigation } from '@/components/Navigation';
@@ -28,6 +31,7 @@ interface ScoringRule {
   is_negative: boolean | null;
   is_active: boolean | null;
   sort_order: number | null;
+  effective_from_episode_id: string | null;
 }
 
 const DEFAULT_CATEGORIES = [
@@ -122,6 +126,20 @@ export function AdminScoringRules() {
     },
   });
 
+  // Quick toggle active mutation
+  const toggleActive = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase
+        .from('scoring_rules')
+        .update({ is_active })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-scoring-rules'] });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       code: '',
@@ -204,9 +222,9 @@ export function AdminScoringRules() {
 
   const stats = {
     total: rules?.length || 0,
-    active: rules?.filter((r: ScoringRule) => !!r.is_active).length || 0,
-    positive: rules?.filter((r: ScoringRule) => !r.is_negative).length || 0,
-    negative: rules?.filter((r: ScoringRule) => !!r.is_negative).length || 0,
+    active: rules?.filter((r: ScoringRule) => !!r.is_active && !r.effective_from_episode_id).length || 0,
+    inactive: rules?.filter((r: ScoringRule) => !r.is_active).length || 0,
+    pending: rules?.filter((r: ScoringRule) => !!r.effective_from_episode_id).length || 0,
   };
 
   if (isLoading) {
@@ -257,13 +275,13 @@ export function AdminScoringRules() {
             <p className="text-xl font-bold text-green-600">{stats.active}</p>
             <p className="text-neutral-500 text-xs">Active</p>
           </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-center">
-            <p className="text-xl font-bold text-blue-600">{stats.positive}</p>
-            <p className="text-neutral-500 text-xs">Positive</p>
+          <div className="bg-neutral-100 border border-neutral-200 rounded-2xl p-3 text-center">
+            <p className="text-xl font-bold text-neutral-500">{stats.inactive}</p>
+            <p className="text-neutral-500 text-xs">Inactive</p>
           </div>
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-3 text-center">
-            <p className="text-xl font-bold text-red-600">{stats.negative}</p>
-            <p className="text-neutral-500 text-xs">Negative</p>
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-center">
+            <p className="text-xl font-bold text-amber-600">{stats.pending}</p>
+            <p className="text-neutral-500 text-xs">Pending</p>
           </div>
         </div>
 
@@ -433,45 +451,77 @@ export function AdminScoringRules() {
 
                 {expandedCategories.has(category) && (
                   <div className="border-t border-cream-200 divide-y divide-cream-100">
-                    {categoryRules.map((rule: ScoringRule) => (
-                      <div
-                        key={rule.id}
-                        className={`px-4 py-3 flex items-center gap-3 ${!rule.is_active ? 'opacity-50' : ''}`}
-                      >
-                        <span
-                          className={`font-mono text-xs px-2 py-0.5 rounded ${
-                            rule.is_negative
-                              ? 'bg-red-100 text-red-600'
-                              : 'bg-green-100 text-green-600'
-                          }`}
+                    {categoryRules.map((rule: ScoringRule) => {
+                      const isPending = !!rule.effective_from_episode_id;
+                      return (
+                        <div
+                          key={rule.id}
+                          className={`px-4 py-3 flex items-center gap-3 ${!rule.is_active ? 'bg-neutral-50' : ''}`}
                         >
-                          {rule.is_negative ? '-' : '+'}
-                          {Math.abs(rule.points)}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-neutral-800 font-medium truncate">{rule.name}</p>
-                          <p className="text-neutral-400 text-xs font-mono">{rule.code}</p>
-                        </div>
-                        <div className="flex items-center gap-1">
+                          {/* Quick Active Toggle */}
                           <button
-                            onClick={() => startEditing(rule)}
-                            className="p-2 hover:bg-cream-100 rounded-xl transition-colors"
+                            onClick={() => toggleActive.mutate({ id: rule.id, is_active: !rule.is_active })}
+                            disabled={toggleActive.isPending}
+                            className="flex-shrink-0"
+                            title={rule.is_active ? 'Click to deactivate' : 'Click to activate'}
                           >
-                            <Edit2 className="h-4 w-4 text-neutral-500" />
+                            {rule.is_active ? (
+                              <ToggleRight className="h-6 w-6 text-green-500" />
+                            ) : (
+                              <ToggleLeft className="h-6 w-6 text-neutral-300" />
+                            )}
                           </button>
-                          <button
-                            onClick={() => {
-                              if (confirm('Delete this rule?')) {
-                                deleteRule.mutate(rule.id);
-                              }
-                            }}
-                            className="p-2 hover:bg-red-50 rounded-xl transition-colors"
+
+                          {/* Points Badge */}
+                          <span
+                            className={`font-mono text-xs px-2 py-0.5 rounded ${
+                              rule.is_negative
+                                ? 'bg-red-100 text-red-600'
+                                : 'bg-green-100 text-green-600'
+                            }`}
                           >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </button>
+                            {rule.is_negative ? '-' : '+'}
+                            {Math.abs(rule.points)}
+                          </span>
+
+                          {/* Rule Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className={`font-medium truncate ${rule.is_active ? 'text-neutral-800' : 'text-neutral-400'}`}>
+                                {rule.name}
+                              </p>
+                              {isPending && (
+                                <span className="flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                                  <Clock className="h-3 w-3" />
+                                  Pending
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-neutral-400 text-xs font-mono">{rule.code}</p>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => startEditing(rule)}
+                              className="p-2 hover:bg-cream-100 rounded-xl transition-colors"
+                            >
+                              <Edit2 className="h-4 w-4 text-neutral-500" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm('Delete this rule?')) {
+                                  deleteRule.mutate(rule.id);
+                                }
+                              }}
+                              className="p-2 hover:bg-red-50 rounded-xl transition-colors"
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

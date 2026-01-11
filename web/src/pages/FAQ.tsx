@@ -10,6 +10,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
+import { EditableText } from '@/components/EditableText';
+import { useSiteCopy } from '@/lib/hooks/useSiteCopy';
 import { ChevronDown, HelpCircle, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -116,6 +118,7 @@ const DEFAULT_FAQS: FAQItem[] = [
 
 export default function FAQ() {
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
+  const { getCopy } = useSiteCopy();
 
   // Fetch FAQ content from CMS (site_copy table)
   const { data: faqData, isLoading } = useQuery({
@@ -205,12 +208,12 @@ export default function FAQ() {
           <div className="w-16 h-16 bg-burgundy-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <HelpCircle className="h-8 w-8 text-burgundy-600" />
           </div>
-          <h1 className="text-3xl font-display font-bold text-neutral-800 mb-2">
-            Frequently Asked Questions
-          </h1>
-          <p className="text-neutral-500">
-            Everything you need to know about Reality Games Fantasy League
-          </p>
+          <EditableText copyKey="faq.header.title" as="h1" className="text-3xl font-display font-bold text-neutral-800 mb-2">
+            {getCopy('faq.header.title', 'Frequently Asked Questions')}
+          </EditableText>
+          <EditableText copyKey="faq.header.subtitle" as="p" className="text-neutral-500">
+            {getCopy('faq.header.subtitle', 'Everything you need to know about Reality Games Fantasy League')}
+          </EditableText>
         </div>
 
         {/* Expand/Collapse All */}

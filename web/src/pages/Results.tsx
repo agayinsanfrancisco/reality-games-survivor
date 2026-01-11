@@ -19,6 +19,7 @@ import {
   Flame,
   XCircle,
 } from 'lucide-react';
+import { EditableText } from '@/components/EditableText';
 
 // Category colors and icons
 const categoryConfig: Record<string, { color: string; bgColor: string; icon: React.ReactNode }> = {
@@ -194,12 +195,12 @@ export default function Results() {
             <ArrowLeft className="h-5 w-5 text-neutral-600" />
           </Link>
           <div>
-            <h1 className="text-2xl font-display font-bold text-neutral-800">
+            <EditableText copyKey="results.header.title" as="h1" className="text-2xl font-display font-bold text-neutral-800">
               {getCopy('results.header.title', `Week ${weekNumber?.replace('week-', '')} Results`)}
-            </h1>
-            <p className="text-neutral-500">
+            </EditableText>
+            <EditableText copyKey="results.header.subtitle" as="p" className="text-neutral-500">
               {getCopy('results.header.subtitle', episode?.title || 'Episode Results')}
-            </p>
+            </EditableText>
           </div>
         </div>
 

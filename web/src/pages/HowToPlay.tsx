@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useSiteCopy } from '@/lib/hooks/useSiteCopy';
+import { EditableText } from '@/components/EditableText';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 
@@ -135,16 +136,16 @@ export default function HowToPlay() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-center gap-3 mb-3">
             <BookOpen className="h-9 w-9 text-burgundy-500" />
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-neutral-800">
+            <EditableText copyKey="how-to-play.header.title" as="h1" className="text-3xl md:text-4xl font-display font-bold text-neutral-800">
               {getCopy('how-to-play.header.title', 'How to Play')}
-            </h1>
+            </EditableText>
           </div>
-          <p className="text-neutral-600 text-lg max-w-2xl mx-auto">
+          <EditableText copyKey="how-to-play.header.subtitle" as="p" className="text-neutral-600 text-lg max-w-2xl mx-auto">
             {getCopy(
               'how-to-play.header.subtitle',
               'Everything you need to know to dominate your league'
             )}
-          </p>
+          </EditableText>
         </div>
       </div>
 
@@ -152,9 +153,9 @@ export default function HowToPlay() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         {/* Steps Section */}
         <section className="mb-16">
-          <h2 className="text-2xl font-display font-bold text-neutral-800 mb-8 text-center">
+          <EditableText copyKey="how-to-play.steps.section-title" as="h2" className="text-2xl font-display font-bold text-neutral-800 mb-8 text-center">
             {getCopy('how-to-play.steps.section-title', 'The Game in 6 Steps')}
-          </h2>
+          </EditableText>
           <div className="space-y-6">
             {steps.map((step, index) => (
               <div
@@ -195,9 +196,9 @@ export default function HowToPlay() {
 
         {/* Strategy Tips */}
         <section className="mb-16">
-          <h2 className="text-2xl font-display font-bold text-neutral-800 mb-8 text-center">
+          <EditableText copyKey="how-to-play.strategies.section-title" as="h2" className="text-2xl font-display font-bold text-neutral-800 mb-8 text-center">
             {getCopy('how-to-play.strategies.section-title', 'Strategy Tips')}
-          </h2>
+          </EditableText>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {strategies.map((strategy, index) => (
               <div
@@ -222,24 +223,24 @@ export default function HowToPlay() {
 
         {/* SMS Feature Section */}
         <section className="mb-16">
-          <h2 className="text-2xl font-display font-bold text-neutral-800 mb-8 text-center">
+          <EditableText copyKey="how-to-play.sms.section-title" as="h2" className="text-2xl font-display font-bold text-neutral-800 mb-8 text-center">
             {getCopy('how-to-play.sms.section-title', 'Make Picks via Text')}
-          </h2>
+          </EditableText>
           <div className="bg-gradient-to-r from-burgundy-50 to-amber-50 rounded-2xl shadow-card border border-burgundy-200 p-6 md:p-8">
             <div className="flex flex-col md:flex-row items-start gap-6">
               <div className="w-16 h-16 bg-burgundy-500 rounded-2xl flex items-center justify-center flex-shrink-0">
                 <MessageSquare className="h-8 w-8 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-display font-bold text-neutral-800 mb-2">
+                <EditableText copyKey="how-to-play.sms.title" as="h3" className="text-xl font-display font-bold text-neutral-800 mb-2">
                   {getCopy('how-to-play.sms.title', 'SMS Commands')}
-                </h3>
-                <p className="text-neutral-600 mb-4">
+                </EditableText>
+                <EditableText copyKey="how-to-play.sms.description" as="p" className="text-neutral-600 mb-4">
                   {getCopy(
                     'how-to-play.sms.description',
                     "Can't get to the app? No problem! Make your weekly picks and check your status by texting our number."
                   )}
-                </p>
+                </EditableText>
                 
                 <div className="bg-white rounded-xl p-4 mb-4 border border-cream-200">
                   <div className="flex items-center gap-3 mb-3">
@@ -280,9 +281,9 @@ export default function HowToPlay() {
 
         {/* Quick Links */}
         <section className="mb-16">
-          <h2 className="text-2xl font-display font-bold text-neutral-800 mb-8 text-center">
+          <EditableText copyKey="how-to-play.links.section-title" as="h2" className="text-2xl font-display font-bold text-neutral-800 mb-8 text-center">
             {getCopy('how-to-play.links.section-title', 'Learn More')}
-          </h2>
+          </EditableText>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link
               to="/scoring"
@@ -358,15 +359,15 @@ export default function HowToPlay() {
         {/* CTA Section */}
         <section className="text-center pb-16">
           <div className="bg-gradient-to-r from-burgundy-500 to-burgundy-600 rounded-2xl p-8 md:p-12 text-white shadow-lg">
-            <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">
+            <EditableText copyKey="how-to-play.cta.title" as="h2" className="text-2xl md:text-3xl font-display font-bold mb-4">
               {getCopy('how-to-play.cta.title', 'Ready to Play?')}
-            </h2>
-            <p className="text-burgundy-100 mb-8 max-w-lg mx-auto text-lg">
+            </EditableText>
+            <EditableText copyKey="how-to-play.cta.description" as="p" className="text-burgundy-100 mb-8 max-w-lg mx-auto text-lg">
               {getCopy(
                 'how-to-play.cta.description',
                 'Join Season 50: In the Hands of the Fans and prove you know more about Survivor strategy than your friends.'
               )}
-            </p>
+            </EditableText>
             {user ? (
               <Link
                 to="/dashboard"

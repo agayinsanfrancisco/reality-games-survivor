@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useSiteCopy } from '@/lib/hooks/useSiteCopy';
+import { EditableText } from '@/components/EditableText';
 import { Users, ChevronRight } from 'lucide-react';
 // Footer is provided by Layout component
 
@@ -337,12 +338,14 @@ export function Dashboard() {
       {/* Welcome Header - Reduced spacing */}
       <div className="mb-4">
         <h1 className="text-2xl font-display font-bold text-neutral-800">
-          {getCopy('dashboard.header.title', 'Welcome back')}
+          <EditableText copyKey="dashboard.header.title" as="span" className="">
+            {getCopy('dashboard.header.title', 'Welcome back')}
+          </EditableText>
           {profile?.display_name ? `, ${profile.display_name.split(' ')[0]}` : ''}.
         </h1>
-        <p className="text-neutral-500 mt-1 text-base">
+        <EditableText copyKey="dashboard.header.subtitle" as="p" className="text-neutral-500 mt-1 text-base">
           {getCopy('dashboard.header.subtitle', 'Your fantasy headquarters')}
-        </p>
+        </EditableText>
       </div>
 
       {/* Trivia Bar - Above the fold */}

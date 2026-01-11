@@ -2,8 +2,11 @@ import { Link } from 'react-router-dom';
 import { MessageSquare, Phone, CheckCircle } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
+import { EditableText } from '@/components/EditableText';
+import { useSiteCopy } from '@/lib/hooks/useSiteCopy';
 
 export default function SMSCommands() {
+  const { getCopy } = useSiteCopy();
   const commands = [
     {
       command: 'PICK [name]',
@@ -40,11 +43,13 @@ export default function SMSCommands() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-6 max-w-4xl mx-auto">
           <div>
-            <h1 className="text-2xl font-display font-bold text-neutral-800 flex items-center gap-2">
+            <EditableText copyKey="sms.header.title" as="h1" className="text-2xl font-display font-bold text-neutral-800 flex items-center gap-2">
               <MessageSquare className="h-6 w-6 text-burgundy-500" />
-              SMS Commands
-            </h1>
-            <p className="text-neutral-500">Make picks and check status via text</p>
+              {getCopy('sms.header.title', 'SMS Commands')}
+            </EditableText>
+            <EditableText copyKey="sms.header.subtitle" as="p" className="text-neutral-500">
+              {getCopy('sms.header.subtitle', 'Make picks and check status via text')}
+            </EditableText>
           </div>
         </div>
 
@@ -52,25 +57,29 @@ export default function SMSCommands() {
         <div className="bg-burgundy-50 border border-burgundy-200 rounded-2xl p-6 mb-6">
           <div className="flex items-center gap-3 mb-3">
             <Phone className="h-6 w-6 text-burgundy-500" />
-            <h2 className="text-lg font-display font-bold text-neutral-800">Text Us</h2>
+            <EditableText copyKey="sms.phone.title" as="h2" className="text-lg font-display font-bold text-neutral-800">
+              {getCopy('sms.phone.title', 'Text Us')}
+            </EditableText>
           </div>
-          <a 
-            href="sms:+14247227529" 
+          <a
+            href="sms:+14247227529"
             className="text-3xl font-mono font-bold text-burgundy-500 mb-2 block hover:text-burgundy-600 transition-colors"
           >
             (424) 722-7529
           </a>
-          <p className="text-neutral-600 text-sm mb-4">
-            Save this number to your contacts for easy access during episodes!
-          </p>
-          <p className="text-neutral-600 text-sm font-medium">
-            Make weekly picks and check the leaderboard with just a simple text command.
-          </p>
+          <EditableText copyKey="sms.phone.save" as="p" className="text-neutral-600 text-sm mb-4">
+            {getCopy('sms.phone.save', 'Save this number to your contacts for easy access during episodes!')}
+          </EditableText>
+          <EditableText copyKey="sms.phone.description" as="p" className="text-neutral-600 text-sm font-medium">
+            {getCopy('sms.phone.description', 'Make weekly picks and check the leaderboard with just a simple text command.')}
+          </EditableText>
         </div>
 
         {/* Setup Instructions */}
         <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200 mb-6">
-          <h2 className="text-lg font-display font-bold text-neutral-800 mb-4">Setup</h2>
+          <EditableText copyKey="sms.setup.title" as="h2" className="text-lg font-display font-bold text-neutral-800 mb-4">
+            {getCopy('sms.setup.title', 'Setup')}
+          </EditableText>
           <div className="space-y-3">
             <div className="flex items-start gap-3">
               <div className="w-6 h-6 bg-burgundy-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -106,9 +115,9 @@ export default function SMSCommands() {
 
         {/* Commands List */}
         <div className="bg-white rounded-2xl shadow-card p-6 border border-cream-200">
-          <h2 className="text-lg font-display font-bold text-neutral-800 mb-4">
-            Available Commands
-          </h2>
+          <EditableText copyKey="sms.commands.title" as="h2" className="text-lg font-display font-bold text-neutral-800 mb-4">
+            {getCopy('sms.commands.title', 'Available Commands')}
+          </EditableText>
           <div className="space-y-4">
             {commands.map((cmd) => (
               <div key={cmd.command} className="bg-cream-50 rounded-xl p-4 border border-cream-200">
@@ -129,22 +138,22 @@ export default function SMSCommands() {
 
         {/* Weekly Pick Reminder Feature */}
         <div className="mt-6 bg-gradient-to-r from-burgundy-50 to-amber-50 rounded-2xl shadow-card p-6 border border-burgundy-200">
-          <h2 className="text-lg font-display font-bold text-neutral-800 mb-3">
-            Weekly Pick Reminders
-          </h2>
-          <p className="text-neutral-700 mb-4">
-            We can text everyone each week asking who their weekly pick is. All you have to do is
-            text <strong>1</strong> or <strong>2</strong> to confirm your pick for that week!
-          </p>
-          <p className="text-neutral-600 text-sm">
-            This feature makes it super easy to make your picks without even opening the app. Just
-            reply with the number of your castaway (1 for your first pick, 2 for your second pick).
-          </p>
+          <EditableText copyKey="sms.reminders.title" as="h2" className="text-lg font-display font-bold text-neutral-800 mb-3">
+            {getCopy('sms.reminders.title', 'Weekly Pick Reminders')}
+          </EditableText>
+          <EditableText copyKey="sms.reminders.description" as="p" className="text-neutral-700 mb-4">
+            {getCopy('sms.reminders.description', 'We can text everyone each week asking who their weekly pick is. All you have to do is text 1 or 2 to confirm your pick for that week!')}
+          </EditableText>
+          <EditableText copyKey="sms.reminders.details" as="p" className="text-neutral-600 text-sm">
+            {getCopy('sms.reminders.details', 'This feature makes it super easy to make your picks without even opening the app. Just reply with the number of your castaway (1 for your first pick, 2 for your second pick).')}
+          </EditableText>
         </div>
 
         {/* Tips */}
         <div className="mt-6 bg-white rounded-2xl shadow-card p-6 border border-cream-200">
-          <h2 className="text-lg font-display font-bold text-neutral-800 mb-4">Tips</h2>
+          <EditableText copyKey="sms.tips.title" as="h2" className="text-lg font-display font-bold text-neutral-800 mb-4">
+            {getCopy('sms.tips.title', 'Tips')}
+          </EditableText>
           <ul className="space-y-2">
             <li className="flex items-start gap-2 text-neutral-600">
               <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
