@@ -9,11 +9,8 @@ import {
   Calendar,
   Palmtree,
   Mail,
-  Briefcase,
   Activity,
-  Sparkles,
   ExternalLink,
-  HelpCircle,
   MessageSquare,
 } from 'lucide-react';
 
@@ -39,28 +36,10 @@ const quickLinks: QuickLink[] = [
     description: 'Manage leagues',
   },
   {
-    path: '/admin/content',
-    label: 'CMS',
-    icon: <FileText className="h-5 w-5" />,
-    description: 'Edit content',
-  },
-  {
     path: '/admin/announcements',
     label: 'Announcements',
     icon: <Bell className="h-5 w-5" />,
     description: 'Send blasts',
-  },
-  {
-    path: '/admin/stats',
-    label: 'Analytics',
-    icon: <BarChart3 className="h-5 w-5" />,
-    description: 'View metrics',
-  },
-  {
-    path: '/admin/seasons',
-    label: 'Seasons',
-    icon: <Calendar className="h-5 w-5" />,
-    description: 'Season settings',
   },
   {
     path: '/admin/castaways',
@@ -69,34 +48,10 @@ const quickLinks: QuickLink[] = [
     description: 'Manage cast',
   },
   {
-    path: '/admin/email-queue',
-    label: 'Email Queue',
-    icon: <Mail className="h-5 w-5" />,
-    description: 'Email status',
-  },
-  {
-    path: '/admin/jobs',
-    label: 'Jobs',
-    icon: <Briefcase className="h-5 w-5" />,
-    description: 'Scheduled tasks',
-  },
-  {
-    path: '/admin/fun-stats',
-    label: 'Fun Stats',
-    icon: <Sparkles className="h-5 w-5" />,
-    description: 'Player insights',
-  },
-  {
-    path: '/admin/faq',
-    label: 'FAQ',
-    icon: <HelpCircle className="h-5 w-5" />,
-    description: 'Manage FAQs',
-  },
-  {
-    path: '/admin/campaigns',
-    label: 'Campaigns',
-    icon: <MessageSquare className="h-5 w-5" />,
-    description: 'SMS & Email',
+    path: '/admin/stats',
+    label: 'Analytics',
+    icon: <BarChart3 className="h-5 w-5" />,
+    description: 'View metrics',
   },
 ];
 
@@ -113,6 +68,34 @@ const externalLinks: QuickLink[] = [
     label: 'Railway',
     icon: <Activity className="h-5 w-5" />,
     description: 'Deployments',
+    external: true,
+  },
+  {
+    path: 'https://github.com/agayinsanfrancisco/reality-games-survivor',
+    label: 'GitHub',
+    icon: <FileText className="h-5 w-5" />,
+    description: 'Repository',
+    external: true,
+  },
+  {
+    path: 'https://resend.com/emails',
+    label: 'Resend',
+    icon: <Mail className="h-5 w-5" />,
+    description: 'Email logs',
+    external: true,
+  },
+  {
+    path: 'https://console.twilio.com',
+    label: 'Twilio',
+    icon: <MessageSquare className="h-5 w-5" />,
+    description: 'SMS logs',
+    external: true,
+  },
+  {
+    path: 'https://buffer.com/publish',
+    label: 'Buffer',
+    icon: <Calendar className="h-5 w-5" />,
+    description: 'Social media',
     external: true,
   },
 ];
