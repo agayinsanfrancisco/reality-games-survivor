@@ -54,7 +54,12 @@ export default function SMSCommands() {
             <Phone className="h-6 w-6 text-burgundy-500" />
             <h2 className="text-lg font-display font-bold text-neutral-800">Text Us</h2>
           </div>
-          <p className="text-3xl font-mono font-bold text-burgundy-500 mb-2">(YOUR_NUMBER_HERE)</p>
+          <a 
+            href="sms:+14247227529" 
+            className="text-3xl font-mono font-bold text-burgundy-500 mb-2 block hover:text-burgundy-600 transition-colors"
+          >
+            (424) 722-7529
+          </a>
           <p className="text-neutral-600 text-sm mb-4">
             Save this number to your contacts for easy access during episodes!
           </p>

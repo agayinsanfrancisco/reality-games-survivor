@@ -8,9 +8,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Loader2, Bell } from 'lucide-react';
+import { User, Loader2, Bell, Smartphone, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import { apiWithAuth } from '@/lib/api';
 import type { Database } from '@/types/supabase';
 
 type UserInsert = Database['public']['Tables']['users']['Insert'];
@@ -85,6 +86,10 @@ export default function ProfileSetup() {
   const [favoriteSeason, setFavoriteSeason] = useState('');
   const [season50WinnerPrediction, setSeason50WinnerPrediction] = useState('');
   const [emailNotifications, setEmailNotifications] = useState(true);
+  
+  // Phone number (optional)
+  const [phone, setPhone] = useState('');
+  const [smsNotifications, setSmsNotifications] = useState(false);
 
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -162,6 +167,8 @@ export default function ProfileSetup() {
       favorite_season?: string;
       season_50_winner_prediction?: string;
       notification_email: boolean;
+      phone?: string;
+      notification_sms?: boolean;
     }) => {
       const updateData: Record<string, unknown> = {
         display_name: data.display_name,
@@ -174,6 +181,8 @@ export default function ProfileSetup() {
       if (data.favorite_season) updateData.favorite_season = data.favorite_season;
       if (data.season_50_winner_prediction)
         updateData.season_50_winner_prediction = data.season_50_winner_prediction;
+      if (data.phone) updateData.phone = data.phone;
+      if (data.notification_sms !== undefined) updateData.notification_sms = data.notification_sms;
 
       // Fetch existing role if present to avoid losing it
       const { data: existingUser } = await supabase
@@ -268,6 +277,8 @@ export default function ProfileSetup() {
         favorite_season: favoriteSeason || undefined,
         season_50_winner_prediction: season50WinnerPrediction || undefined,
         notification_email: emailNotifications,
+        phone: phone.trim() || undefined,
+        notification_sms: smsNotifications,
       });
     } catch (err: any) {
       console.error('Submit error:', err);
@@ -367,24 +378,81 @@ export default function ProfileSetup() {
             </p>
           </div>
 
-          {/* Email Notifications Toggle */}
-          <div
-            className="flex items-center justify-between cursor-pointer p-4 bg-cream-50 rounded-xl border border-cream-200 hover:bg-cream-100 transition-colors"
-            onClick={() => setEmailNotifications(!emailNotifications)}
-          >
-            <div className="flex items-center gap-3">
-              <Bell className="h-5 w-5 text-neutral-400" />
-              <div>
-                <p className="text-neutral-800 font-medium">Email Notifications</p>
-                <p className="text-neutral-400 text-sm">Get reminders and results</p>
+          {/* Notifications Section */}
+          <div className="space-y-3">
+            <p className="text-sm text-neutral-500 font-medium">Notifications</p>
+            
+            {/* Email Notifications Toggle */}
+            <div
+              className="flex items-center justify-between cursor-pointer p-4 bg-cream-50 rounded-xl border border-cream-200 hover:bg-cream-100 transition-colors"
+              onClick={() => setEmailNotifications(!emailNotifications)}
+            >
+              <div className="flex items-center gap-3">
+                <Bell className="h-5 w-5 text-neutral-400" />
+                <div>
+                  <p className="text-neutral-800 font-medium">Email Notifications</p>
+                  <p className="text-neutral-400 text-sm">Get reminders and results</p>
+                </div>
+              </div>
+              <div
+                className={`w-12 h-7 rounded-full p-1 transition-colors ${emailNotifications ? 'bg-burgundy-500' : 'bg-neutral-300'}`}
+              >
+                <div
+                  className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${emailNotifications ? 'translate-x-5' : 'translate-x-0'}`}
+                />
               </div>
             </div>
-            <div
-              className={`w-12 h-7 rounded-full p-1 transition-colors ${emailNotifications ? 'bg-burgundy-500' : 'bg-neutral-300'}`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${emailNotifications ? 'translate-x-5' : 'translate-x-0'}`}
-              />
+
+            {/* SMS Section */}
+            <div className="p-4 bg-gradient-to-r from-burgundy-50 to-amber-50 rounded-xl border border-burgundy-200">
+              <div className="flex items-center gap-3 mb-3">
+                <MessageSquare className="h-5 w-5 text-burgundy-500" />
+                <div>
+                  <p className="text-neutral-800 font-medium">SMS Picks & Notifications</p>
+                  <p className="text-neutral-400 text-sm">Text "PICK [name]" to make picks on the go!</p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-neutral-700 mb-1">
+                    Phone Number (optional)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="h-5 w-5 text-neutral-400" />
+                    <input
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="(555) 555-5555"
+                      className="flex-1 px-4 py-2 rounded-lg border border-cream-300 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-500/20 outline-none transition-all"
+                    />
+                  </div>
+                  <p className="text-xs text-neutral-500 mt-1">
+                    We'll send a verification code to confirm your number
+                  </p>
+                </div>
+
+                {phone && (
+                  <div
+                    className="flex items-center justify-between cursor-pointer p-3 bg-white rounded-lg border border-cream-200 hover:bg-cream-50 transition-colors"
+                    onClick={() => setSmsNotifications(!smsNotifications)}
+                  >
+                    <div>
+                      <p className="text-neutral-800 font-medium text-sm">SMS Reminders</p>
+                      <p className="text-neutral-400 text-xs">Get pick reminders via text</p>
+                    </div>
+                    <div
+                      className={`w-10 h-6 rounded-full p-0.5 transition-colors ${smsNotifications ? 'bg-burgundy-500' : 'bg-neutral-300'}`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${smsNotifications ? 'translate-x-4' : 'translate-x-0'}`}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
