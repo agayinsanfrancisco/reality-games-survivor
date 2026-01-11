@@ -4,7 +4,7 @@
  * Create, edit, delete, and reorder FAQ items.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { AdminNavBar } from '@/components/AdminNavBar';
@@ -67,6 +67,48 @@ export function AdminFAQ() {
       return data as FAQItem[];
     },
   });
+
+  // Fetch FAQ categories
+  const { data: categoryRecords, isLoading: categoriesLoading } = useQuery({
+    queryKey: ['admin', 'faq-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('site_copy')
+        .select('*')
+        .eq('page', 'faq_categories')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Seed default categories if none exist
+  useEffect(() => {
+    if (categoryRecords && categoryRecords.length === 0) {
+      const DEFAULT_CATEGORIES = [
+        'Getting Started',
+        'Gameplay',
+        'Leagues',
+        'Scoring',
+        'Support',
+        'Other',
+      ];
+      Promise.all(
+        DEFAULT_CATEGORIES.map((name, index) =>
+          supabase.from('site_copy').insert({
+            page: 'faq_categories',
+            key: `faq_category_${name.toLowerCase().replace(/\s+/g, '_')}`,
+            content: name,
+            sort_order: index,
+            is_active: true,
+          })
+        )
+      ).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['admin', 'faq-categories'] });
+      });
+    }
+  }, [categoryRecords, queryClient]);
 
   // Create FAQ
   const createFAQ = useMutation({
@@ -136,6 +178,50 @@ export function AdminFAQ() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'faqs'] });
+    },
+  });
+
+  // Category mutations
+  const createCategory = useMutation({
+    mutationFn: async (name: string) => {
+      const maxSort = categoryRecords?.reduce((max, c) => Math.max(max, c.sort_order || 0), 0) || 0;
+      const { error } = await supabase.from('site_copy').insert({
+        page: 'faq_categories',
+        key: `faq_category_${Date.now()}`,
+        content: name,
+        sort_order: maxSort + 1,
+        is_active: true,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'faq-categories'] });
+    },
+  });
+
+  const updateCategory = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase.from('site_copy').update({ content: name }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'faq-categories'] });
+    },
+  });
+
+  const deleteCategory = useMutation({
+    mutationFn: async (id: string) => {
+      // Check if any FAQs use this category
+      const categoryName = categoryRecords?.find(c => c.id === id)?.content;
+      const faqsUsingCategory = faqs?.filter(f => f.section === categoryName).length || 0;
+      if (faqsUsingCategory > 0) {
+        throw new Error(`Cannot delete category with ${faqsUsingCategory} FAQs. Reassign them first.`);
+      }
+      const { error } = await supabase.from('site_copy').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'faq-categories'] });
     },
   });
 
@@ -230,9 +316,9 @@ export function AdminFAQ() {
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full px-4 py-2 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy-500"
                 >
-                  {FAQ_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
+                  {categoryRecords?.map((cat) => (
+                    <option key={cat.id} value={cat.content}>
+                      {cat.content}
                     </option>
                   ))}
                 </select>
@@ -280,6 +366,64 @@ export function AdminFAQ() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Category Management */}
+        {!isCreating && !editingId && (
+          <div className="bg-white rounded-2xl shadow-card border border-cream-200 p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-neutral-800">Categories</h2>
+              <button
+                onClick={() => {
+                  const name = prompt('Enter category name:');
+                  if (name) createCategory.mutate(name);
+                }}
+                className="flex items-center gap-2 text-burgundy-500 hover:text-burgundy-600 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                Add Category
+              </button>
+            </div>
+            {categoriesLoading ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="h-5 w-5 text-burgundy-500 animate-spin" />
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {categoryRecords?.map((cat) => (
+                  <div key={cat.id} className="flex items-center gap-1 bg-cream-100 px-3 py-1.5 rounded-lg">
+                    <span className="text-sm text-neutral-700">{cat.content}</span>
+                    <button
+                      onClick={() => {
+                        const newName = prompt('Edit category name:', cat.content);
+                        if (newName && newName !== cat.content) {
+                          updateCategory.mutate({ id: cat.id, name: newName });
+                        }
+                      }}
+                      className="text-neutral-400 hover:text-burgundy-500 transition-colors p-1"
+                      title="Edit category"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Delete category "${cat.content}"?`)) {
+                          deleteCategory.mutate(cat.id).catch(err => alert(err.message));
+                        }
+                      }}
+                      className="text-neutral-400 hover:text-red-500 transition-colors p-1"
+                      title="Delete category"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {categoryRecords?.length === 0 && (
+                  <p className="text-sm text-neutral-500">No categories yet. Add one to get started.</p>
+                )}
+              </div>
+            )}
           </div>
         )}
 

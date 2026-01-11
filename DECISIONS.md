@@ -91,3 +91,22 @@
 - Big bang migration: Too risky for production system
 - Never migrate: Technical debt accumulates
 **Revisit When:** All routes are extracted to modules
+
+---
+
+### Store FAQ and Scoring Categories in site_copy Table
+**Date:** 2026-01-11
+**Context:** AdminFAQ and AdminScoringRules had hardcoded category arrays. User requested editable categories with full CRUD functionality.
+**Decision:** Store categories in the existing `site_copy` table using `page='faq_categories'` and `page='scoring_categories'`
+**Why:**
+- No database migration required (site_copy table already exists)
+- Reuses existing infrastructure and patterns
+- FAQ already uses site_copy table for content
+- Supports reordering via existing sort_order field
+- Can soft-delete using existing is_active field
+- API endpoints already exist for CRUD operations
+**Alternatives Rejected:**
+- Create dedicated categories table: Would require database migration and new API endpoints
+- Store as JSONB in settings: Less queryable, harder to manage individually
+- Keep hardcoded arrays: Not editable by admins, defeats purpose
+**Revisit When:** Categories need complex metadata (colors, icons) or relationships that site_copy can't support

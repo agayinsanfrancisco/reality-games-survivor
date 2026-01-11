@@ -7,8 +7,8 @@
 
 ## Current State
 
-**Last Session:** 1
-**Last Updated:** 2026-01-10
+**Last Session:** 2
+**Last Updated:** 2026-01-11
 
 ### Completed
 - Full codebase audit completed
@@ -19,6 +19,11 @@
 - API endpoints documented
 - Database schema documented
 - Dead code identified
+- Category management added to AdminFAQ.tsx (create, edit, delete categories)
+- Category management added to AdminScoringRules.tsx (create, edit, delete categories)
+- Categories stored in site_copy table (no migration required)
+- Auto-seeding of default categories on first load
+- Build verification passed after changes
 
 ### Blocked
 - None
@@ -52,3 +57,23 @@
 - Main issues: scattered test files, one orphaned admin page
 - No critical bugs found
 - Architecture is clean with proper separation of concerns
+
+### Session 2
+**Date:** 2026-01-11
+**Completed:**
+- Added editable category management to AdminFAQ.tsx
+- Added editable category management to AdminScoringRules.tsx
+- Implemented CRUD operations for categories (create, edit, delete)
+- Categories stored in site_copy table (page='faq_categories' and page='scoring_categories')
+- Auto-seeding of default categories on first page load
+- Added category management UI with edit/delete buttons for each category
+- Updated category dropdowns to populate from database instead of hardcoded arrays
+- Implemented protection against deleting categories with assigned items
+- Build verification passed (0 TypeScript errors)
+
+**Notes:**
+- Decision: Used site_copy table instead of creating new categories table (no migration needed)
+- web/src/pages/admin/AdminFAQ.tsx: Added lines 71-111 (category query + seeding), 185-226 (category mutations), 320-323 (dropdown update), 373-428 (category UI)
+- web/src/pages/admin/AdminScoringRules.tsx: Added lines 88-123 (category query + seeding), 176-217 (category mutations), 365-420 (category UI)
+- Categories persist across page reloads and are fully editable by admins
+- Testing required: Manual verification in browser at /admin/faq and /admin/scoring-rules

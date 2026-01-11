@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -85,13 +85,42 @@ export function AdminScoringRules() {
     },
   });
 
-  // Derive categories from rules + defaults
-  const categories = Array.from(
-    new Set([
-      ...DEFAULT_CATEGORIES,
-      ...(rules?.map((r) => r.category).filter(Boolean) || []),
-    ])
-  ) as string[];
+  // Fetch scoring categories from database
+  const { data: categoryRecords, isLoading: categoriesLoading } = useQuery({
+    queryKey: ['admin', 'scoring-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('site_copy')
+        .select('*')
+        .eq('page', 'scoring_categories')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Seed defaults if none exist
+  useEffect(() => {
+    if (categoryRecords && categoryRecords.length === 0) {
+      Promise.all(
+        DEFAULT_CATEGORIES.map((name, index) =>
+          supabase.from('site_copy').insert({
+            page: 'scoring_categories',
+            key: `scoring_category_${name.toLowerCase().replace(/\s+/g, '_')}`,
+            content: name,
+            sort_order: index,
+            is_active: true,
+          })
+        )
+      ).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['admin', 'scoring-categories'] });
+      });
+    }
+  }, [categoryRecords, queryClient]);
+
+  // Derive categories from database records
+  const categories = categoryRecords?.map(c => c.content) || DEFAULT_CATEGORIES;
 
   // Create rule mutation
   const createRule = useMutation({
@@ -141,6 +170,49 @@ export function AdminScoringRules() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-scoring-rules'] });
+    },
+  });
+
+  // Category mutations
+  const createCategory = useMutation({
+    mutationFn: async (name: string) => {
+      const maxSort = categoryRecords?.reduce((max, c) => Math.max(max, c.sort_order || 0), 0) || 0;
+      const { error } = await supabase.from('site_copy').insert({
+        page: 'scoring_categories',
+        key: `scoring_category_${Date.now()}`,
+        content: name,
+        sort_order: maxSort + 1,
+        is_active: true,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'scoring-categories'] });
+    },
+  });
+
+  const updateCategory = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase.from('site_copy').update({ content: name }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'scoring-categories'] });
+    },
+  });
+
+  const deleteCategory = useMutation({
+    mutationFn: async (id: string) => {
+      const categoryName = categoryRecords?.find(c => c.id === id)?.content;
+      const rulesUsingCategory = rules?.filter(r => r.category === categoryName).length || 0;
+      if (rulesUsingCategory > 0) {
+        throw new Error(`Cannot delete category with ${rulesUsingCategory} rules. Reassign them first.`);
+      }
+      const { error } = await supabase.from('site_copy').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'scoring-categories'] });
     },
   });
 
@@ -288,6 +360,64 @@ export function AdminScoringRules() {
             <p className="text-neutral-500 text-xs">Pending</p>
           </div>
         </div>
+
+        {/* Category Management */}
+        {!isAdding && !editingRule && (
+          <div className="bg-white rounded-2xl shadow-card border border-cream-200 p-4 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-neutral-800">Categories</h2>
+              <button
+                onClick={() => {
+                  const name = prompt('Enter category name:');
+                  if (name) createCategory.mutate(name);
+                }}
+                className="flex items-center gap-2 text-burgundy-500 hover:text-burgundy-600 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                Add Category
+              </button>
+            </div>
+            {categoriesLoading ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="h-5 w-5 text-burgundy-500 animate-spin" />
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {categoryRecords?.map((cat) => (
+                  <div key={cat.id} className="flex items-center gap-1 bg-cream-100 px-3 py-1.5 rounded-lg">
+                    <span className="text-sm text-neutral-700">{cat.content}</span>
+                    <button
+                      onClick={() => {
+                        const newName = prompt('Edit category name:', cat.content);
+                        if (newName && newName !== cat.content) {
+                          updateCategory.mutate({ id: cat.id, name: newName });
+                        }
+                      }}
+                      className="text-neutral-400 hover:text-burgundy-500 transition-colors p-1"
+                      title="Edit category"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Delete category "${cat.content}"?`)) {
+                          deleteCategory.mutate(cat.id).catch(err => alert(err.message));
+                        }
+                      }}
+                      className="text-neutral-400 hover:text-red-500 transition-colors p-1"
+                      title="Delete category"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {categoryRecords?.length === 0 && (
+                  <p className="text-sm text-neutral-500">No categories yet. Add one to get started.</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Add/Edit Form */}
         {(isAdding || editingRule) && (
