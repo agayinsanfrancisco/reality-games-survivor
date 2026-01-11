@@ -203,6 +203,17 @@ export async function scheduleAutoRandomizeRankings(targetDate?: Date): Promise<
   }
 
   const delay = target.getTime() - now.getTime();
+  
+  // Max safe setTimeout delay is ~24.8 days (2^31 - 1 ms)
+  const MAX_TIMEOUT = 2147483647;
+  
+  if (delay > MAX_TIMEOUT) {
+    console.log(
+      `Auto-randomize rankings scheduled for ${target.toISOString()} (${Math.round(delay / 1000 / 60 / 60)} hours) - too far, will reschedule on restart`
+    );
+    return;
+  }
+  
   console.log(
     `Scheduling auto-randomize rankings for ${target.toISOString()} (${Math.round(delay / 1000 / 60 / 60)} hours)`
   );
@@ -249,6 +260,17 @@ export async function scheduleDraftFinalize(targetDate?: Date): Promise<void> {
   }
 
   const delay = target.getTime() - now.getTime();
+  
+  // Max safe setTimeout delay is ~24.8 days (2^31 - 1 ms)
+  const MAX_TIMEOUT = 2147483647;
+  
+  if (delay > MAX_TIMEOUT) {
+    console.log(
+      `Draft finalization scheduled for ${target.toISOString()} (${Math.round(delay / 1000 / 60 / 60)} hours) - too far, will reschedule on restart`
+    );
+    return;
+  }
+  
   console.log(
     `Scheduling draft finalization for ${target.toISOString()} (${Math.round(delay / 1000 / 60 / 60)} hours)`
   );
