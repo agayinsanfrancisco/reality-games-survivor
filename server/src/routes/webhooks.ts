@@ -337,7 +337,8 @@ router.post('/sms', async (req: Request, res: Response) => {
   try {
     // Validate Twilio webhook signature to prevent spoofing
     const twilioSignature = req.headers['x-twilio-signature'] as string;
-    const webhookUrl = `${process.env.BASE_URL || 'https://api.rgfl.app'}/webhooks/sms`;
+    // Use API_URL for webhook validation (not BASE_URL which is frontend)
+    const webhookUrl = `${process.env.API_URL || 'https://rgfl-api-production.up.railway.app'}/webhooks/sms`;
 
     if (!validateTwilioWebhook(twilioSignature, webhookUrl, req.body)) {
       console.warn('Invalid Twilio webhook signature - possible spoofing attempt');

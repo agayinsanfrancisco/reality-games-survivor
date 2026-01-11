@@ -10,15 +10,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useSiteCopy } from '@/lib/hooks/useSiteCopy';
-// import { apiWithAuth } from '../lib/api'; // Commented out until SMS feature launches
+import { apiWithAuth } from '../lib/api';
 import { useNavigate } from 'react-router-dom';
 import {
-  // PhoneVerificationPrompt, // Hidden until SMS feature launches
+  PhoneVerificationPrompt,
   ProfileHeader,
   ProfileInfo,
-  // PhoneSection, // Hidden until SMS feature launches
+  PhoneSection,
   NotificationsSection,
-  // SecuritySection, // Removed - no password auth, only Google/Magic Link
   LogoutButton,
 } from '@/components/profile';
 
@@ -31,14 +30,10 @@ export default function Profile() {
   const [nameError, setNameError] = useState<string | null>(null);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
 
-  // Phone state - commented out until SMS feature launches
-  // const [phoneError, setPhoneError] = useState<string | null>(null);
-  // const [phoneSuccess, setPhoneSuccess] = useState<string | null>(null);
-  // const [showVerification, setShowVerification] = useState(false);
-
-  // Password state - removed, no password auth available
-  // const [passwordError, setPasswordError] = useState<string | null>(null);
-  // const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  // Phone state
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [phoneSuccess, setPhoneSuccess] = useState<string | null>(null);
+  const [showVerification, setShowVerification] = useState(false);
 
   // Fetch user profile
   const {
@@ -123,8 +118,7 @@ export default function Profile() {
     },
   });
 
-  // Phone mutations - commented out until SMS feature launches
-  /*
+  // Phone mutations
   const updatePhone = useMutation({
     mutationFn: async (newPhone: string) => {
       const {
@@ -209,26 +203,6 @@ export default function Profile() {
       setPhoneSuccess(null);
     },
   });
-  */
-
-  // Change password mutation - removed, no password auth available
-  /*
-  const changePassword = useMutation({
-    mutationFn: async (password: string) => {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      setPasswordError(null);
-      setPasswordSuccess('Password changed successfully!');
-      setTimeout(() => setPasswordSuccess(null), 3000);
-    },
-    onError: (error: Error) => {
-      setPasswordError(error.message);
-      setPasswordSuccess(null);
-    },
-  });
-  */
 
   // Logout
   const handleLogout = async () => {
@@ -288,9 +262,8 @@ export default function Profile() {
         </p>
       </div>
 
-      {/* Phone Verification Prompt - hidden until SMS feature launches
+      {/* Phone Verification Prompt */}
       {!user?.phone_verified && <PhoneVerificationPrompt />}
-      */}
 
       {/* Profile Info */}
       <ProfileHeader
@@ -315,7 +288,7 @@ export default function Profile() {
         isUpdating={updateProfile.isPending}
       />
 
-      {/* Phone Number - hidden until SMS feature launches
+      {/* Phone Number */}
       <PhoneSection
         currentPhone={user?.phone || null}
         isPhoneVerified={user?.phone_verified ?? false}
@@ -330,21 +303,18 @@ export default function Profile() {
         showVerification={showVerification}
         onShowVerification={setShowVerification}
       />
-      */}
 
       {/* Notification Preferences */}
       <NotificationsSection
         emailEnabled={user?.notification_email ?? true}
-        smsEnabled={false}
+        smsEnabled={user?.notification_sms ?? false}
         pushEnabled={user?.notification_push ?? true}
-        phoneVerified={false}
+        phoneVerified={user?.phone_verified ?? false}
         onEmailChange={(enabled) => updateNotifications.mutate({ notification_email: enabled })}
-        onSmsChange={() => {}}
+        onSmsChange={(enabled) => updateNotifications.mutate({ notification_sms: enabled })}
         onPushChange={(enabled) => updateNotifications.mutate({ notification_push: enabled })}
-        hideSms={true}
+        hideSms={false}
       />
-
-      {/* Security / Password - Removed since we only use Google/Magic Link auth */}
 
       {/* Logout Button */}
       <LogoutButton onLogout={handleLogout} />

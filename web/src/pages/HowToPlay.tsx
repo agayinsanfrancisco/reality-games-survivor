@@ -11,8 +11,9 @@ import {
   Zap,
   Shield,
   Clock,
-  CheckCircle2,
   Flame,
+  MessageSquare,
+  Smartphone,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useSiteCopy } from '@/lib/hooks/useSiteCopy';
@@ -37,16 +38,6 @@ export default function HowToPlay() {
   const { user } = useAuth();
   const { getCopy } = useSiteCopy();
 
-  // Parse JSON details from CMS or use fallback
-  const parseDetails = (key: string, fallback: string[]): string[] => {
-    try {
-      const content = getCopy(key, JSON.stringify(fallback));
-      return JSON.parse(content);
-    } catch {
-      return fallback;
-    }
-  };
-
   const steps = [
     {
       icon: Users,
@@ -55,12 +46,6 @@ export default function HowToPlay() {
         'how-to-play.step1.description',
         'Play with friends in a private league or join a public one. Each league has its own leaderboard and bragging rights.'
       ),
-      details: parseDetails('how-to-play.step1.details', [
-        'Create a private league and invite friends with a code',
-        'Join public leagues to compete with the community',
-        'Play in multiple leagues with the same roster',
-        'Everyone is automatically in the Global League',
-      ]),
     },
     {
       icon: Trophy,
@@ -69,12 +54,6 @@ export default function HowToPlay() {
         'how-to-play.step2.description',
         'After the first episode, participants rank all castaways 1-24. This determines who you get in the snake draft.'
       ),
-      details: parseDetails('how-to-play.step2.details', [
-        'Rankings apply to ALL your leagues for the season',
-        'Picks are made in reverse order of prior season fantasy rankings (or random for new leagues)',
-        'The picking order reverses each round (snake draft style)',
-        'Special selection rules apply if there are more participants than castaways',
-      ]),
     },
     {
       icon: Target,
@@ -83,12 +62,6 @@ export default function HowToPlay() {
         'how-to-play.step3.description',
         'After the deadline, the system runs a snake draft. You get 2 castaways based on your draft position and rankings.'
       ),
-      details: parseDetails('how-to-play.step3.details', [
-        'Draft positions are randomly assigned for new leagues',
-        'Snake draft means pick order reverses each round',
-        "You'll get your highest-ranked available castaway each pick",
-        'Your 2 castaways are your team for the entire season',
-      ]),
     },
     {
       icon: Calendar,
@@ -97,12 +70,6 @@ export default function HowToPlay() {
         'how-to-play.step4.description',
         'Each week, choose which of your 2 castaways to "start" for that episode. Only your starting castaway earns points - the other is benched.'
       ),
-      details: parseDetails('how-to-play.step4.details', [
-        'Picks lock Wednesday at 8pm ET / 5pm PT when the episode airs',
-        'A random number generator is used if no pick is made',
-        'Prior week designations do NOT impact the current week',
-        'When only one castaway remains, they must be your starter',
-      ]),
     },
     {
       icon: Star,
@@ -111,10 +78,6 @@ export default function HowToPlay() {
         'how-to-play.step5.description',
         "Points are based on your STARTING castaway's performance that week. Your benched castaway does not score."
       ),
-      details: parseDetails('how-to-play.step5.details', [
-        'If a team has no remaining castaways, they can no longer score points',
-        'Their Total Points are set at that point',
-      ]),
       linkTo: '/scoring',
       linkText: 'View Full Scoring Rules →',
     },
@@ -125,12 +88,6 @@ export default function HowToPlay() {
         'how-to-play.step6.description',
         'The player with the most total points at the end of the season wins! Track your progress on the leaderboard.'
       ),
-      details: parseDetails('how-to-play.step6.details', [
-        'Points accumulate across all episodes',
-        'Leaderboard updates after each episode is scored',
-        'Compete for glory in multiple leagues',
-        'Bragging rights last until next season!',
-      ]),
     },
   ];
 
@@ -219,16 +176,6 @@ export default function HowToPlay() {
                         {step.title}
                       </h3>
                       <p className="text-neutral-600 mb-4">{step.description}</p>
-                      {step.details.length > 0 ? (
-                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {step.details.map((detail, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm text-neutral-600">
-                              <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                              <span>{detail}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
                       {'linkTo' in step && step.linkTo && (
                         <Link
                           to={step.linkTo}
@@ -273,6 +220,64 @@ export default function HowToPlay() {
           </div>
         </section>
 
+        {/* SMS Feature Section */}
+        <section className="mb-16">
+          <h2 className="text-2xl font-display font-bold text-neutral-800 mb-8 text-center">
+            {getCopy('how-to-play.sms.section-title', 'Make Picks via Text')}
+          </h2>
+          <div className="bg-gradient-to-r from-burgundy-50 to-amber-50 rounded-2xl shadow-card border border-burgundy-200 p-6 md:p-8">
+            <div className="flex flex-col md:flex-row items-start gap-6">
+              <div className="w-16 h-16 bg-burgundy-500 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <MessageSquare className="h-8 w-8 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-display font-bold text-neutral-800 mb-2">
+                  {getCopy('how-to-play.sms.title', 'SMS Commands')}
+                </h3>
+                <p className="text-neutral-600 mb-4">
+                  {getCopy(
+                    'how-to-play.sms.description',
+                    "Can't get to the app? No problem! Make your weekly picks and check your status by texting our number."
+                  )}
+                </p>
+                
+                <div className="bg-white rounded-xl p-4 mb-4 border border-cream-200">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Smartphone className="h-5 w-5 text-burgundy-500" />
+                    <span className="font-mono font-bold text-burgundy-600 text-lg">(424) 722-7529</span>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <code className="bg-cream-100 px-2 py-1 rounded font-mono text-burgundy-600">PICK [name]</code>
+                      <span className="text-neutral-600">Submit your weekly pick</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-cream-100 px-2 py-1 rounded font-mono text-burgundy-600">TEAM</code>
+                      <span className="text-neutral-600">View your roster</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-cream-100 px-2 py-1 rounded font-mono text-burgundy-600">STATUS</code>
+                      <span className="text-neutral-600">Check your pick status</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-cream-100 px-2 py-1 rounded font-mono text-burgundy-600">HELP</code>
+                      <span className="text-neutral-600">Get all commands</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <Link
+                  to="/sms-commands"
+                  className="inline-flex items-center gap-2 text-burgundy-600 hover:text-burgundy-700 font-medium"
+                >
+                  View all SMS commands
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Quick Links */}
         <section className="mb-16">
           <h2 className="text-2xl font-display font-bold text-neutral-800 mb-8 text-center">
@@ -297,6 +302,23 @@ export default function HowToPlay() {
               </div>
             </Link>
             <Link
+              to="/sms-commands"
+              className="bg-white rounded-2xl shadow-card border border-cream-200 p-6 hover:shadow-card-hover transition-shadow group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <MessageSquare className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-neutral-800">SMS Commands</h3>
+                    <p className="text-neutral-500 text-sm">Make picks via text</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-5 w-5 text-neutral-400 group-hover:text-green-500 transition-colors" />
+              </div>
+            </Link>
+            <Link
               to="/timeline"
               className="bg-white rounded-2xl shadow-card border border-cream-200 p-6 hover:shadow-card-hover transition-shadow group"
             >
@@ -311,6 +333,23 @@ export default function HowToPlay() {
                   </div>
                 </div>
                 <ArrowRight className="h-5 w-5 text-neutral-400 group-hover:text-amber-500 transition-colors" />
+              </div>
+            </Link>
+            <Link
+              to="/faq"
+              className="bg-white rounded-2xl shadow-card border border-cream-200 p-6 hover:shadow-card-hover transition-shadow group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <BookOpen className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-neutral-800">FAQ</h3>
+                    <p className="text-neutral-500 text-sm">Common questions answered</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-5 w-5 text-neutral-400 group-hover:text-blue-500 transition-colors" />
               </div>
             </Link>
           </div>

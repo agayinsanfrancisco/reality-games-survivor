@@ -3,7 +3,7 @@ import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useState, useEffect, useRef } from 'react';
-import { Shield, Menu, X, ChevronDown, Lightbulb } from 'lucide-react';
+import { Shield, Menu, X, ChevronDown, Lightbulb, Mail, HelpCircle } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -16,12 +16,12 @@ export function Navigation() {
   const { user, signOut, loading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
-  const [castawaysOpen, setCastawaysOpen] = useState(false);
   const [leaguesOpen, setLeaguesOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const howToPlayRef = useRef<HTMLDivElement>(null);
-  const castawaysRef = useRef<HTMLDivElement>(null);
   const leaguesRef = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLDivElement>(null);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -37,18 +37,18 @@ export function Navigation() {
       if (howToPlayRef.current && !howToPlayRef.current.contains(event.target as Node)) {
         setHowToPlayOpen(false);
       }
-      if (castawaysRef.current && !castawaysRef.current.contains(event.target as Node)) {
-        setCastawaysOpen(false);
-      }
       if (leaguesRef.current && !leaguesRef.current.contains(event.target as Node)) {
         setLeaguesOpen(false);
       }
+      if (contactRef.current && !contactRef.current.contains(event.target as Node)) {
+        setContactOpen(false);
+      }
     };
-    if (mobileMenuOpen || howToPlayOpen || castawaysOpen || leaguesOpen) {
+    if (mobileMenuOpen || howToPlayOpen || leaguesOpen || contactOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [mobileMenuOpen, howToPlayOpen, castawaysOpen, leaguesOpen]);
+  }, [mobileMenuOpen, howToPlayOpen, leaguesOpen, contactOpen]);
 
   // Handle sign out
   const handleSignOut = async () => {
@@ -141,63 +141,40 @@ export function Navigation() {
                   {leaguesOpen && (
                     <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-neutral-200 min-w-[180px] z-50 py-1">
                       <Link
-                        to="/leagues?filter=my"
+                        to="/leagues"
                         onClick={() => setLeaguesOpen(false)}
-                        className="block px-4 py-2 text-sm hover:bg-neutral-50 text-neutral-600"
-                      >
-                        My Leagues
-                      </Link>
-                      <Link
-                        to="/leagues?filter=public"
-                        onClick={() => setLeaguesOpen(false)}
-                        className="block px-4 py-2 text-sm hover:bg-neutral-50 text-neutral-600"
-                      >
-                        Public Leagues
-                      </Link>
-                    </div>
-                  )}
-                </div>
-                <div className="relative" ref={castawaysRef}>
-                  <button
-                    onClick={() => setCastawaysOpen(!castawaysOpen)}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${
-                      isActive('/castaways') || isActive('/draft-rankings')
-                        ? 'text-burgundy-600 bg-burgundy-50'
-                        : 'text-neutral-600 hover:text-burgundy-600 hover:bg-neutral-50'
-                    }`}
-                  >
-                    Castaways
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${castawaysOpen ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-                  {castawaysOpen && (
-                    <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-neutral-200 min-w-[180px] z-50 py-1">
-                      <Link
-                        to="/castaways"
-                        onClick={() => setCastawaysOpen(false)}
                         className={`block px-4 py-2 text-sm hover:bg-neutral-50 ${
-                          isActive('/castaways') && !isActive('/draft-rankings')
+                          isActive('/leagues') && !isActive('/draft-rankings')
                             ? 'text-burgundy-600 bg-burgundy-50'
                             : 'text-neutral-600'
                         }`}
                       >
-                        All Castaways
+                        All Leagues
                       </Link>
                       <Link
                         to="/draft-rankings"
-                        onClick={() => setCastawaysOpen(false)}
+                        onClick={() => setLeaguesOpen(false)}
                         className={`block px-4 py-2 text-sm hover:bg-neutral-50 ${
                           isActive('/draft-rankings')
                             ? 'text-burgundy-600 bg-burgundy-50'
                             : 'text-neutral-600'
                         }`}
                       >
-                        Your Rankings
+                        Draft Rankings
                       </Link>
                     </div>
                   )}
                 </div>
+                <Link
+                  to="/castaways"
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    isActive('/castaways')
+                      ? 'text-burgundy-600 bg-burgundy-50'
+                      : 'text-neutral-600 hover:text-burgundy-600 hover:bg-neutral-50'
+                  }`}
+                >
+                  Castaways
+                </Link>
                 <Link
                   to="/leaderboard"
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -249,6 +226,17 @@ export function Navigation() {
                         Scoring Rules
                       </Link>
                       <Link
+                        to="/sms-commands"
+                        onClick={() => setHowToPlayOpen(false)}
+                        className={`block px-4 py-2 text-sm hover:bg-neutral-50 ${
+                          isActive('/sms-commands')
+                            ? 'text-burgundy-600 bg-burgundy-50'
+                            : 'text-neutral-600'
+                        }`}
+                      >
+                        SMS Commands
+                      </Link>
+                      <Link
                         to="/timeline"
                         onClick={() => setHowToPlayOpen(false)}
                         className={`block px-4 py-2 text-sm hover:bg-neutral-50 ${
@@ -258,6 +246,50 @@ export function Navigation() {
                         }`}
                       >
                         Weekly Timeline
+                      </Link>
+                    </div>
+                  )}
+                </div>
+                {/* Contact Dropdown */}
+                <div className="relative" ref={contactRef}>
+                  <button
+                    onClick={() => setContactOpen(!contactOpen)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${
+                      isActive('/contact') || isActive('/faq')
+                        ? 'text-burgundy-600 bg-burgundy-50'
+                        : 'text-neutral-600 hover:text-burgundy-600 hover:bg-neutral-50'
+                    }`}
+                  >
+                    Contact
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform ${contactOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {contactOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-neutral-200 min-w-[180px] z-50 py-1">
+                      <Link
+                        to="/contact"
+                        onClick={() => setContactOpen(false)}
+                        className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50 ${
+                          isActive('/contact') && !isActive('/faq')
+                            ? 'text-burgundy-600 bg-burgundy-50'
+                            : 'text-neutral-600'
+                        }`}
+                      >
+                        <Mail className="h-4 w-4" />
+                        Contact Us
+                      </Link>
+                      <Link
+                        to="/faq"
+                        onClick={() => setContactOpen(false)}
+                        className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50 ${
+                          isActive('/faq')
+                            ? 'text-burgundy-600 bg-burgundy-50'
+                            : 'text-neutral-600'
+                        }`}
+                      >
+                        <HelpCircle className="h-4 w-4" />
+                        FAQ
                       </Link>
                     </div>
                   )}
@@ -399,39 +431,14 @@ export function Navigation() {
                     Leagues
                   </div>
                   <Link
-                    to="/leagues?filter=my"
+                    to="/leagues"
                     className={`block px-8 py-2 text-sm ${
-                      isActive('/leagues') && location.search.includes('my')
+                      isActive('/leagues') && !isActive('/draft-rankings')
                         ? 'text-burgundy-600 bg-burgundy-50'
                         : 'text-neutral-600'
                     }`}
                   >
-                    My Leagues
-                  </Link>
-                  <Link
-                    to="/leagues?filter=public"
-                    className={`block px-8 py-2 text-sm ${
-                      isActive('/leagues') && location.search.includes('public')
-                        ? 'text-burgundy-600 bg-burgundy-50'
-                        : 'text-neutral-600'
-                    }`}
-                  >
-                    Public Leagues
-                  </Link>
-                </div>
-                <div>
-                  <div className="px-4 py-2 text-sm font-semibold text-neutral-800 uppercase tracking-wide">
-                    Castaways
-                  </div>
-                  <Link
-                    to="/castaways"
-                    className={`block px-8 py-2 text-sm ${
-                      isActive('/castaways') && !isActive('/draft-rankings')
-                        ? 'text-burgundy-600 bg-burgundy-50'
-                        : 'text-neutral-600'
-                    }`}
-                  >
-                    All Castaways
+                    All Leagues
                   </Link>
                   <Link
                     to="/draft-rankings"
@@ -441,9 +448,19 @@ export function Navigation() {
                         : 'text-neutral-600'
                     }`}
                   >
-                    Your Rankings
+                    Draft Rankings
                   </Link>
                 </div>
+                <Link
+                  to="/castaways"
+                  className={`block px-4 py-3 text-sm font-semibold uppercase tracking-wide ${
+                    isActive('/castaways')
+                      ? 'text-burgundy-600 bg-burgundy-50'
+                      : 'text-neutral-600'
+                  }`}
+                >
+                  Castaways
+                </Link>
                 <Link
                   to="/leaderboard"
                   className={`block px-4 py-3 text-sm font-semibold uppercase tracking-wide ${
@@ -487,6 +504,41 @@ export function Navigation() {
                     }`}
                   >
                     Weekly Timeline
+                  </Link>
+                  <Link
+                    to="/sms-commands"
+                    className={`block px-8 py-2 text-sm ${
+                      isActive('/sms-commands')
+                        ? 'text-burgundy-600 bg-burgundy-50'
+                        : 'text-neutral-600'
+                    }`}
+                  >
+                    SMS Commands
+                  </Link>
+                </div>
+                <div>
+                  <div className="px-4 py-2 text-sm font-semibold text-neutral-800 uppercase tracking-wide">
+                    Contact
+                  </div>
+                  <Link
+                    to="/contact"
+                    className={`block px-8 py-2 text-sm ${
+                      isActive('/contact') && !isActive('/faq')
+                        ? 'text-burgundy-600 bg-burgundy-50'
+                        : 'text-neutral-600'
+                    }`}
+                  >
+                    Contact Us
+                  </Link>
+                  <Link
+                    to="/faq"
+                    className={`block px-8 py-2 text-sm ${
+                      isActive('/faq')
+                        ? 'text-burgundy-600 bg-burgundy-50'
+                        : 'text-neutral-600'
+                    }`}
+                  >
+                    FAQ
                   </Link>
                 </div>
                 {/* Admin link for mobile */}
@@ -586,16 +638,42 @@ export function Navigation() {
             >
               Scoring Rules
             </Link>
-            <Link
-              to="/contact"
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                isActive('/contact')
-                  ? 'text-burgundy-600 bg-burgundy-50'
-                  : 'text-neutral-600 hover:text-burgundy-600 hover:bg-neutral-50'
-              }`}
-            >
-              Contact
-            </Link>
+            <div className="relative group">
+              <button
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${
+                  isActive('/contact') || isActive('/faq')
+                    ? 'text-burgundy-600 bg-burgundy-50'
+                    : 'text-neutral-600 hover:text-burgundy-600 hover:bg-neutral-50'
+                }`}
+              >
+                Contact
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-neutral-200 min-w-[160px] z-50 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                <Link
+                  to="/contact"
+                  className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50 ${
+                    isActive('/contact') && !isActive('/faq')
+                      ? 'text-burgundy-600 bg-burgundy-50'
+                      : 'text-neutral-600'
+                  }`}
+                >
+                  <Mail className="h-4 w-4" />
+                  Contact Us
+                </Link>
+                <Link
+                  to="/faq"
+                  className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50 ${
+                    isActive('/faq')
+                      ? 'text-burgundy-600 bg-burgundy-50'
+                      : 'text-neutral-600'
+                  }`}
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  FAQ
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* Right: Login + Sign Up */}
@@ -659,12 +737,22 @@ export function Navigation() {
             <Link
               to="/contact"
               className={`block px-4 py-3 text-sm font-medium rounded-lg mx-2 ${
-                isActive('/contact')
+                isActive('/contact') && !isActive('/faq')
                   ? 'text-burgundy-600 bg-burgundy-50'
                   : 'text-neutral-600 hover:bg-neutral-50'
               }`}
             >
-              Contact
+              Contact Us
+            </Link>
+            <Link
+              to="/faq"
+              className={`block px-4 py-3 text-sm font-medium rounded-lg mx-2 ${
+                isActive('/faq')
+                  ? 'text-burgundy-600 bg-burgundy-50'
+                  : 'text-neutral-600 hover:bg-neutral-50'
+              }`}
+            >
+              FAQ
             </Link>
             <hr className="my-2 border-neutral-100 mx-4" />
             <Link to="/login" className="block px-4 py-3 text-sm font-medium text-neutral-600 mx-2">
