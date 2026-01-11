@@ -123,12 +123,6 @@ export default function GlobalLeaderboard() {
         </p>
       </div>
 
-      {/* Weighted Score Explanation Callout */}
-      <div className="mb-6 bg-burgundy-50 border border-burgundy-100 rounded-xl px-4 py-3 text-sm text-burgundy-700">
-        <span className="font-medium">Ranked by weighted score:</span> Players in more leagues get
-        more accurate rankings. Confidence: ⚠️ = 1 league (33%), ✓ = 2 (55%), ✓✓ = 3 (70%), ✓✓✓ = 5+ (~83%+)
-      </div>
-
       {/* Stats Summary */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         <div className="bg-white rounded-2xl shadow-card p-4 border border-cream-200 text-center">
