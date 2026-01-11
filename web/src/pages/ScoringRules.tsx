@@ -144,9 +144,16 @@ export default function ScoringRules() {
             >
               {/* Category Header */}
               <div className="px-6 py-4 bg-burgundy-50 border-b border-burgundy-100">
-                <h2 className="text-lg font-display font-bold text-burgundy-800">
-                  {section.category}
-                </h2>
+                <EditableText
+                  copyKey={`scoring.category.${section.category.toLowerCase().replace(/\s+/g, '_')}`}
+                  as="h2"
+                  className="text-lg font-display font-bold text-burgundy-800"
+                >
+                  {getCopy(
+                    `scoring.category.${section.category.toLowerCase().replace(/\s+/g, '_')}`,
+                    section.category
+                  )}
+                </EditableText>
               </div>
 
               {/* Rules List */}
@@ -160,7 +167,17 @@ export default function ScoringRules() {
                     >
                       {rule.positive ? '+' : '−'}
                     </span>
-                    <p className="text-neutral-700 flex-1">{rule.text}</p>
+                    <EditableText
+                      copyKey={`scoring.rule.${section.category.toLowerCase().replace(/\s+/g, '_')}.${i}`}
+                      as="p"
+                      className="text-neutral-700 flex-1"
+                      multiline={true}
+                    >
+                      {getCopy(
+                        `scoring.rule.${section.category.toLowerCase().replace(/\s+/g, '_')}.${i}`,
+                        rule.text
+                      )}
+                    </EditableText>
                   </div>
                 ))}
               </div>
