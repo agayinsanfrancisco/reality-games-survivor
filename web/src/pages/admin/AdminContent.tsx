@@ -85,6 +85,12 @@ interface Castaway {
   photo_url: string | null;
   fun_fact: string | null;
   status: string;
+  age: number | null;
+  hometown: string | null;
+  occupation: string | null;
+  tribe_original: string | null;
+  previous_seasons: string[] | null;
+  best_placement: number | null;
 }
 
 // Primary category tabs
@@ -103,6 +109,7 @@ const PAGE_TABS = [
   { id: 'leaderboard', label: 'Leaderboard' },
   { id: 'profile', label: 'Profile' },
   { id: 'contact', label: 'Contact' },
+  { id: 'faq', label: 'FAQ' },
 ] as const;
 
 export function AdminContent() {
@@ -159,7 +166,7 @@ export function AdminContent() {
       if (!season) return [];
       const { data, error } = await supabase
         .from('castaways')
-        .select('id, name, photo_url, fun_fact, status')
+        .select('id, name, photo_url, fun_fact, status, age, hometown, occupation, tribe_original, previous_seasons, best_placement')
         .eq('season_id', season.id)
         .order('name');
       if (error) throw error;
@@ -168,10 +175,20 @@ export function AdminContent() {
     enabled: activeCategory === 'castaways',
   });
 
-  // Update castaway fun fact mutation
-  const updateCastawayFunFact = useMutation({
-    mutationFn: async ({ id, fun_fact }: { id: string; fun_fact: string }) => {
-      const { error } = await supabase.from('castaways').update({ fun_fact }).eq('id', id);
+  // Update castaway profile mutation
+  const updateCastawayProfile = useMutation({
+    mutationFn: async (data: {
+      id: string;
+      age?: number | null;
+      hometown?: string | null;
+      occupation?: string | null;
+      tribe_original?: string | null;
+      previous_seasons?: string[] | null;
+      best_placement?: number | null;
+      fun_fact?: string | null;
+    }) => {
+      const { id, ...updates } = data;
+      const { error } = await supabase.from('castaways').update(updates).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {

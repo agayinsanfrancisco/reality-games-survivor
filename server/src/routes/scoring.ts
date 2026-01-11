@@ -13,6 +13,9 @@ import { logAdminAction, AUDIT_ACTIONS } from '../services/audit-logger.js';
 
 const router = Router();
 
+// Apply authentication to all scoring routes
+router.use(authenticate);
+
 // POST /api/episodes/:id/scoring/start - Begin scoring session
 router.post('/:id/scoring/start', requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {

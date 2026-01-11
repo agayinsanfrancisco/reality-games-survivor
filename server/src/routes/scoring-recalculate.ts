@@ -5,10 +5,13 @@
  */
 
 import { Router, Response } from 'express';
-import { AuthenticatedRequest, requireAdmin } from '../middleware/authenticate.js';
+import { authenticate, AuthenticatedRequest, requireAdmin } from '../middleware/authenticate.js';
 import * as ScoringService from '../services/scoring.js';
 
 const router = Router();
+
+// Apply authentication to all scoring routes
+router.use(authenticate);
 
 // POST /api/scoring/recalculate - Recalculate all standings (admin)
 router.post('/recalculate', requireAdmin, async (req: AuthenticatedRequest, res: Response) => {

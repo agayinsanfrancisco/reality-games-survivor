@@ -75,7 +75,7 @@ router.post('/:id/draft/set-order', authenticate, async (req, res) => {
     }
 });
 // POST /api/draft/finalize-all - Auto-complete all incomplete drafts (system/cron)
-router.post('/finalize-all', requireAdmin, async (req, res) => {
+router.post('/finalize-all', authenticate, requireAdmin, async (req, res) => {
     try {
         const result = await DraftService.finalizeAllDrafts();
         if (result.error) {

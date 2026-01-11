@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { requireAdmin } from '../middleware/authenticate.js';
+import { authenticate, requireAdmin } from '../middleware/authenticate.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { EmailService } from '../emails/index.js';
 const router = Router();
 // POST /api/notifications/send-reminders - Send reminders (cron)
-router.post('/send-reminders', requireAdmin, async (req, res) => {
+router.post('/send-reminders', authenticate, requireAdmin, async (req, res) => {
     try {
         const { type } = req.body;
         if (!['pick', 'draft'].includes(type)) {
@@ -185,7 +185,7 @@ router.post('/send-reminders', requireAdmin, async (req, res) => {
     }
 });
 // POST /api/notifications/send-results - Send episode results (cron)
-router.post('/send-results', requireAdmin, async (req, res) => {
+router.post('/send-results', authenticate, requireAdmin, async (req, res) => {
     try {
         const { episode_id } = req.body;
         if (!episode_id) {

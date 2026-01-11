@@ -6,7 +6,7 @@ import { EmailService } from '../emails/index.js';
 const router = Router();
 
 // POST /api/notifications/send-reminders - Send reminders (cron)
-router.post('/send-reminders', requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/send-reminders', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { type } = req.body;
 
@@ -207,7 +207,7 @@ router.post('/send-reminders', requireAdmin, async (req: AuthenticatedRequest, r
 });
 
 // POST /api/notifications/send-results - Send episode results (cron)
-router.post('/send-results', requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/send-results', authenticate, requireAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { episode_id } = req.body;
 

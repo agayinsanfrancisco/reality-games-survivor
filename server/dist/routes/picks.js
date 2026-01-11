@@ -190,7 +190,7 @@ router.get('/:id/picks/current', authenticate, async (req, res) => {
     }
 });
 // POST /api/picks/lock - Lock all picks for current episode (cron)
-router.post('/lock', requireAdmin, async (req, res) => {
+router.post('/lock', authenticate, requireAdmin, async (req, res) => {
     try {
         const now = new Date();
         // Find episodes that should be locked
@@ -227,7 +227,7 @@ router.post('/lock', requireAdmin, async (req, res) => {
     }
 });
 // POST /api/picks/auto-fill - Auto-pick for users who didn't submit (cron)
-router.post('/auto-fill', requireAdmin, async (req, res) => {
+router.post('/auto-fill', authenticate, requireAdmin, async (req, res) => {
     try {
         const now = new Date();
         // Find episodes past lock time
