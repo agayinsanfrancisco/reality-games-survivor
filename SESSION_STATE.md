@@ -8,7 +8,7 @@
 ## Current State
 
 **Last Session:** 3
-**Last Updated:** 2026-01-11
+**Last Updated:** 2026-01-12
 
 ### Completed
 - Full codebase audit completed
@@ -24,7 +24,9 @@
 - Categories stored in site_copy table (no migration required)
 - Auto-seeding of default categories on first load
 - Fixed double navigation on Leagues page (removed duplicate Navigation/Footer)
+- Fixed double navigation on GlobalLeaderboard page (removed duplicate Navigation/Footer)
 - Made CastawayDetail.tsx page fully editable with EditableText components
+- Matched GlobalLeaderboard width to Leagues page (max-w-6xl)
 - Build verification passed after changes
 
 ### Blocked
