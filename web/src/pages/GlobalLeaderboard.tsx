@@ -120,7 +120,7 @@ export default function GlobalLeaderboard() {
       <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
         {/* Header */}
         <div className="mb-6">
-        <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-2">
           <Trophy className="h-8 w-8 text-burgundy-500" />
           {/* Only show EditableText when using CMS fallback, not dynamic season title */}
           {activeSeason ? (

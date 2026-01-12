@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useSiteCopy } from '@/lib/hooks/useSiteCopy';
 import { EditableText } from '@/components/EditableText';
+import { Navigation } from '@/components/Navigation';
+import { Footer } from '@/components/Footer';
 import {
   Users,
   Search,
@@ -209,9 +211,12 @@ export default function Leagues() {
   const _isAlreadyMember = (leagueId: string) => myMemberships?.includes(leagueId);
 
   return (
-    <div className="max-w-6xl mx-auto pb-24">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+    <div className="min-h-screen bg-cream-50 flex flex-col">
+      <Navigation />
+
+      <main className="flex-1 max-w-6xl mx-auto px-4 py-8 w-full">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-display font-bold text-neutral-800 flex items-center gap-3">
             <span className="text-3xl">🏆</span>
@@ -229,7 +234,9 @@ export default function Leagues() {
             className="px-4 py-2 bg-burgundy-500 text-white rounded-xl font-semibold hover:bg-burgundy-600 transition shadow-lg flex items-center gap-2"
           >
             <Plus className="h-5 w-5" />
-            Create League
+            <EditableText copyKey="leagues.create_button" as="span" className="">
+              {getCopy('leagues.create_button', 'Create League')}
+            </EditableText>
           </Link>
         </div>
       </div>
@@ -251,7 +258,11 @@ export default function Leagues() {
             >
               <div className="flex items-center gap-3">
                 <Crown className="h-5 w-5" />
-                <span className="font-semibold text-lg">My Leagues</span>
+                <span className="font-semibold text-lg">
+                  <EditableText copyKey="leagues.my_leagues" as="span" className="">
+                    {getCopy('leagues.my_leagues', 'My Leagues')}
+                  </EditableText>
+                </span>
                 <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm">
                   {myLeagues.length}
                 </span>
@@ -393,11 +404,13 @@ export default function Leagues() {
             <div className="bg-cream-50 px-4 sm:px-6 py-4 border-b border-cream-200">
               <h2 className="text-lg font-semibold text-neutral-800 flex items-center gap-2">
                 <Globe className="h-5 w-5 text-teal-600" />
-                Join a League
+                <EditableText copyKey="leagues.join.title" as="span" className="">
+                  {getCopy('leagues.join.title', 'Join a League')}
+                </EditableText>
               </h2>
-              <p className="text-sm text-neutral-500 mt-1">
-                Browse public leagues or enter an invite code
-              </p>
+              <EditableText copyKey="leagues.join.subtitle" as="p" className="text-sm text-neutral-500 mt-1">
+                {getCopy('leagues.join.subtitle', 'Browse public leagues or enter an invite code')}
+              </EditableText>
             </div>
 
             {/* Join with Code Section */}
@@ -406,11 +419,13 @@ export default function Leagues() {
                 <div className="flex-1">
                   <h3 className="font-semibold text-neutral-800 flex items-center gap-2">
                     <Lock className="h-5 w-5 text-burgundy-500" />
-                    Have an invite code?
+                    <EditableText copyKey="leagues.invite.title" as="span" className="">
+                      {getCopy('leagues.invite.title', 'Have an invite code?')}
+                    </EditableText>
                   </h3>
-                  <p className="text-neutral-500 text-sm mt-1">
-                    Enter your 6-character code to join a private league
-                  </p>
+                  <EditableText copyKey="leagues.invite.description" as="p" className="text-neutral-500 text-sm mt-1">
+                    {getCopy('leagues.invite.description', 'Enter your 6-character code to join a private league')}
+                  </EditableText>
                 </div>
                 <div className="flex gap-2 w-full md:w-auto">
                   <input
@@ -541,15 +556,24 @@ export default function Leagues() {
 
               {filteredJoinableLeagues?.length === 0 && (
                 <div className="px-6 py-10 text-center text-neutral-500">
-                  {search
-                    ? 'No leagues match your search'
-                    : 'No public leagues available to join'}
+                  {search ? (
+                    <EditableText copyKey="leagues.no_results" as="span" className="">
+                      {getCopy('leagues.no_results', 'No leagues match your search')}
+                    </EditableText>
+                  ) : (
+                    <EditableText copyKey="leagues.no_public" as="span" className="">
+                      {getCopy('leagues.no_public', 'No public leagues available to join')}
+                    </EditableText>
+                  )}
                 </div>
               )}
             </div>
           </div>
         </>
       )}
+      </main>
+
+      <Footer />
     </div>
   );
 }

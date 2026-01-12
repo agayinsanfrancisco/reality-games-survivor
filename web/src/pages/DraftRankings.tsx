@@ -168,13 +168,6 @@ export default function DraftRankings() {
         <Navigation />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
           <div className="mb-6">
-            <Link
-              to="/castaways"
-              className="inline-flex items-center gap-2 text-neutral-600 hover:text-neutral-800 mb-4"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Castaways
-            </Link>
             <h1 className="text-3xl font-display font-bold text-neutral-800 mb-2">
               {getCopy('draft-rankings.header.title', 'Draft Rankings')}
             </h1>
