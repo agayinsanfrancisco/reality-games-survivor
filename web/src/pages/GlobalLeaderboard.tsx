@@ -7,8 +7,6 @@ import { Trophy, Users, TrendingUp, Medal, ChevronDown } from 'lucide-react';
 import { GlobalChat } from '@/components/GlobalChat';
 import { TorchStaff } from '@/components/icons';
 import { EditableText } from '@/components/EditableText';
-import { Navigation } from '@/components/Navigation';
-import { Footer } from '@/components/Footer';
 
 interface PlayerStats {
   userId: string;
@@ -114,10 +112,8 @@ export default function GlobalLeaderboard() {
     : getCopy('leaderboard.header.title', 'Global Leaderboard');
 
   return (
-    <div className="min-h-screen bg-cream-50 flex flex-col">
-      <Navigation />
-
-      <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
+    <>
+      <div className="max-w-4xl mx-auto px-4 py-8 w-full">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
@@ -443,9 +439,7 @@ export default function GlobalLeaderboard() {
             </div>
           );
         })()}
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </>
   );
 }
