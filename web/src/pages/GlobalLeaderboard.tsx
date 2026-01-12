@@ -113,7 +113,7 @@ export default function GlobalLeaderboard() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto px-4 py-8 w-full">
+      <div className="max-w-6xl mx-auto px-4 py-8 w-full">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
